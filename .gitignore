@@ -1,0 +1,100 @@
+# ==============================================================================
+# PROYECTO: SI-09 · Gestión de Recursos Humanos y Vacaciones
+# .gitignore Global
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Frontend (Angular & Node.js)
+# ------------------------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+tmp/
+frontend/tmp/
+.angular/
+frontend/.angular/
+package-lock.json.log
+
+# ------------------------------------------------------------------------------
+# Backend (Java, Maven, Spring Boot)
+# ------------------------------------------------------------------------------
+target/
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------------------
+# Persistencia y Contenedores (Docker & PostgreSQL)
+# ------------------------------------------------------------------------------
+postgres_data/
+docker_data/
+*.sql.backup
+*.dump
+
+# ------------------------------------------------------------------------------
+# Seguridad, Secretos y Entornos (Arts. 7, 20 Constitución)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local
+*.key
+*.crt
+*.pem
+credentials.json
+
+# ------------------------------------------------------------------------------
+# Logs y Procesos
+# ------------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------------------------------------------------------
+# Entornos de Desarrollo (IDEs) y Sistema Operativo
+# ------------------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+# Archivos del Sistema Operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# Spec Kit y Agentes de IA (Temporales y cachés locales)
+# ------------------------------------------------------------------------------
+.specify/.tmp/
+.specify/reports/
