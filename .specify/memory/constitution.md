@@ -3,7 +3,7 @@
 Constitution · MD
 # Constitución del Proyecto — SI-09 · Gestión de Recursos Humanos y Vacaciones
  
-**Versión:** 1.0.0 · **Ratificada:** 2026-10-20 · **Última enmienda:** 2026-10-20
+**Versión:** 1.0.1 · **Ratificada:** 2026-10-20 · **Última enmienda:** 2026-10-27
  
 **Pila tecnológica:** Angular + Angular Material · Spring Boot (arquitectura por capas) · PostgreSQL
  
@@ -221,7 +221,7 @@ Estas reglas derivan directamente de las historias de usuario. Se consideran **i
 5. Cualquier desviación de este artículo se documenta como **complejidad justificada** (Art. 26).
 ### Art. 24 · Calidad de código y Definition of Done
 1. Análisis estático y formato automático obligatorios en CI (p. ej. Checkstyle/Spotless y ESLint/Prettier); la compilación NO DEBE emitir *warnings* ignorados.
-2. Revisión por pares obligatoria en cada Pull Request; ramas cortas, integración frecuente (*trunk-based* o *GitHub Flow*), *commits* convencionales.
+2. Revisión por pares obligatoria en cada Pull Request; ramas cortas basadas en la convención `spec-001` a `spec-008` (una por historia/especificación y asignada a su integrante responsable), integración mediante *GitHub Flow* hacia `main` y *commits* convencionales.
 3. **Una HU o tarea está *Hecha* cuando:**
    - [ ] Todos sus CA están cubiertos por tests automatizados y pasan en CI.
    - [ ] Se cumplen los invariantes de los Arts. 10–18 aplicables, incluidos los tests negativos.
