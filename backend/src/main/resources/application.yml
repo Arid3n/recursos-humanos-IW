@@ -5,7 +5,7 @@ spring:
     default: dev
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/rrhh_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:${DB_PORT:5433}/rrhh_db}
     username: ${DB_USERNAME:rrhh_user}
     password: ${DB_PASSWORD:rrhh_password}
     driver-class-name: org.postgresql.Driver
