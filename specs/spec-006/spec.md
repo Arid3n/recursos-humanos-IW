@@ -6,6 +6,14 @@
 **Historia de Usuario**: HU-06  
 **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 
+## Clarifications
+
+### Session 2026-10-27
+- Q: ¿Cómo se presentan los fines de semana y festivos en la cuadrícula mensual? → A: Tonalidad atenuada y etiqueta descriptiva del festivo, diferenciando claramente los días laborables de los no computables.
+- Q: ¿Cómo se indica visualmente un solapamiento de dos o más ausencias? → A: Indicador visual dual: borde destacado en la casilla e icono de advertencia con texto accesible indicando el número exacto de personas ausentes (cumpliendo WCAG 2.1 AA sin depender solo del color).
+- Q: ¿Permite el calendario filtrar por empleado específico dentro del equipo? → A: Sí; además de la visión global del equipo, incluye un filtro por empleado para consultar individualmente la planificación de una persona a su cargo.
+- Q: ¿Qué información se muestra al interactuar con una ausencia en el calendario? → A: Al pulsar sobre un bloque de ausencia se despliega un panel lateral o diálogo con el nombre del empleado, tipo de ausencia, rango completo de fechas y estado (Aprobada o Pendiente).
+
 ---
 
 ## 1. User Scenarios & Testing *(mandatory)*
@@ -39,14 +47,19 @@ Como responsable de equipo, quiero visualizar un calendario mensual interactivo 
    - **When** el usuario pulsa en el botón "Mes anterior" o "Mes siguiente",
    - **Then** el sistema consulta al backend únicamente el rango de fechas del mes seleccionado y actualiza la vista sin recargar la página.
 
-5. **Restricción de visibilidad a miembros del equipo**:
+5. **Filtrado por empleado del equipo**:
+   - **Given** la vista del calendario con múltiples integrantes,
+   - **When** el responsable selecciona un empleado concreto en el selector de filtro,
+   - **Then** el calendario aísla y muestra únicamente los eventos correspondientes a dicho trabajador.
+
+6. **Restricción de visibilidad a miembros del equipo**:
    - **Given** un responsable de equipo,
    - **When** se consultan las ausencias del calendario,
    - **Then** el sistema garantiza que bajo ningún concepto aparezcan ausencias de personas pertenecientes a otros departamentos o equipos.
 
 ### Edge Cases
 - **Mes sin ninguna ausencia:** El calendario se muestra limpio con las casillas de días hábiles y festivos correctamente posicionadas.
-- **Ausencia que abarca cambio de mes:** La ausencia debe dividirse o extenderse visualmente cubriendo los días correspondientes a cada mes al navegar entre ellos.
+- **Ausencia que abarca cambio de mes:** La ausencia divide visualmente sus bloques cubriendo los días correspondientes a cada mes al navegar entre ellos.
 
 ---
 
@@ -59,12 +72,13 @@ Como responsable de equipo, quiero visualizar un calendario mensual interactivo 
 - **FR-004**: La interfaz NO DEBE transmitir el estado únicamente mediante el color; debe incorporar patrones, iconos y textos explicativos (Art. 21).
 - **FR-005**: La interfaz DEBE permitir la navegación fluida hacia meses anteriores y posteriores.
 - **FR-006**: Las ausencias en estado `REJECTED` NO DEBEN mostrarse en el calendario.
+- **FR-007**: La interfaz DEBE incluir un filtro opcional por empleado dentro del equipo del responsable.
 
 ### Key Entities
 - **TeamCalendarEvent (DTO)**:
   - `employeeId`: Identificador del empleado.
   - `employeeName`: Nombre y apellidos.
-  - `type`: Tipo de ausencia.
+  - `leaveType`: Tipo de ausencia.
   - `status`: `PENDING` o `APPROVED`.
   - `date`: Día concreto en el que aplica la ausencia.
 - **TeamCalendarDaySummary (DTO)**:
@@ -77,13 +91,13 @@ Como responsable de equipo, quiero visualizar un calendario mensual interactivo 
 
 ## 3. Success Criteria *(mandatory)*
 
-- **SC-001**: La carga del calendario para un mes completo tarda menos de 1 segundo en responder.
-- **SC-002**: 100% de los días con 2 o más ausencias concurrentes quedan identificados y resaltados.
+- **SC-001**: La carga del calendario para un mes completo tarda menos de 800ms en responder.
+- **SC-002**: 100% de los días con 2 o más ausencias concurrentes quedan identificados y resaltados con icono y texto.
 - **SC-003**: Cumplimiento íntegro de contraste y accesibilidad visual según normativa WCAG 2.1 AA.
 - **SC-004**: Cero eventos de empleados externos mostrados en la vista del responsable.
 
 ---
 
 ## 4. Assumptions
-- El calendario muestra ausencias por día completo (o medio día si se contemplase en la política de empresa).
+- El calendario muestra ausencias computadas por días completos.
 - Los fines de semana y festivos se identifican visualmente con tonalidad diferenciada.

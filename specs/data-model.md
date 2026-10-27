@@ -95,6 +95,7 @@ erDiagram
         text objectives "Objetivos fijados"
         integer rating "Valoración numérica (1-5)"
         text comments "Comentarios cualitativos"
+        text employee_comments "Comentarios del empleado"
         varchar status "PENDING_ACKNOWLEDGMENT, FINALIZED"
         timestamptz employee_acknowledged_at "Conformidad empleado"
         timestamptz finalized_at "Cierre inmutable"

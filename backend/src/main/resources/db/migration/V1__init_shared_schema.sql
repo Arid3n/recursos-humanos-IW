@@ -1,7 +1,4 @@
--- =============================================================================
--- V1__init_shared_schema.sql
--- Base de Datos Compartida: SI-09 Recursos Humanos y Vacaciones
--- =============================================================================
+-- MODELO DE LA BASE DE DATOS --
 
 -- 1. Tabla de Usuarios y Autenticación
 CREATE TABLE users (
@@ -101,6 +98,7 @@ CREATE TABLE performance_reviews (
     objectives TEXT NOT NULL,
     rating INTEGER NOT NULL,
     comments TEXT,
+    employee_comments TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING_ACKNOWLEDGMENT',
     employee_acknowledged_at TIMESTAMPTZ,
     finalized_at TIMESTAMPTZ,
