@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: API de Empleados y Trayectoria Contractual (HU-01)
+  version: 1.0.0
+  description: Endpoints para el alta de empleados, actualización de datos y registro de variaciones contractuales inmutables.
+paths:
+  /api/v1/employees:
+    post:
+      summary: Alta de nuevo empleado
+      operationId: createEmployee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Empleado creado exitosamente con credencial provisional generada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEmployeeResponse'
+        '400':
+          description: Error de validación en campos obligatorios
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Acceso denegado (Solo rol RRHH)
+
+    get:
+      summary: Listado paginado de empleados
+      operationId: listEmployees
+      tags:
+        - Employees
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Página de empleados
+
+  /api/v1/employees/{id}:
+    get:
+      summary: Obtener detalle y condición contractual vigente de un empleado
+      operationId: getEmployeeById
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDetailResponse'
+        '404':
+          description: Empleado no encontrado
+
+    delete:
+      summary: Baja de empleado (Inactivación lógica)
+      operationId: deactivateEmployee
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Empleado inactivado exitosamente
+
+  /api/v1/employees/{id}/contracts:
+    post:
+      summary: Registrar variación contractual inmutable (Append-Only)
+      operationId: addContractVariation
+      tags:
+        - Contracts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractVariationRequest'
+      responses:
+        '201':
+          description: Variación contractual registrada exitosamente
+        '400':
+          description: Falta fecha de efectos u otros campos requeridos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    get:
+      summary: Consultar historial cronológico completo de la trayectoria contractual
+      operationId: getContractHistory
+      tags:
+        - Contracts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContractHistoryItemResponse'
+
+components:
+  schemas:
+    CreateEmployeeRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - nationalId
+        - email
+        - hireDate
+        - position
+        - department
+        - salary
+        - collectiveAgreementId
+      properties:
+        firstName:
+          type: string
+          example: "María"
+        lastName:
+          type: string
+          example: "González Pérez"
+        nationalId:
+          type: string
+          example: "12345678Z"
+        email:
+          type: string
+          format: email
+          example: "maria.gonzalez@empresa.com"
+        managerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Obligatorio salvo que position sea CEO / Dirección General"
+        hireDate:
+          type: string
+          format: date
+          example: "2026-11-01"
+        position:
+          type: string
+          example: "Ingeniera de Software"
+        department:
+          type: string
+          example: "Tecnología"
+        salary:
+          type: number
+          format: double
+          example: 42000.00
+        collectiveAgreementId:
+          type: integer
+          format: int64
+          example: 1
+
+    CreateEmployeeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        fullName:
+          type: string
+        temporaryPassword:
+          type: string
+          description: "Contraseña provisional autogenerada para el usuario"
+          example: "Temp#Pass2026!"
+        contractRecordId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateContractVariationRequest:
+      type: object
+      required:
+        - effectiveFrom
+        - position
+        - department
+        - salary
+        - collectiveAgreementId
+      properties:
+        effectiveFrom:
+          type: string
+          format: date
+          description: "Fecha obligatoria de entrada en vigor (puede ser retroactiva o futura)"
+          example: "2027-01-01"
+        position:
+          type: string
+          example: "Tech Lead"
+        department:
+          type: string
+          example: "Tecnología"
+        salary:
+          type: number
+          format: double
+          example: 50000.00
+        collectiveAgreementId:
+          type: integer
+          format: int64
+        managerId:
+          type: string
+          format: uuid
+          nullable: true
+
+    ContractHistoryItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        effectiveFrom:
+          type: string
+          format: date
+        position:
+          type: string
+        department:
+          type: string
+        salary:
+          type: number
+        collectiveAgreementName:
+          type: string
+        managerName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+
+    EmployeeDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        nationalId:
+          type: string
+        email:
+          type: string
+        active:
+          type: boolean
+        hireDate:
+          type: string
+          format: date
+        currentContract:
+          $ref: '#/components/schemas/ContractHistoryItemResponse'
+
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        invalidFields:
+          type: object
+          additionalProperties:
+            type: string
