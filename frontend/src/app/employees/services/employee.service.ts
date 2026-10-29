@@ -56,4 +56,8 @@ export class EmployeeService {
   deactivateEmployee(employeeId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${employeeId}`);
   }
+
+  getMyProfile(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/me`);
+  }
 }

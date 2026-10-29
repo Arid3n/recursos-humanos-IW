@@ -45,7 +45,15 @@ public class EmployeeController {
         return ResponseEntity.ok(page);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Obtener los datos de la ficha personal del empleado en sesión")
+    public ResponseEntity<EmployeeProfileResponse> getMyProfile() {
+        EmployeeProfileResponse profile = employeeService.getMyProfile();
+        return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F-]{36}}")
     @PreAuthorize("hasRole('RRHH') or hasRole('RESPONSABLE_EQUIPO') or hasRole('EMPLEADO')")
     @Operation(summary = "Consultar ficha y condición contractual vigente de un empleado")
     public ResponseEntity<EmployeeDetailResponse> getEmployeeById(@PathVariable UUID id) {

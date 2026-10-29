@@ -9,6 +9,7 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-btn">Inicio</a>
 
       @if (authService.isAuthenticated()) {
+        <a routerLink="/profile" routerLinkActive="active" class="nav-btn">Mi Ficha y Saldo</a>
         @if (authService.isRRHH()) {
           <a routerLink="/employees/new" routerLinkActive="active" class="nav-btn">Alta de Empleado</a>
         }

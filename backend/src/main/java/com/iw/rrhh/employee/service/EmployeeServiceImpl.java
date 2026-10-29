@@ -263,4 +263,44 @@ public class EmployeeServiceImpl implements EmployeeService {
                 record.getCreatedBy()
         );
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeProfileResponse getMyProfile() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new org.springframework.security.access.AccessDeniedException("Usuario no autenticado");
+        }
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado: " + username));
+        Employee employee = employeeRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new NoSuchElementException("No existe ficha de empleado asociada al usuario: " + username));
+
+        ContractRecord currentContract = contractRecordRepository.findCurrentContract(employee.getId(), LocalDate.now()).orElse(null);
+        String position = currentContract != null ? currentContract.getPosition() : "Sin asignar";
+        String department = currentContract != null ? currentContract.getDepartment() : "Sin asignar";
+        String agreementName = currentContract != null && currentContract.getCollectiveAgreement() != null
+                ? currentContract.getCollectiveAgreement().getName()
+                : "Convenio Colectivo General";
+        String managerName = null;
+        if (employee.getManager() != null) {
+            managerName = employee.getManager().getFirstName() + " " + employee.getManager().getLastName();
+        } else if (currentContract != null && currentContract.getManager() != null) {
+            managerName = currentContract.getManager().getFirstName() + " " + currentContract.getManager().getLastName();
+        }
+
+        return new EmployeeProfileResponse(
+                employee.getId(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getEmail(),
+                employee.getNationalId(),
+                employee.getHireDate(),
+                position,
+                department,
+                agreementName,
+                managerName
+        );
+    }
 }

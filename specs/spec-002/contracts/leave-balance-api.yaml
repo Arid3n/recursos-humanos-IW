@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: API de Consulta de Ficha y Saldo de Vacaciones (HU-02)
+  version: 1.0.0
+  description: Endpoints para la consulta de perfil personal y saldo desglosado de vacaciones (correspondientes, disfrutados, disponibles y en trámite).
+paths:
+  /api/v1/employees/me:
+    get:
+      summary: Ficha personal del empleado autenticado
+      description: Devuelve los datos básicos del empleado asociado a la sesión activa (FR-001).
+      operationId: getMyProfile
+      tags:
+        - Profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil del empleado autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfileResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: No se encontró ficha de empleado asociada al usuario autenticado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/leave/balances/me:
+    get:
+      summary: Saldo de vacaciones del empleado autenticado
+      description: Calcula y devuelve el saldo desglosado de vacaciones (Art. 12, FR-002) para el año especificado o el año en curso.
+      operationId: getMyLeaveBalance
+      tags:
+        - LeaveBalance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          required: false
+          description: Año fiscal a consultar. Por defecto el año actual.
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        '200':
+          description: Saldo desglosado calculado en tiempo real
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalanceResponse'
+        '401':
+          description: No autenticado
+        '404':
+          description: Empleado no encontrado
+
+  /api/v1/leave/balances/employee/{employeeId}:
+    get:
+      summary: Saldo de vacaciones de un empleado por ID
+      description: Permite consultar el saldo a RRHH o al responsable de equipo del empleado. Si un rol EMPLEADO consulta un ID ajeno, se rechaza con 403 Forbidden (Art. 10, FR-005).
+      operationId: getEmployeeLeaveBalance
+      tags:
+        - LeaveBalance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        '200':
+          description: Saldo desglosado del empleado especificado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalanceResponse'
+        '401':
+          description: No autenticado
+        '403':
+          description: Acceso denegado (intento de consultar ficha ajena fuera de alcance)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Empleado no encontrado
+
+  /api/v1/leave/requests/me:
+    get:
+      summary: Listado de solicitudes del empleado autenticado en el año
+      description: Proporciona el desglose trazable de las solicitudes que componen los días disfrutados y pendientes del balance.
+      operationId: getMyLeaveRequests
+      tags:
+        - LeaveRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        '200':
+          description: Lista de solicitudes del año
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaveSummaryItemResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EmployeeProfileResponse:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - nationalId
+        - hireDate
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+          example: "Ana"
+        lastName:
+          type: string
+          example: "García López"
+        email:
+          type: string
+          format: email
+          example: "ana.garcia@empresa.com"
+        nationalId:
+          type: string
+          example: "12345678Z"
+        hireDate:
+          type: string
+          format: date
+          example: "2024-03-01"
+        currentPosition:
+          type: string
+          example: "Desarrollador Senior"
+        currentDepartment:
+          type: string
+          example: "Ingeniería"
+        currentAgreementName:
+          type: string
+          example: "Convenio Colectivo TIC Estatal"
+        managerFullName:
+          type: string
+          nullable: true
+          example: "Carlos Morales"
+
+    LeaveBalanceResponse:
+      type: object
+      required:
+        - employeeId
+        - year
+        - entitledDays
+        - spentDays
+        - pendingDays
+        - availableDays
+        - isClosedYear
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+        year:
+          type: integer
+          example: 2026
+        entitledDays:
+          type: integer
+          description: Días correspondientes por convenio (prorrateados si ingresó en el año)
+          example: 22
+        spentDays:
+          type: integer
+          description: Días disfrutados formalmente aprobados en el año
+          example: 7
+        pendingDays:
+          type: integer
+          description: Días solicitados en trámite
+          example: 3
+        availableDays:
+          type: integer
+          description: Días libres disponibles restantes (entitledDays - spentDays)
+          example: 15
+        isClosedYear:
+          type: boolean
+          description: Indica si el ejercicio fiscal consultado ya está cerrado (solo lectura)
+          example: false
+        agreementName:
+          type: string
+          nullable: true
+          example: "Convenio Colectivo TIC Estatal"
+
+    LeaveSummaryItemResponse:
+      type: object
+      required:
+        - id
+        - leaveType
+        - startDate
+        - endDate
+        - calculatedDays
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        leaveType:
+          type: string
+          enum: [VACATION, PERMIT]
+        startDate:
+          type: string
+          format: date
+          example: "2026-07-10"
+        endDate:
+          type: string
+          format: date
+          example: "2026-07-17"
+        calculatedDays:
+          type: integer
+          example: 5
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        rejectionReason:
+          type: string
+          nullable: true
+
+    ProblemDetail:
+      type: object
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          example: "about:blank"
+        title:
+          type: string
+          example: "Forbidden"
+        status:
+          type: integer
+          example: 403
+        detail:
+          type: string
+          example: "No tiene autorización para consultar los datos del empleado solicitado."
+        invalidFields:
+          type: object
+          additionalProperties:
+            type: string
+

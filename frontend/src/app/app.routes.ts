@@ -17,6 +17,15 @@ export const routes: Routes = [
     loadComponent: () => import('./employees/components/employee-create/employee-create.component').then(m => m.EmployeeCreateComponent)
   },
   {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/employees/components/my-profile/my-profile.component').then(m => m.MyProfileComponent)
+  },
+  {
+    path: 'vacations',
+    redirectTo: 'profile'
+  },
+  {
     path: '**',
     redirectTo: ''
   }
