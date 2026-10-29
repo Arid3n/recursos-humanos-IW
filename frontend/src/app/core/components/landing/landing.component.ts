@@ -79,7 +79,11 @@ import { AuthService } from '../../services/auth.service';
             <h3>Vacaciones y Permisos</h3>
             <p>Gestión de solicitudes de ausencias, cálculo derivado de saldo disponible según convenio y resolución atómica por responsables.</p>
             <div class="card-footer-info">
-              <span class="card-tag">Art. 12, 13 y 14</span>
+              @if (authService.isAuthenticated()) {
+                <a routerLink="/profile" class="card-link">Consultar mi saldo →</a>
+              } @else {
+                <span class="card-tag">Art. 12, 13 y 14</span>
+              }
             </div>
           </div>
 

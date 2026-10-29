@@ -15,4 +15,5 @@ public interface EmployeeService {
     EmployeeDetailResponse updatePersonalData(UUID employeeId, UpdatePersonalDataRequest request);
     void deactivateEmployee(UUID employeeId);
     Page<EmployeeDetailResponse> listEmployees(boolean activeOnly, Pageable pageable);
+    EmployeeProfileResponse getMyProfile();
 }
