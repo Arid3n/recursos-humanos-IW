@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: API de Seguimiento de Mis Solicitudes de Ausencia (HU-04)
+  description: Endpoints para consulta paginada, filtrado y cancelación de solicitudes del empleado en sesión.
+  version: 1.0.0
+paths:
+  /api/v1/leave/my-requests:
+    get:
+      summary: Consultar solicitudes de ausencia del empleado autenticado
+      description: |
+        Devuelve el listado histórico de solicitudes del empleado extraído de la sesión (Art. 10).
+        Permite paginación en servidor y filtrado opcional por estado actual.
+      operationId: getMyLeaveRequests
+      tags:
+        - Leave Tracking
+      security:
+        - basicAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Número de página (0-indexed).
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Número de elementos por página.
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: Filtro opcional por estado de la solicitud.
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED]
+      responses:
+        '200':
+          description: Listado paginado de solicitudes recuperado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLeaveRequestSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/leave/requests/{id}/cancel:
+    post:
+      summary: Cancelar una solicitud pendiente propia
+      description: |
+        Permite al empleado en sesión cancelar y descartar una solicitud propia siempre y cuando
+        se encuentre estrictamente en estado PENDING.
+      operationId: cancelLeaveRequest
+      tags:
+        - Leave Tracking
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador UUID de la solicitud.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Solicitud cancelada y descartada con éxito.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Intento de cancelar una solicitud perteneciente a otro empleado.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Solicitud no encontrada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: La solicitud ya ha sido resuelta (Aprobada o Rechazada) y no puede ser cancelada unilateralmente.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  responses:
+    Unauthorized:
+      description: Credenciales no proporcionadas o inválidas.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+  schemas:
+    LeaveType:
+      type: string
+      enum: [VACATION, PERMIT]
+
+    LeaveStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+
+    LeaveRequestSummaryResponse:
+      type: object
+      required:
+        - id
+        - leaveType
+        - startDate
+        - endDate
+        - calculatedDays
+        - status
+        - createdAt
+        - canCancel
+      properties:
+        id:
+          type: string
+          format: uuid
+        leaveType:
+          $ref: '#/components/schemas/LeaveType'
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        calculatedDays:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/LeaveStatus'
+        rejectionReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        canCancel:
+          type: boolean
+
+    PageLeaveRequestSummary:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveRequestSummaryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+
+    ProblemDetail:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
