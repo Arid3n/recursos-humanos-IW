@@ -22,6 +22,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/employees/components/my-profile/my-profile.component').then(m => m.MyProfileComponent)
   },
   {
+    path: 'leave/request',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/leave/components/leave-request-create/leave-request-create.component').then(m => m.LeaveRequestCreateComponent)
+  },
+  {
     path: 'vacations',
     redirectTo: 'profile'
   },

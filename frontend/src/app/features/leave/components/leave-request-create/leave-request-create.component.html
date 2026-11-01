@@ -1,0 +1,121 @@
+<div class="leave-request-container" role="main" aria-label="Formulario de solicitud de vacaciones o permisos">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <div mat-card-avatar class="header-avatar">
+        <mat-icon>event_note</mat-icon>
+      </div>
+      <mat-card-title>Solicitud de Ausencias</mat-card-title>
+      <mat-card-subtitle>Gestiona tus periodos de vacaciones o permisos retribuidos</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Indicador de saldo actual para vacaciones -->
+      <div *ngIf="balance() && form.get('leaveType')?.value === 'VACATION'" class="balance-badge-card" role="status">
+        <div class="balance-info">
+          <span class="label">Saldo de vacaciones disponible ({{ balance()?.year }}):</span>
+          <span class="badge" [class.badge-low]="(balance()?.availableDays ?? 0) <= 3">
+            {{ balance()?.availableDays }} días
+          </span>
+        </div>
+        <span class="agreement-hint" *ngIf="balance()?.agreementName">
+          Convenio: {{ balance()?.agreementName }}
+        </span>
+      </div>
+
+      <!-- Banner de recomendación por antelación reducida (< 7 días) -->
+      <div *ngIf="shortNoticeWarning()" class="notice-banner" role="status" aria-live="polite">
+        <mat-icon class="notice-icon">info</mat-icon>
+        <div class="notice-text">
+          <strong>Aviso de antelación:</strong> La fecha de inicio seleccionada es en menos de 7 días. Se recomienda solicitar ausencias con antelación salvo imprevisto justificado.
+        </div>
+      </div>
+
+      <!-- Mensaje de error general / negocio -->
+      <div *ngIf="errorMessage()" class="alert-banner alert-error" role="alert" aria-live="assertive">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <!-- Mensaje de éxito -->
+      <div *ngIf="successMessage()" class="alert-banner alert-success" role="status" aria-live="polite">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ successMessage() }}</span>
+      </div>
+
+      <!-- Formulario reactivo -->
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="request-form">
+        <!-- Tipo de ausencia -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipo de ausencia</mat-label>
+          <mat-select formControlName="leaveType" aria-label="Selecciona tipo de ausencia">
+            <mat-option value="VACATION">
+              <mat-icon class="option-icon">beach_access</mat-icon>
+              Vacaciones anuales (descuenta del saldo anual)
+            </mat-option>
+            <mat-option value="PERMIT">
+              <mat-icon class="option-icon">assignment</mat-icon>
+              Permiso retribuido / especial (no descuenta vacaciones)
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Selector de rango de fechas -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Selecciona el periodo de fechas</mat-label>
+          <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate">
+            <input matStartDate formControlName="startDate" placeholder="Fecha inicio" aria-label="Fecha de inicio">
+            <input matEndDate formControlName="endDate" placeholder="Fecha fin" aria-label="Fecha de finalización">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="rangePicker"></mat-datepicker-toggle>
+          <mat-date-range-picker #rangePicker></mat-date-range-picker>
+          <mat-error *ngIf="form.get('startDate')?.hasError('required') || form.get('endDate')?.hasError('required')">
+            Ambas fechas son obligatorias
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Previsualización interactiva de días laborables (Art. 14) -->
+        <div *ngIf="calculatingDays()" class="calculating-indicator">
+          <mat-progress-spinner mode="indeterminate" diameter="24"></mat-progress-spinner>
+          <span>Calculando días hábiles con el calendario oficial...</span>
+        </div>
+
+        <div *ngIf="!calculatingDays() && workingDaysInfo() as info" class="breakdown-container">
+          <h4 class="breakdown-title">Cómputo oficial del periodo (Servidor)</h4>
+          <div class="metrics-chips">
+            <div class="metric-chip highlight" [attr.aria-label]="'Días laborables solicitados: ' + info.workingDays">
+              <span class="chip-num">{{ info.workingDays }}</span>
+              <span class="chip-label">Días laborables</span>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-num">{{ info.calendarDays }}</span>
+              <span class="chip-label">Días naturales</span>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-num">{{ info.weekendDays }}</span>
+              <span class="chip-label">Fines de semana</span>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-num">{{ info.holidayDays }}</span>
+              <span class="chip-label">Festivos oficiales</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón de acción -->
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            class="submit-button"
+            [disabled]="isSubmitDisabled()"
+            aria-label="Confirmar y tramitar solicitud de ausencia"
+          >
+            <mat-progress-spinner *ngIf="submitting()" mode="indeterminate" diameter="20" class="btn-spinner"></mat-progress-spinner>
+            <span>{{ submitting() ? 'Tramitando...' : 'Confirmar y Enviar Solicitud' }}</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

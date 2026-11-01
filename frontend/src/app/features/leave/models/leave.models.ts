@@ -36,3 +36,31 @@ export interface EmployeeProfile {
   managerFullName: string | null;
 }
 
+export interface CreateLeaveRequest {
+  leaveType: LeaveType;
+  startDate: string; // ISO YYYY-MM-DD
+  endDate: string;   // ISO YYYY-MM-DD
+}
+
+export interface LeaveRequestResponse {
+  id: string;
+  employeeId: string;
+  employeeFullName: string;
+  managerId: string | null;
+  leaveType: LeaveType;
+  startDate: string;
+  endDate: string;
+  calculatedDays: number;
+  status: LeaveStatus;
+  createdAt: string;
+}
+
+export interface WorkingDaysCalculationResponse {
+  startDate: string;
+  endDate: string;
+  workingDays: number;
+  calendarDays: number;
+  weekendDays: number;
+  holidayDays: number;
+}
+

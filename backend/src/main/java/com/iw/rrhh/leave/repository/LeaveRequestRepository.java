@@ -44,5 +44,19 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
         @Param("startOfYear") LocalDate startOfYear,
         @Param("endOfYear") LocalDate endOfYear
     );
+    @Query("""
+        SELECT COUNT(lr) > 0
+        FROM LeaveRequest lr
+        WHERE lr.employee.id = :employeeId
+          AND lr.status IN :statuses
+          AND lr.startDate <= :endDate
+          AND lr.endDate >= :startDate
+    """)
+    boolean hasOverlappingRequests(
+        @Param("employeeId") UUID employeeId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("statuses") List<LeaveStatus> statuses
+    );
 }
 

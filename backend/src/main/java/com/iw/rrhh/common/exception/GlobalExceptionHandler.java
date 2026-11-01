@@ -76,6 +76,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
     }
 
+    @ExceptionHandler(InsufficientLeaveBalanceException.class)
+    public ResponseEntity<ProblemDetail> handleInsufficientBalance(InsufficientLeaveBalanceException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Saldo insuficiente de vacaciones");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/insufficient-balance"));
+        problemDetail.setProperty("requestedDays", ex.getRequestedDays());
+        problemDetail.setProperty("availableDays", ex.getAvailableDays());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(LeaveRequestOverlapException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveOverlap(LeaveRequestOverlapException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Solapamiento de ausencias detectado");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-overlap"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
