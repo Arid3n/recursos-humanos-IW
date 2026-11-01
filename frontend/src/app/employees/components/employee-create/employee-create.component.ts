@@ -10,6 +10,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { EmployeeService } from '../../services/employee.service';
+import { EmployeeDetailResponse } from '../../models/employee.models';
 import { PasswordDialogComponent } from '../password-dialog/password-dialog.component';
 
 @Component({
@@ -110,7 +111,12 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
 
               <mat-form-field appearance="outline" class="col">
                 <mat-label>Responsable de Equipo (Opcional solo para CEO)</mat-label>
-                <input matInput formControlName="managerId" placeholder="UUID del responsable (si aplica)" />
+                <mat-select formControlName="managerId">
+                  <mat-option [value]="null">-- Sin responsable (Solo CEO / Dirección General) --</mat-option>
+                  @for (m of managers(); track m.id) {
+                    <mat-option [value]="m.id">{{ m.firstName }} {{ m.lastName }} ({{ m.email }})</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
             </div>
 
@@ -167,6 +173,7 @@ export class EmployeeCreateComponent implements OnInit {
 
   form!: FormGroup;
   isSubmitting = signal(false);
+  managers = signal<EmployeeDetailResponse[]>([]);
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -180,6 +187,11 @@ export class EmployeeCreateComponent implements OnInit {
       salary: [null, [Validators.required, Validators.min(0)]],
       collectiveAgreementId: [1, [Validators.required]],
       managerId: [null]
+    });
+
+    this.employeeService.listEmployees(true, 0, 100).subscribe({
+      next: (res) => this.managers.set(res?.content || []),
+      error: () => this.managers.set([])
     });
   }
 
@@ -202,7 +214,7 @@ export class EmployeeCreateComponent implements OnInit {
       department: val.department.trim(),
       salary: Number(val.salary),
       collectiveAgreementId: Number(val.collectiveAgreementId),
-      managerId: val.managerId ? val.managerId.trim() : null
+      managerId: val.managerId ? val.managerId : null
     }).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
