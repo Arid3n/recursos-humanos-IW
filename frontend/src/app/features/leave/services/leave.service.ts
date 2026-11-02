@@ -1,7 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LeaveBalanceResponse, LeaveSummaryItem, CreateLeaveRequest, LeaveRequestResponse, WorkingDaysCalculationResponse } from '../models/leave.models';
+import {
+  LeaveBalanceResponse,
+  LeaveSummaryItem,
+  CreateLeaveRequest,
+  LeaveRequestResponse,
+  WorkingDaysCalculationResponse,
+  LeaveRequestSummary,
+  PageResponse,
+  LeaveStatus
+} from '../models/leave.models';
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +52,20 @@ export class LeaveService {
 
   createLeaveRequest(request: CreateLeaveRequest): Observable<LeaveRequestResponse> {
     return this.http.post<LeaveRequestResponse>(`${this.apiUrl}/requests`, request);
+  }
+
+  getMyRequests(page: number = 0, size: number = 10, status?: LeaveStatus): Observable<PageResponse<LeaveRequestSummary>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http.get<PageResponse<LeaveRequestSummary>>(`${this.apiUrl}/my-requests`, { params });
+  }
+
+  cancelRequest(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/requests/${id}/cancel`, {});
   }
 }
 

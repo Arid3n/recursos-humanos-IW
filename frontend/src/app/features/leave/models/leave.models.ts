@@ -64,3 +64,26 @@ export interface WorkingDaysCalculationResponse {
   holidayDays: number;
 }
 
+export interface LeaveRequestSummary {
+  id: string;
+  leaveType: LeaveType;
+  startDate: string;
+  endDate: string;
+  calculatedDays: number;
+  status: LeaveStatus;
+  rejectionReason: string | null;
+  createdAt: string;
+  canCancel: boolean;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+

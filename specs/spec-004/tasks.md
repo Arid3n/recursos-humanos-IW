@@ -9,9 +9,9 @@
 
 **Purpose**: Estructuras base, DTOs y manejo de excepciones comunes para seguimiento de ausencias.
 
-- [ ] T001 Create `LeaveRequestSummaryResponse` record in `backend/src/main/java/com/iw/rrhh/leave/dto/LeaveRequestSummaryResponse.java`
-- [ ] T002 [P] Create `PageResponse<T>` record in `backend/src/main/java/com/iw/rrhh/common/dto/PageResponse.java`
-- [ ] T003 [P] Create exception `LeaveRequestNotCancellableException` in `backend/src/main/java/com/iw/rrhh/common/exception/LeaveRequestNotCancellableException.java` and map to `409 Conflict` (RFC 9457 ProblemDetail) in `backend/src/main/java/com/iw/rrhh/common/exception/GlobalExceptionHandler.java`
+- [x] T001 Create `LeaveRequestSummaryResponse` record in `backend/src/main/java/com/iw/rrhh/leave/dto/LeaveRequestSummaryResponse.java`
+- [x] T002 [P] Create `PageResponse<T>` record in `backend/src/main/java/com/iw/rrhh/common/dto/PageResponse.java`
+- [x] T003 [P] Create exception `LeaveRequestNotCancellableException` in `backend/src/main/java/com/iw/rrhh/common/exception/LeaveRequestNotCancellableException.java` and map to `409 Conflict` (RFC 9457 ProblemDetail) in `backend/src/main/java/com/iw/rrhh/common/exception/GlobalExceptionHandler.java`
 
 **Checkpoint**: Base de DTOs y excepciones lista.
 
@@ -25,19 +25,19 @@
 
 ### Backend Implementation
 
-- [ ] T004 [P] [US1] Add pagination query methods `findByEmployeeIdOrderByCreatedAtDesc` and `findByEmployeeIdAndStatusOrderByCreatedAtDesc` in `backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java`
-- [ ] T005 [US1] Implement `getMyRequests(Principal, LeaveStatus, Pageable)` and `cancelRequest(Principal, UUID)` in `backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestService.java` and `backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestServiceImpl.java` ensuring identity is extracted strictly from `Principal` (Art. 10)
-- [ ] T006 [US1] Expose endpoints `GET /api/v1/leave/my-requests` and `POST /api/v1/leave/requests/{id}/cancel` in `backend/src/main/java/com/iw/rrhh/leave/controller/LeaveRequestController.java`
-- [ ] T007 [P] [US1] Unit tests for tracking and cancellation logic in `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestTrackingServiceTest.java` (tagged `HU-04.CA-1`, `HU-04.CA-3`, `HU-04.CA-5`)
-- [ ] T008 [US1] Integration tests with MockMvc and security context verifying pagination, filter by status, cancellation of pending request, 409 when cancelling approved request, and 403 when cancelling another employee's request in `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestTrackingIntegrationTest.java`
+- [x] T004 [P] [US1] Add pagination query methods `findByEmployeeIdOrderByCreatedAtDesc` and `findByEmployeeIdAndStatusOrderByCreatedAtDesc` in `backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java`
+- [x] T005 [US1] Implement `getMyRequests(Principal, LeaveStatus, Pageable)` and `cancelRequest(Principal, UUID)` in `backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestService.java` and `backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestServiceImpl.java` ensuring identity is extracted strictly from `Principal` (Art. 10)
+- [x] T006 [US1] Expose endpoints `GET /api/v1/leave/my-requests` and `POST /api/v1/leave/requests/{id}/cancel` in `backend/src/main/java/com/iw/rrhh/leave/controller/LeaveRequestController.java`
+- [x] T007 [P] [US1] Unit tests for tracking and cancellation logic in `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestTrackingServiceTest.java` (tagged `HU-04.CA-1`, `HU-04.CA-3`, `HU-04.CA-5`)
+- [x] T008 [US1] Integration tests with MockMvc and security context verifying pagination, filter by status, cancellation of pending request, 409 when cancelling approved request, and 403 when cancelling another employee's request in `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestTrackingIntegrationTest.java`
 
 ### Frontend Implementation
 
-- [ ] T009 [P] [US1] Add `LeaveRequestSummary` interface and API methods `getMyRequests` and `cancelRequest` in `frontend/src/app/features/leave/models/leave.models.ts` and `frontend/src/app/features/leave/services/leave.service.ts`
-- [ ] T010 [P] [US1] Create accessible modal dialog `RejectionReasonDialogComponent` in `frontend/src/app/features/leave/components/rejection-reason-dialog/rejection-reason-dialog.component.ts`
-- [ ] T011 [US1] Implement `LeaveRequestListComponent` with Angular Material table, status badges, filter buttons, cancellation button with confirmation dialog, and paginator in `frontend/src/app/features/leave/components/leave-request-list/leave-request-list.component.ts`, `.html`, `.scss`
-- [ ] T012 [P] [US1] Unit tests for `LeaveRequestListComponent` covering table render, status filtering and cancel dispatch in `frontend/src/app/features/leave/components/leave-request-list/leave-request-list.component.spec.ts`
-- [ ] T013 [US1] Register route `/leave/my-requests` in `frontend/src/app/app.routes.ts` and add navigation item "Mis Solicitudes" in `frontend/src/app/app.html`
+- [x] T009 [P] [US1] Add `LeaveRequestSummary` interface and API methods `getMyRequests` and `cancelRequest` in `frontend/src/app/features/leave/models/leave.models.ts` and `frontend/src/app/features/leave/services/leave.service.ts`
+- [x] T010 [P] [US1] Create accessible modal dialog `RejectionReasonDialogComponent` in `frontend/src/app/features/leave/components/rejection-reason-dialog/rejection-reason-dialog.component.ts`
+- [x] T011 [US1] Implement `LeaveRequestListComponent` with Angular Material table, status badges, filter buttons, cancellation button with confirmation dialog, and paginator in `frontend/src/app/features/leave/components/leave-request-list/leave-request-list.component.ts`, `.html`, `.scss`
+- [x] T012 [P] [US1] Unit tests for `LeaveRequestListComponent` covering table render, status filtering and cancel dispatch in `frontend/src/app/features/leave/components/leave-request-list/leave-request-list.component.spec.ts`
+- [x] T013 [US1] Register route `/leave/my-requests` in `frontend/src/app/app.routes.ts` and add navigation item "Mis Solicitudes" in `frontend/src/app/app.html`
 
 **Checkpoint**: HU-04 completamente funcional en backend y frontend.
 
@@ -47,9 +47,9 @@
 
 **Purpose**: Verificación cruzada, calidad de código y tests completos.
 
-- [ ] T014 [P] Execute backend test suite (`./mvnw test -Dtest="LeaveRequestTrackingServiceTest,LeaveRequestTrackingIntegrationTest"`)
-- [ ] T015 [P] Execute frontend test suite (`npx ng test --watch=false`)
-- [ ] T016 Validate end-to-end scenarios against `specs/spec-004/quickstart.md`
+- [x] T014 [P] Execute backend test suite (`./mvnw test -Dtest="LeaveRequestTrackingServiceTest,LeaveRequestTrackingIntegrationTest"`)
+- [x] T015 [P] Execute frontend test suite (`npx ng test --watch=false`)
+- [x] T016 Validate end-to-end scenarios against `specs/spec-004/quickstart.md`
 
 ---
 

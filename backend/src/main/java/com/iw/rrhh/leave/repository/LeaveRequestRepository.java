@@ -58,5 +58,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
         @Param("endDate") LocalDate endDate,
         @Param("statuses") List<LeaveStatus> statuses
     );
+
+    org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(UUID employeeId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdAndStatusOrderByCreatedAtDesc(UUID employeeId, LeaveStatus status, org.springframework.data.domain.Pageable pageable);
 }
 

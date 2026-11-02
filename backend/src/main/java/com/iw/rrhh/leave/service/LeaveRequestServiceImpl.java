@@ -152,4 +152,55 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         return employeeRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new NoSuchElementException("No se encontró ficha de empleado para el usuario autenticado"));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.iw.rrhh.common.dto.PageResponse<com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse> getMyRequests(
+            java.security.Principal principal,
+            LeaveStatus status,
+            org.springframework.data.domain.Pageable pageable
+    ) {
+        Employee employee = getAuthenticatedEmployee();
+        org.springframework.data.domain.Page<LeaveRequest> page;
+        if (status != null) {
+            page = leaveRequestRepository.findByEmployeeIdAndStatusOrderByCreatedAtDesc(employee.getId(), status, pageable);
+        } else {
+            page = leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employee.getId(), pageable);
+        }
+
+        org.springframework.data.domain.Page<com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse> dtoPage = page.map(this::mapToSummary);
+        return com.iw.rrhh.common.dto.PageResponse.from(dtoPage);
+    }
+
+    @Override
+    @Transactional
+    public void cancelRequest(java.security.Principal principal, UUID requestId) {
+        Employee employee = getAuthenticatedEmployee();
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NoSuchElementException("Solicitud de ausencia no encontrada con ID: " + requestId));
+
+        if (!leaveRequest.getEmployee().getId().equals(employee.getId())) {
+            throw new AccessDeniedException("No tiene permiso para cancelar una solicitud que no le pertenece");
+        }
+
+        if (leaveRequest.getStatus() != LeaveStatus.PENDING) {
+            throw new com.iw.rrhh.common.exception.LeaveRequestNotCancellableException("Solo se pueden cancelar solicitudes en estado PENDIENTE");
+        }
+
+        leaveRequestRepository.delete(leaveRequest);
+    }
+
+    private com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse mapToSummary(LeaveRequest lr) {
+        return new com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse(
+                lr.getId(),
+                lr.getLeaveType(),
+                lr.getStartDate(),
+                lr.getEndDate(),
+                lr.getCalculatedDays(),
+                lr.getStatus(),
+                lr.getStatus() == LeaveStatus.REJECTED ? lr.getRejectionReason() : null,
+                lr.getCreatedAt(),
+                lr.getStatus() == LeaveStatus.PENDING
+        );
+    }
 }
