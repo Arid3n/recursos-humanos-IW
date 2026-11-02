@@ -43,6 +43,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
     }
 
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Formato de datos no válido en la solicitud (compruebe números, fechas o formato UUID de identificadores)"
+        );
+        problemDetail.setTitle("Petición no legible");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/malformed-request"));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetail> handleIllegalArgument(IllegalArgumentException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -73,6 +90,63 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
         problemDetail.setTitle("Acceso no autorizado");
         problemDetail.setType(URI.create("https://api.rrhh.iw/errors/forbidden"));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+    }
+
+    @ExceptionHandler(InsufficientLeaveBalanceException.class)
+    public ResponseEntity<ProblemDetail> handleInsufficientBalance(InsufficientLeaveBalanceException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Saldo insuficiente de vacaciones");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/insufficient-balance"));
+        problemDetail.setProperty("requestedDays", ex.getRequestedDays());
+        problemDetail.setProperty("availableDays", ex.getAvailableDays());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(LeaveRequestOverlapException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveOverlap(LeaveRequestOverlapException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Solapamiento de ausencias detectado");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-overlap"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(LeaveRequestNotCancellableException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveNotCancellable(LeaveRequestNotCancellableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Solicitud no cancelable");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-not-cancellable"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Credenciales inválidas");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/unauthorized"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<ProblemDetail> handleDisabled(org.springframework.security.authentication.DisabledException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Cuenta desactivada");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/account-disabled"));
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
     }
 

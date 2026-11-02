@@ -60,6 +60,10 @@ public class SecurityDataInitializer implements CommandLineRunner {
                 User u = new User(rrhhUsername, passwordEncoder.encode(defaultPassword), UserRole.RRHH);
                 return userRepository.save(u);
             });
+            if (!passwordEncoder.matches(defaultPassword, rrhhUser.getPasswordHash())) {
+                rrhhUser.setPasswordHash(passwordEncoder.encode(defaultPassword));
+                rrhhUser = userRepository.save(rrhhUser);
+            }
 
             String rrhhNationalId = "00000000T";
             if (employeeRepository.findByUserId(rrhhUser.getId()).isEmpty()

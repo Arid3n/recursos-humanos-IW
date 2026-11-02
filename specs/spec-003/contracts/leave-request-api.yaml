@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: API de Solicitud de Vacaciones y Permisos (HU-03)
+  version: 1.0.0
+  description: Endpoints para el cómputo oficial de días laborables en servidor y la creación de solicitudes de ausencia en estado PENDING.
+paths:
+  /api/v1/leave/requests/calculate-days:
+    get:
+      summary: Cómputo de días laborables entre dos fechas
+      description: Calcula los días laborables (lunes a viernes) entre dos fechas descontando automáticamente festivos oficiales del calendario de la sede (Art. 14, FR-002).
+      operationId: calculateWorkingDays
+      tags:
+        - LeaveRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          description: Fecha de inicio del periodo (formato YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: '2026-07-06'
+        - name: endDate
+          in: query
+          required: true
+          description: Fecha de fin del periodo (formato YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: '2026-07-10'
+      responses:
+        '200':
+          description: Cómputo oficial calculado por el servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkingDaysCalculationResponse'
+        '400':
+          description: Rango de fechas no válido (endDate < startDate)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: No autenticado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/leave/requests:
+    post:
+      summary: Crear una nueva solicitud de ausencia
+      description: Registra una solicitud de tipo VACATION o PERMIT en estado PENDING, validando fechas, tope de saldo disponible y no solapamiento con solicitudes activas previas (FR-001, FR-003, FR-004, FR-007).
+      operationId: createLeaveRequest
+      tags:
+        - LeaveRequests
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeaveRequest'
+      responses:
+        '201':
+          description: Solicitud creada con éxito en estado PENDING
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestResponse'
+        '400':
+          description: Error de validación en los campos o rango con 0 días hábiles
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: No autenticado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Conflicto de negocio (saldo insuficiente o solapamiento con otra ausencia existente)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateLeaveRequest:
+      type: object
+      required:
+        - leaveType
+        - startDate
+        - endDate
+      properties:
+        leaveType:
+          $ref: '#/components/schemas/LeaveType'
+        startDate:
+          type: string
+          format: date
+          example: '2026-07-06'
+        endDate:
+          type: string
+          format: date
+          example: '2026-07-10'
+
+    LeaveRequestResponse:
+      type: object
+      required:
+        - id
+        - employeeId
+        - employeeFullName
+        - leaveType
+        - startDate
+        - endDate
+        - calculatedDays
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
+        employeeId:
+          type: string
+          format: uuid
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        employeeFullName:
+          type: string
+          example: 'Juan Pérez'
+        managerId:
+          type: string
+          format: uuid
+          nullable: true
+          example: '660e8400-e29b-41d4-a716-446655440001'
+        leaveType:
+          $ref: '#/components/schemas/LeaveType'
+        startDate:
+          type: string
+          format: date
+          example: '2026-07-06'
+        endDate:
+          type: string
+          format: date
+          example: '2026-07-10'
+        calculatedDays:
+          type: integer
+          example: 5
+        status:
+          $ref: '#/components/schemas/LeaveStatus'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-11-01T12:00:00Z'
+
+    WorkingDaysCalculationResponse:
+      type: object
+      required:
+        - startDate
+        - endDate
+        - workingDays
+        - calendarDays
+        - weekendDays
+        - holidayDays
+      properties:
+        startDate:
+          type: string
+          format: date
+          example: '2026-07-06'
+        endDate:
+          type: string
+          format: date
+          example: '2026-07-10'
+        workingDays:
+          type: integer
+          description: Días laborables computables de lunes a viernes excluyendo festivos
+          example: 5
+        calendarDays:
+          type: integer
+          description: Días naturales totales del rango
+          example: 5
+        weekendDays:
+          type: integer
+          description: Días de fin de semana (sábado y domingo) descontados
+          example: 0
+        holidayDays:
+          type: integer
+          description: Días festivos oficiales descontados
+          example: 0
+
+    LeaveType:
+      type: string
+      enum:
+        - VACATION
+        - PERMIT
+      description: Tipo de ausencia (VACATION descuenta saldo anual, PERMIT no descuenta)
+
+    LeaveStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+      description: Estado canónico del ciclo de vida
+
+    ProblemDetail:
+      type: object
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          example: 'about:blank'
+        title:
+          type: string
+          example: 'Bad Request'
+        status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: 'El número de días solicitados excede el saldo de vacaciones disponible.'
+        instance:
+          type: string
+          format: uri
+          example: '/api/v1/leave/requests'
+        invalidFields:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            endDate: 'La fecha de fin debe ser posterior o igual a la de inicio'

@@ -10,6 +10,8 @@
 
       @if (authService.isAuthenticated()) {
         <a routerLink="/profile" routerLinkActive="active" class="nav-btn">Mi Ficha y Saldo</a>
+        <a routerLink="/leave/request" routerLinkActive="active" class="nav-btn">Solicitar Ausencia</a>
+        <a routerLink="/leave/my-requests" routerLinkActive="active" class="nav-btn">Mis Solicitudes</a>
         @if (authService.isRRHH()) {
           <a routerLink="/employees/new" routerLinkActive="active" class="nav-btn">Alta de Empleado</a>
         }
