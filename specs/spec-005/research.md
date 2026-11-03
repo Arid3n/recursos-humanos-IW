@@ -14,6 +14,7 @@
 - **Justificación**: `manager_id` ya existe (HU-01) y es la relación usada por `LeaveBalanceServiceImpl.getEmployeeLeaveBalance`. Comprobar el responsable **actual** del empleado cubre el caso "cambio de responsable" de la spec.
 - **Alternativas consideradas**:
   - Usar `leave_requests.resolved_by` (que HU-03 rellena con el responsable al crear): descartado, queda obsoleto si cambia el responsable.
+- **Nota para HU-06 y siguientes**: en solicitudes `PENDING`, `resolved_by` contiene el responsable asignado al crear (comportamiento de HU-03, no se modifica). Solo en `APPROVED`/`REJECTED` indica quién resolvió; HU-05 lo sobrescribe al resolver.
   - Equipo por `contract_records.department`: descartado, la spec define equipo como personas a cargo directo.
 
 ### 1.2 Endpoints de resolución
@@ -37,6 +38,7 @@
 
 - **Decisión**: Reutilizar `LeaveBalanceService.getEmployeeLeaveBalance(employeeId, year)` con `year = startDate.getYear()` y comparar `calculatedDays > availableDays` → `InsufficientLeaveBalanceException` (ya mapeada a `409` con `requestedDays`/`availableDays`). Solo para `VACATION` (spec-003: los permisos no consumen saldo).
 - **Justificación**: Una única regla de saldo (Art. 12 y 14.3); ese método ya aplica la regla de alcance para responsables.
+- **Código HTTP**: Se mantiene `409` (y no `422` del Art. 9.3) porque `InsufficientLeaveBalanceException` ya está mapeada a `409` en HU-03; cambiarla rompería el contrato existente. Además, en la aprobación el caso típico es concurrente (otra aprobación consumió el saldo), que el Art. 9.3 asigna a `409`.
 - **Alternativas consideradas**: Duplicar la suma en el servicio de resolución: descartado (dos implementaciones que pueden divergir).
 
 ### 1.5 Transiciones en la entidad
@@ -49,15 +51,17 @@
 ### 1.6 Refuerzo en base de datos (Art. 8.2 y 13.2)
 
 - **Decisión**: Migración `V3__leave_resolution_constraints.sql` con:
-  - `CHECK chk_leave_resolved_fields`: si `status <> 'PENDING'` entonces `resolved_at` y `resolved_by` no nulos.
-  - `CHECK chk_leave_rejection_reason`: si `status = 'REJECTED'` entonces `char_length(trim(rejection_reason)) >= 5`.
-  - *Trigger* `trg_leave_requests_immutable_resolution` (`BEFORE UPDATE`) que lanza excepción si `OLD.status <> 'PENDING'` y cambia `status`, `rejection_reason`, `resolved_by` o `resolved_at`.
+  - `CHECK chk_leave_rejection_reason`: si `status = 'REJECTED'` entonces `char_length(btrim(rejection_reason)) >= 5`.
+  - *Trigger* `trg_leave_requests_immutable_resolution` (`BEFORE UPDATE`) que lanza excepción si `OLD.status <> 'PENDING'` y cambia `status` o `rejection_reason`.
 - **Justificación**: El Art. 13.2 exige que la imposibilidad de re-resolver se refuerce en BD; un `CHECK` no puede comparar valores anterior/nuevo, por eso se usa un *trigger* mínimo.
+- **Alcance deliberadamente limitado** (resultado de `/speckit-analyze`):
+  - No se añade `CHECK` que obligue a `resolved_at`/`resolved_by` no nulos en solicitudes resueltas: los tests de integración existentes de HU-03/HU-04 (`LeaveRequestIntegrationTest`, `LeaveBalanceIntegrationTest`, `LeaveRequestTrackingIntegrationTest`) crean solicitudes `APPROVED`/`REJECTED` sin esos campos como *fixtures*. El registro de quién y cuándo (Art. 13.6) lo garantizan los métodos de dominio y los tests de HU-05.
+  - El *trigger* no protege `resolved_by`/`resolved_at`: la FK `resolved_by ... ON DELETE SET NULL` (V1) ejecuta un `UPDATE` sobre filas resueltas al borrar un empleado, y el *trigger* lo bloquearía.
 - **Coordinación**: El número de versión `V3` puede colisionar con migraciones de otras ramas (`spec-007`, `spec-008`); se renumerará al integrar si fuera necesario.
 
 ### 1.7 Notificaciones (Art. 15)
 
-- **Decisión**: Nuevo paquete `notification` con entidad `Notification` sobre la tabla existente `notifications`. `NotificationService.notify(Employee recipient, String title, String message)` se invoca desde la resolución. Endpoints del empleado en sesión: `GET /api/v1/notifications?page&size` (más recientes primero), `GET /api/v1/notifications/unread-count`, `POST /api/v1/notifications/{id}/read` (`204`; `403` si no es suya; idempotente).
+- **Decisión**: Nuevo paquete `notification` con entidad `Notification` sobre la tabla existente `notifications`. `NotificationService.createNotification(Employee recipient, String title, String message)` se invoca desde la resolución. Endpoints del empleado en sesión: `GET /api/v1/notifications?page&size` (más recientes primero), `GET /api/v1/notifications/unread-count`, `POST /api/v1/notifications/{id}/read` (`204`; `403` si no es suya; idempotente).
 - **Mensaje**: título `"Solicitud aprobada"` / `"Solicitud rechazada"`; mensaje con tipo, periodo (`dd/MM/yyyy`) y `Motivo: …` o `Comentario: …` si existe.
 - **Justificación**: Tabla e índice `idx_notifications_recipient (recipient_id, is_read, created_at DESC)` ya existen en V1.
 - **Alternativas consideradas**: Eventos de dominio (`ApplicationEventPublisher`) + listener: indirección innecesaria (Art. 23); la llamada directa ya es transaccional.

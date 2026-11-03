@@ -74,8 +74,9 @@ cd frontend && npx ng test --watch=false
 
 | CA | Cobertura esperada |
 |---|---|
-| HU-05.CA-1 | Bandeja solo con `PENDING` del equipo; `403` para otro equipo y para rol `EMPLEADO`. |
+| HU-05.CA-1 | Bandeja solo con `PENDING` del equipo; `403` para otro equipo y para rol `EMPLEADO`; tras cambio de responsable, solo resuelve el nuevo. |
 | HU-05.CA-2 | Aprobación con/sin comentario; rechazo con motivo; `400` sin motivo o < 5 caracteres. |
-| HU-05.CA-3 | `409` al resolver una solicitud `APPROVED`/`REJECTED`; *trigger* de BD impide modificarla. |
+| HU-05.CA-3 | `409` al resolver una solicitud `APPROVED`/`REJECTED`; *trigger* de BD impide modificar su estado o motivo. |
+| Regresión | Suites de HU-03/HU-04 siguen en verde con `V3` aplicada. |
 | HU-05.CA-4 | Notificación creada en la resolución; listado, contador y marcado propios; `403` sobre notificación ajena; *rollback* conjunto si falla la notificación. |
 | HU-05.CA-5 | Saldo derivado refleja la aprobación; saldo insuficiente → `409`; aprobaciones concurrentes no dejan saldo negativo. |

@@ -83,6 +83,7 @@ specs/spec-005/
 ```text
 backend/src/main/
 ├── java/com/iw/rrhh/
+│   ├── common/config/ClockConfig.java                     # NUEVO (bean Clock, Art. 22.5)
 │   ├── common/exception/
 │   │   ├── LeaveRequestAlreadyResolvedException.java      # NUEVO (409)
 │   │   └── GlobalExceptionHandler.java                    # MODIFICADO

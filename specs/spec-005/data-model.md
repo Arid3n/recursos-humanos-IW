@@ -62,9 +62,10 @@ Sin cambios de esquema. Se usa `manager` para determinar el equipo. Repositorio:
 
 | Objeto | Definición |
 |---|---|
-| `chk_leave_resolved_fields` | `status = 'PENDING' OR (resolved_at IS NOT NULL AND resolved_by IS NOT NULL)` |
 | `chk_leave_rejection_reason` | `status <> 'REJECTED' OR (rejection_reason IS NOT NULL AND char_length(btrim(rejection_reason)) >= 5)` |
-| `fn_leave_requests_immutable_resolution()` + `trg_leave_requests_immutable_resolution` | `BEFORE UPDATE`: si `OLD.status <> 'PENDING'` y cambia `status`, `rejection_reason`, `resolved_by` o `resolved_at` → `RAISE EXCEPTION`. |
+| `fn_leave_requests_immutable_resolution()` + `trg_leave_requests_immutable_resolution` | `BEFORE UPDATE`: si `OLD.status <> 'PENDING'` y cambia `status` o `rejection_reason` (`IS DISTINCT FROM`) → `RAISE EXCEPTION`. |
+
+No se restringen `resolved_by`/`resolved_at` en BD (compatibilidad con *fixtures* de HU-03/HU-04 y con `ON DELETE SET NULL`; ver `research.md` §1.6).
 
 **Reversión**: `DROP TRIGGER`, `DROP FUNCTION`, `ALTER TABLE leave_requests DROP CONSTRAINT …` (documentado como comentario en la migración).
 
