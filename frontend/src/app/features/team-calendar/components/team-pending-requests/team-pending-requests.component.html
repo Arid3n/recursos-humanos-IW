@@ -1,0 +1,116 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="page-heading">
+      <div class="page-icon">
+        <mat-icon>fact_check</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Solicitudes del Equipo</h1>
+        <p class="page-subtitle">Aprueba o rechaza las solicitudes pendientes de las personas a tu cargo.</p>
+      </div>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="alert-text">{{ errorMessage() }}</p>
+      <button mat-stroked-button color="warn" (click)="loadRequests()">
+        <mat-icon>refresh</mat-icon> Reintentar
+      </button>
+    </div>
+  }
+
+  <div class="table-card surface-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <mat-spinner diameter="44"></mat-spinner>
+        <span>Cargando solicitudes...</span>
+      </div>
+    }
+
+    @if (!loading() && !errorMessage() && requests().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">task_alt</mat-icon>
+        <h3>No hay solicitudes pendientes en tu equipo</h3>
+        <p>Cuando alguien de tu equipo solicite una ausencia, aparecerá aquí.</p>
+      </div>
+    } @else if (requests().length > 0) {
+      <div class="table-scroll-wrap">
+        <table mat-table [dataSource]="requests()" class="requests-table" aria-label="Solicitudes pendientes del equipo">
+          <ng-container matColumnDef="employee">
+            <th mat-header-cell *matHeaderCellDef scope="col">Empleado</th>
+            <td mat-cell *matCellDef="let req" class="employee-name">{{ req.employeeName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="leaveType">
+            <th mat-header-cell *matHeaderCellDef scope="col">Tipo</th>
+            <td mat-cell *matCellDef="let req">
+              <span class="type-cell">
+                <mat-icon aria-hidden="true">{{ req.leaveType === 'VACATION' ? 'beach_access' : 'event_note' }}</mat-icon>
+                {{ req.leaveType === 'VACATION' ? 'Vacaciones' : 'Permiso' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dates">
+            <th mat-header-cell *matHeaderCellDef scope="col">Periodo</th>
+            <td mat-cell *matCellDef="let req">
+              {{ req.startDate | date:'dd/MM/yyyy' }} &ndash; {{ req.endDate | date:'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="calculatedDays">
+            <th mat-header-cell *matHeaderCellDef scope="col">Días</th>
+            <td mat-cell *matCellDef="let req">
+              <strong>{{ req.calculatedDays }}</strong> {{ req.calculatedDays === 1 ? 'día laborable' : 'días laborables' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef scope="col">Solicitada</th>
+            <td mat-cell *matCellDef="let req">{{ req.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef scope="col">Acciones</th>
+            <td mat-cell *matCellDef="let req">
+              <div class="actions-cell">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  [disabled]="resolvingId() === req.id"
+                  (click)="openResolveDialog(req, 'approve')"
+                  [attr.aria-label]="'Aprobar solicitud de ' + req.employeeName">
+                  <mat-icon>check</mat-icon> Aprobar
+                </button>
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  type="button"
+                  [disabled]="resolvingId() === req.id"
+                  (click)="openResolveDialog(req, 'reject')"
+                  [attr.aria-label]="'Rechazar solicitud de ' + req.employeeName">
+                  <mat-icon>close</mat-icon> Rechazar
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [hidePageSize]="true"
+        (page)="onPageChange($event)"
+        aria-label="Seleccionar página de solicitudes del equipo">
+      </mat-paginator>
+    }
+  </div>
+</div>

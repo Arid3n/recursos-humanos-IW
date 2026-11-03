@@ -17,3 +17,10 @@ export interface LoginResponse {
   role: UserRole;
   token: string;
 }
+
+/** Nombre visible de cada rol en la interfaz. */
+export const ROLE_LABELS: Record<UserRole, string> = {
+  RRHH: 'RRHH',
+  RESPONSABLE_EQUIPO: 'Responsable de equipo',
+  EMPLEADO: 'Empleado'
+};

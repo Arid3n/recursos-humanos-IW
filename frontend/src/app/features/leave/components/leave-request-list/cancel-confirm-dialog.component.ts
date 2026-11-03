@@ -14,8 +14,8 @@ export interface CancelConfirmDialogData {
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title class="dialog-title">
-      <mat-icon class="warn-icon">warning_amber</mat-icon>
+    <h2 mat-dialog-title class="dialog-title dialog-title-danger">
+      <mat-icon aria-hidden="true">warning_amber</mat-icon>
       <span>¿Cancelar esta solicitud?</span>
     </h2>
 
@@ -26,48 +26,27 @@ export interface CancelConfirmDialogData {
         <strong>{{ data.request.endDate | date:'dd/MM/yyyy' }}</strong> ({{ data.request.calculatedDays }} días).
       </p>
       <p class="warning-note">
-        Esta acción retirará la solicitud de la bandeja de tu responsable y liberará los días sin penalización. Esta operación no se puede deshacer.
+        La solicitud se retirará de la bandeja de tu responsable y los días quedarán libres. Esta acción no se puede deshacer.
       </p>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end" class="dialog-actions">
-      <button mat-button [mat-dialog-close]="false">
-        Mantener Solicitud
-      </button>
+      <button mat-button [mat-dialog-close]="false">Volver</button>
       <button mat-flat-button color="warn" [mat-dialog-close]="true">
-        Sí, Cancelar Solicitud
+        <mat-icon>close</mat-icon>
+        Confirmar cancelación
       </button>
     </mat-dialog-actions>
   `,
   styles: [`
-    .dialog-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.25rem;
-      color: #0f172a;
-      margin: 0;
-    }
-    .warn-icon {
-      color: #ea580c;
-    }
-    .dialog-content {
-      padding: 1rem 0;
-      color: #334155;
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
     .warning-note {
       font-size: 0.85rem;
-      color: #64748b;
-      background: #fff7ed;
-      border-left: 3px solid #f97316;
+      color: #713f12;
+      background: var(--app-warning-soft);
+      border-left: 3px solid var(--app-warning);
       padding: 0.5rem 0.75rem;
       border-radius: 4px;
       margin-top: 0.75rem;
-    }
-    .dialog-actions {
-      gap: 0.5rem;
     }
   `]
 })

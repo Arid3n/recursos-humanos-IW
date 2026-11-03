@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: API de Resolución de Solicitudes y Notificaciones (HU-05)
+  description: |
+    Bandeja de solicitudes pendientes del equipo, aprobación/rechazo atómico por el responsable
+    y consulta de notificaciones internas por el empleado en sesión.
+    La identidad se obtiene siempre de la sesión (Art. 10); nunca de parámetros del cliente.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - basicAuth: []
+
+paths:
+  /leave/team-requests:
+    get:
+      summary: Solicitudes pendientes del equipo del responsable en sesión
+      description: Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
+      operationId: getTeamPendingRequests
+      tags: [Leave Resolution]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de solicitudes pendientes del equipo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTeamLeaveRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /leave/requests/{id}/approve:
+    post:
+      summary: Aprobar una solicitud pendiente del equipo
+      description: |
+        En una única transacción: revalida el saldo (solo VACATION), pasa la solicitud a APPROVED,
+        registra quién y cuándo resolvió, y crea la notificación al empleado.
+      operationId: approveLeaveRequest
+      tags: [Leave Resolution]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveLeaveRequest'
+      responses:
+        '200':
+          description: Solicitud aprobada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveResolutionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Solicitud ya resuelta o saldo insuficiente.
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ProblemDetail'
+                  - $ref: '#/components/schemas/InsufficientBalanceProblem'
+
+  /leave/requests/{id}/reject:
+    post:
+      summary: Rechazar una solicitud pendiente del equipo con motivo obligatorio
+      operationId: rejectLeaveRequest
+      tags: [Leave Resolution]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectLeaveRequest'
+      responses:
+        '200':
+          description: Solicitud rechazada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveResolutionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: La solicitud ya está resuelta.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /notifications:
+    get:
+      summary: Notificaciones del empleado en sesión (más recientes primero)
+      operationId: getMyNotifications
+      tags: [Notifications]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de notificaciones propias.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageNotification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/unread-count:
+    get:
+      summary: Número de notificaciones no leídas del empleado en sesión
+      operationId: getUnreadNotificationCount
+      tags: [Notifications]
+      responses:
+        '200':
+          description: Contador de no leídas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/{id}/read:
+    post:
+      summary: Marcar como leída una notificación propia (idempotente)
+      operationId: markNotificationAsRead
+      tags: [Notifications]
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '204':
+          description: Notificación marcada como leída.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, default: 0, minimum: 0 }
+    Size:
+      name: size
+      in: query
+      required: false
+      schema: { type: integer, default: 10, minimum: 1, maximum: 100 }
+    RequestId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    NotificationId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorized:
+      description: Credenciales no proporcionadas o inválidas.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Forbidden:
+      description: Sin rol suficiente o recurso fuera de alcance (Art. 10).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    NotFound:
+      description: El recurso no existe (p. ej. solicitud cancelada por el empleado).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    ValidationError:
+      description: Error de validación por campo (RFC 9457).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ValidationProblem' }
+
+  schemas:
+    LeaveType:
+      type: string
+      enum: [VACATION, PERMIT]
+
+    LeaveStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+
+    TeamLeaveRequestResponse:
+      type: object
+      required: [id, employeeId, employeeName, leaveType, startDate, endDate, calculatedDays, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        employeeId: { type: string, format: uuid }
+        employeeName: { type: string, example: 'Laura Martínez Gómez' }
+        leaveType: { $ref: '#/components/schemas/LeaveType' }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        calculatedDays: { type: integer, minimum: 1 }
+        createdAt: { type: string, format: date-time }
+
+    ApproveLeaveRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    RejectLeaveRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+
+    LeaveResolutionResponse:
+      type: object
+      required: [id, status, resolvedById, resolvedAt]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/LeaveStatus' }
+        reason:
+          type: string
+          nullable: true
+          description: Motivo del rechazo o comentario de la aprobación.
+        resolvedById: { type: string, format: uuid }
+        resolvedAt: { type: string, format: date-time }
+
+    NotificationResponse:
+      type: object
+      required: [id, title, message, read, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, example: 'Solicitud rechazada' }
+        message: { type: string, example: 'Tu solicitud de Vacaciones del 01/12/2026 al 05/12/2026 ha sido rechazada. Motivo: Coincide con la entrega del proyecto.' }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    UnreadCountResponse:
+      type: object
+      required: [count]
+      properties:
+        count: { type: integer, format: int64, minimum: 0 }
+
+    PageMeta:
+      type: object
+      required: [page, size, totalElements, totalPages, first, last]
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        first: { type: boolean }
+        last: { type: boolean }
+
+    PageTeamLeaveRequest:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/TeamLeaveRequestResponse' }
+
+    PageNotification:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/NotificationResponse' }
+
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetail'
+        - type: object
+          properties:
+            invalidFields:
+              type: object
+              additionalProperties: { type: string }
+              example: { reason: 'El motivo debe tener entre 5 y 500 caracteres' }
+
+    InsufficientBalanceProblem:
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetail'
+        - type: object
+          properties:
+            requestedDays: { type: integer }
+            availableDays: { type: integer }

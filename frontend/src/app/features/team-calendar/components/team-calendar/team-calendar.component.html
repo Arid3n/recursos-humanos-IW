@@ -1,0 +1,135 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="page-heading">
+      <div class="page-icon">
+        <mat-icon>calendar_month</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Calendario del Equipo</h1>
+        <p class="page-subtitle">Consulta las ausencias de las personas a tu cargo y anticipa coincidencias.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="month-nav">
+      <button mat-icon-button type="button" aria-label="Mes anterior" (click)="previousMonth()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <h2 class="month-title" aria-live="polite">{{ monthTitle() }}</h2>
+      <button mat-icon-button type="button" aria-label="Mes siguiente" (click)="nextMonth()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
+    @if (hasMembers()) {
+      <mat-form-field appearance="outline" class="employee-filter" subscriptSizing="dynamic">
+        <mat-label>Empleado</mat-label>
+        <mat-select [value]="selectedEmployeeId()" (valueChange)="selectedEmployeeId.set($event)">
+          <mat-option [value]="null">Todo el equipo</mat-option>
+          @for (member of calendar()!.members; track member.id) {
+            <mat-option [value]="member.id">{{ member.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </div>
+
+  <ul class="legend" aria-label="Leyenda">
+    <li><span class="legend-sample approved"><mat-icon aria-hidden="true">check_circle</mat-icon>Aprobada</span></li>
+    <li><span class="legend-sample pending"><mat-icon aria-hidden="true">schedule</mat-icon>Pendiente</span></li>
+    <li><span class="legend-conflict"><mat-icon aria-hidden="true">warning</mat-icon>Coincidencia: 2 o más personas ausentes</span></li>
+    <li><span class="legend-muted">Fin de semana o festivo (no laborable)</span></li>
+  </ul>
+
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="alert-text">{{ errorMessage() }}</p>
+      <button mat-stroked-button color="warn" (click)="loadCalendar()">
+        <mat-icon>refresh</mat-icon> Reintentar
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state" role="status">
+      <mat-spinner diameter="44"></mat-spinner>
+      <span>Cargando calendario...</span>
+    </div>
+  } @else if (calendar()) {
+    @if (!hasMembers()) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">group_off</mat-icon>
+        <p>No tienes personas a tu cargo</p>
+      </div>
+    } @else if (!hasAbsences()) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">event_available</mat-icon>
+        <p>No hay ausencias en este mes</p>
+      </div>
+    }
+
+    <div class="calendar-card surface-card">
+      <table class="calendar-table">
+        <caption class="sr-only">Ausencias del equipo en {{ monthTitle() }}</caption>
+        <thead>
+          <tr>
+            @for (weekDay of weekDays; track weekDay.short) {
+              <th scope="col" [attr.abbr]="weekDay.full">{{ weekDay.short }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (week of weeks(); track $index) {
+            <tr>
+              @for (day of week; track $index) {
+                @if (day) {
+                  <td
+                    class="day-cell"
+                    [class.weekend]="day.dayType === 'WEEKEND'"
+                    [class.holiday]="day.dayType === 'HOLIDAY'"
+                    [class.conflict]="day.hasConflict">
+                    <div class="day-header">
+                      <span class="day-number">{{ dayNumber(day) }}</span>
+                      @if (day.holidayName) {
+                        <span class="holiday-name">{{ day.holidayName }}</span>
+                      }
+                    </div>
+
+                    @if (day.hasConflict) {
+                      <div class="conflict-indicator">
+                        <mat-icon aria-hidden="true">warning</mat-icon>
+                        <span>{{ day.absentCount }} ausencias coincidentes</span>
+                      </div>
+                    }
+
+                    @for (event of day.events; track event.requestId) {
+                      <button
+                        type="button"
+                        class="event"
+                        [class.approved]="event.status === 'APPROVED'"
+                        [class.pending]="event.status === 'PENDING'"
+                        (click)="openDetail(event)">
+                        <span class="event-name">{{ event.employeeName }}</span>
+                        <span class="event-type">
+                          <mat-icon aria-hidden="true">{{ leaveTypeIcon(event) }}</mat-icon>{{ leaveTypeLabel(event) }}
+                        </span>
+                        <span class="event-status">
+                          <mat-icon aria-hidden="true">{{ event.status === 'APPROVED' ? 'check_circle' : 'schedule' }}</mat-icon>
+                          {{ event.status === 'APPROVED' ? 'Aprobada' : 'Pendiente' }}
+                        </span>
+                      </button>
+                    }
+                  </td>
+                } @else {
+                  <td class="empty-cell" aria-hidden="true"></td>
+                }
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

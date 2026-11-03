@@ -1,5 +1,6 @@
 package com.iw.rrhh.leave.domain;
 
+import com.iw.rrhh.common.exception.LeaveRequestAlreadyResolvedException;
 import com.iw.rrhh.employee.domain.Employee;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -64,6 +65,30 @@ public class LeaveRequest {
         this.endDate = endDate;
         this.calculatedDays = calculatedDays;
         this.status = LeaveStatus.PENDING;
+    }
+
+    /**
+     * Transición PENDING → APPROVED (Art. 13.1). El comentario es opcional.
+     */
+    public void approve(Employee resolver, String comment, Instant now) {
+        resolve(LeaveStatus.APPROVED, resolver, comment, now);
+    }
+
+    /**
+     * Transición PENDING → REJECTED (Art. 13.1). El motivo se valida en la capa de servicio.
+     */
+    public void reject(Employee resolver, String reason, Instant now) {
+        resolve(LeaveStatus.REJECTED, resolver, reason, now);
+    }
+
+    private void resolve(LeaveStatus newStatus, Employee resolver, String reason, Instant now) {
+        if (this.status != LeaveStatus.PENDING) {
+            throw new LeaveRequestAlreadyResolvedException();
+        }
+        this.status = newStatus;
+        this.rejectionReason = reason;
+        this.resolvedBy = resolver;
+        this.resolvedAt = now;
     }
 
     public UUID getId() {

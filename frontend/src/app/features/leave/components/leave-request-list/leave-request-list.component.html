@@ -1,13 +1,12 @@
-<div class="leave-list-container">
-  <!-- Header Card -->
+<div class="page-container">
   <div class="page-header">
-    <div class="header-titles">
-      <div class="header-icon-badge">
+    <div class="page-heading">
+      <div class="page-icon">
         <mat-icon>history</mat-icon>
       </div>
       <div>
-        <h1 class="page-title">Mis Solicitudes de Ausencia</h1>
-        <p class="page-subtitle">Consulta el estado, historial y gestiona tus solicitudes de vacaciones y permisos.</p>
+        <h1 class="page-title">Mis Solicitudes</h1>
+        <p class="page-subtitle">Consulta el estado de tus solicitudes de vacaciones y permisos.</p>
       </div>
     </div>
     <div class="header-actions">
@@ -19,7 +18,7 @@
   </div>
 
   <!-- Filters Bar -->
-  <div class="filters-card">
+  <div class="filters-card surface-card">
     <span class="filters-label">Filtrar por estado:</span>
     <div class="filter-buttons" role="group" aria-label="Filtro de solicitudes por estado">
       @for (filter of statusFilters; track filter.label) {
@@ -38,21 +37,19 @@
 
   <!-- Error Alert -->
   @if (errorMessage()) {
-    <div class="error-banner" role="alert">
-      <mat-icon class="error-icon">error_outline</mat-icon>
-      <div class="error-content">
-        <p class="error-text">{{ errorMessage() }}</p>
-        <button mat-stroked-button color="warn" (click)="loadRequests()" class="btn-retry">
-          <mat-icon>refresh</mat-icon> Reintentar
-        </button>
-      </div>
+    <div class="alert-banner alert-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="alert-text">{{ errorMessage() }}</p>
+      <button mat-stroked-button color="warn" (click)="loadRequests()">
+        <mat-icon>refresh</mat-icon> Reintentar
+      </button>
     </div>
   }
 
   <!-- Content Section -->
-  <div class="table-container-card">
+  <div class="table-container-card surface-card">
     @if (loading()) {
-      <div class="loading-overlay">
+      <div class="loading-overlay" role="status">
         <mat-spinner diameter="44"></mat-spinner>
         <span>Cargando solicitudes...</span>
       </div>
@@ -60,23 +57,21 @@
 
     @if (!loading() && requests().length === 0) {
       <div class="empty-state">
-        <div class="empty-icon-wrap">
-          <mat-icon>event_busy</mat-icon>
-        </div>
-        <h3 class="empty-title">
+        <mat-icon class="empty-icon">event_busy</mat-icon>
+        <h3>
           {{ selectedStatus() ? 'No hay solicitudes con el filtro seleccionado' : 'Aún no tienes solicitudes registradas' }}
         </h3>
-        <p class="empty-subtitle">
+        <p>
           {{ selectedStatus() ? 'Prueba seleccionando otro estado o limpiando el filtro.' : 'Crea tu primera solicitud de vacaciones o permisos de forma rápida.' }}
         </p>
         @if (!selectedStatus()) {
           <a mat-flat-button color="primary" routerLink="/leave/request" class="empty-cta-btn">
             <mat-icon>add</mat-icon>
-            <span>Solicitar Ausencia</span>
+            <span>Nueva Solicitud</span>
           </a>
         } @else {
-          <button mat-stroked-button (click)="setFilter(null)">
-            Mostrar Todas
+          <button mat-stroked-button class="empty-cta-btn" (click)="setFilter(null)">
+            Mostrar todas
           </button>
         }
       </div>
@@ -85,14 +80,12 @@
         <table mat-table [dataSource]="requests()" class="requests-table" aria-label="Historial de solicitudes de ausencia">
           <!-- Leave Type Column -->
           <ng-container matColumnDef="leaveType">
-            <th mat-header-cell *matHeaderCellDef scope="col">Tipo de Ausencia</th>
+            <th mat-header-cell *matHeaderCellDef scope="col">Tipo</th>
             <td mat-cell *matCellDef="let req">
-              <div class="leave-type-cell">
-                <span class="type-icon-circle" [class.type-vacation]="req.leaveType === 'VACATION'" [class.type-permit]="req.leaveType === 'PERMIT'">
-                  <mat-icon>{{ req.leaveType === 'VACATION' ? 'beach_access' : 'event_note' }}</mat-icon>
-                </span>
-                <span class="type-name">{{ req.leaveType === 'VACATION' ? 'Vacaciones' : 'Permiso Retribuido' }}</span>
-              </div>
+              <span class="type-cell">
+                <mat-icon aria-hidden="true">{{ req.leaveType === 'VACATION' ? 'beach_access' : 'event_note' }}</mat-icon>
+                {{ req.leaveType === 'VACATION' ? 'Vacaciones' : 'Permiso' }}
+              </span>
             </td>
           </ng-container>
 
@@ -100,21 +93,15 @@
           <ng-container matColumnDef="dates">
             <th mat-header-cell *matHeaderCellDef scope="col">Periodo</th>
             <td mat-cell *matCellDef="let req">
-              <div class="dates-cell">
-                <span class="date-range">
-                  {{ req.startDate | date:'dd/MM/yyyy' }} &rarr; {{ req.endDate | date:'dd/MM/yyyy' }}
-                </span>
-              </div>
+              {{ req.startDate | date:'dd/MM/yyyy' }} &ndash; {{ req.endDate | date:'dd/MM/yyyy' }}
             </td>
           </ng-container>
 
           <!-- Calculated Days Column -->
           <ng-container matColumnDef="calculatedDays">
-            <th mat-header-cell *matHeaderCellDef scope="col">Días Computados</th>
+            <th mat-header-cell *matHeaderCellDef scope="col">Días</th>
             <td mat-cell *matCellDef="let req">
-              <span class="days-badge">
-                <strong>{{ req.calculatedDays }}</strong> {{ req.calculatedDays === 1 ? 'día laborable' : 'días laborables' }}
-              </span>
+              <strong>{{ req.calculatedDays }}</strong> {{ req.calculatedDays === 1 ? 'día laborable' : 'días laborables' }}
             </td>
           </ng-container>
 
@@ -124,17 +111,17 @@
             <td mat-cell *matCellDef="let req">
               @if (req.status === 'PENDING') {
                 <span class="status-badge status-pending">
-                  <mat-icon class="status-icon">schedule</mat-icon>
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
                   <span>Pendiente</span>
                 </span>
               } @else if (req.status === 'APPROVED') {
                 <span class="status-badge status-approved">
-                  <mat-icon class="status-icon">check_circle</mat-icon>
+                  <mat-icon aria-hidden="true">check_circle</mat-icon>
                   <span>Aprobada</span>
                 </span>
               } @else if (req.status === 'REJECTED') {
                 <span class="status-badge status-rejected">
-                  <mat-icon class="status-icon">cancel</mat-icon>
+                  <mat-icon aria-hidden="true">cancel</mat-icon>
                   <span>Rechazada</span>
                 </span>
               }
@@ -143,7 +130,7 @@
 
           <!-- Created At Column -->
           <ng-container matColumnDef="createdAt">
-            <th mat-header-cell *matHeaderCellDef scope="col">Fecha de Solicitud</th>
+            <th mat-header-cell *matHeaderCellDef scope="col">Solicitada</th>
             <td mat-cell *matCellDef="let req" class="created-at-cell">
               {{ req.createdAt | date:'dd/MM/yyyy HH:mm' }}
             </td>
@@ -159,8 +146,8 @@
                   color="warn"
                   class="btn-reason"
                   (click)="openRejectionReason(req)"
-                  matTooltip="Ver motivo de denegación"
-                  aria-label="Ver motivo de denegación de la solicitud">
+                  matTooltip="Ver motivo del rechazo"
+                  aria-label="Ver motivo del rechazo de la solicitud">
                   <mat-icon>info</mat-icon>
                   <span>Ver Motivo</span>
                 </button>
@@ -172,8 +159,8 @@
                   class="btn-cancel"
                   [disabled]="cancellingId() === req.id"
                   (click)="confirmCancel(req)"
-                  matTooltip="Cancelar solicitud en trámite"
-                  aria-label="Cancelar solicitud en trámite">
+                  matTooltip="Cancelar solicitud pendiente"
+                  aria-label="Cancelar solicitud pendiente">
                   @if (cancellingId() === req.id) {
                     <mat-spinner diameter="18"></mat-spinner>
                   } @else {
@@ -184,7 +171,7 @@
               }
 
               @if (req.status === 'APPROVED') {
-                <span class="action-na" title="Las solicitudes aprobadas no pueden cancelarse de forma directa">Consolidada</span>
+                <span class="action-na" title="Las solicitudes aprobadas no pueden cancelarse">Sin acciones</span>
               }
             </td>
           </ng-container>

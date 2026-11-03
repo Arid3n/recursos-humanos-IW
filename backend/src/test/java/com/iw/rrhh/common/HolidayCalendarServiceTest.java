@@ -101,6 +101,31 @@ class HolidayCalendarServiceTest {
     }
 
     @Test
+    @DisplayName("HU-06.CA-3: Debe devolver el nombre de un festivo fijo")
+    void testGetHolidayName_FixedHoliday() {
+        assertThat(holidayCalendarService.getHolidayName(LocalDate.of(2026, 12, 8)))
+                .contains("Inmaculada Concepción");
+        assertThat(holidayCalendarService.getHolidayName(LocalDate.of(2026, 1, 1)))
+                .contains("Año Nuevo");
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-3: Debe devolver el nombre de los festivos móviles")
+    void testGetHolidayName_MovableHolidays() {
+        // Pascua 2026: 5 de abril
+        assertThat(holidayCalendarService.getHolidayName(LocalDate.of(2026, 4, 2)))
+                .contains("Jueves Santo");
+        assertThat(holidayCalendarService.getHolidayName(LocalDate.of(2026, 4, 3)))
+                .contains("Viernes Santo");
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-3: Debe devolver vacío para un día que no es festivo")
+    void testGetHolidayName_NotHoliday() {
+        assertThat(holidayCalendarService.getHolidayName(LocalDate.of(2026, 7, 7))).isEmpty();
+    }
+
+    @Test
     @DisplayName("Debe lanzar excepción si endDate es anterior a startDate")
     void testInvalidDateRange() {
         LocalDate start = LocalDate.of(2026, 7, 10);

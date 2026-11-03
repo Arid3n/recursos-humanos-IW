@@ -5,23 +5,23 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.MonthDay;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class HolidayCalendarService {
 
     // Festivos fijos nacionales
-    private static final Set<MonthDay> FIXED_HOLIDAYS = Set.of(
-            MonthDay.of(1, 1),   // Año Nuevo
-            MonthDay.of(1, 6),   // Epifanía del Señor
-            MonthDay.of(5, 1),   // Fiesta del Trabajo
-            MonthDay.of(8, 15),  // Asunción de la Virgen
-            MonthDay.of(10, 12), // Fiesta Nacional de España
-            MonthDay.of(11, 1),  // Todos los Santos
-            MonthDay.of(12, 6),  // Día de la Constitución
-            MonthDay.of(12, 8),  // Inmaculada Concepción
-            MonthDay.of(12, 25)  // Natividad del Señor
+    private static final Map<MonthDay, String> FIXED_HOLIDAYS = Map.of(
+            MonthDay.of(1, 1), "Año Nuevo",
+            MonthDay.of(1, 6), "Epifanía del Señor",
+            MonthDay.of(5, 1), "Fiesta del Trabajo",
+            MonthDay.of(8, 15), "Asunción de la Virgen",
+            MonthDay.of(10, 12), "Fiesta Nacional de España",
+            MonthDay.of(11, 1), "Todos los Santos",
+            MonthDay.of(12, 6), "Día de la Constitución",
+            MonthDay.of(12, 8), "Inmaculada Concepción",
+            MonthDay.of(12, 25), "Natividad del Señor"
     );
 
     public boolean isWeekend(LocalDate date) {
@@ -30,17 +30,25 @@ public class HolidayCalendarService {
     }
 
     public boolean isHoliday(LocalDate date) {
+        return getHolidayName(date).isPresent();
+    }
+
+    public Optional<String> getHolidayName(LocalDate date) {
         // 1. Comprobar festivos fijos
-        if (FIXED_HOLIDAYS.contains(MonthDay.of(date.getMonth(), date.getDayOfMonth()))) {
-            return true;
+        String fixedHoliday = FIXED_HOLIDAYS.get(MonthDay.from(date));
+        if (fixedHoliday != null) {
+            return Optional.of(fixedHoliday);
         }
 
         // 2. Comprobar festivos móviles (Viernes Santo y Jueves Santo)
         LocalDate easter = computeEasterSunday(date.getYear());
-        LocalDate goodFriday = easter.minusDays(2);
-        LocalDate maundyThursday = easter.minusDays(3);
-
-        return date.equals(goodFriday) || date.equals(maundyThursday);
+        if (date.equals(easter.minusDays(2))) {
+            return Optional.of("Viernes Santo");
+        }
+        if (date.equals(easter.minusDays(3))) {
+            return Optional.of("Jueves Santo");
+        }
+        return Optional.empty();
     }
 
     public boolean isWorkingDay(LocalDate date) {

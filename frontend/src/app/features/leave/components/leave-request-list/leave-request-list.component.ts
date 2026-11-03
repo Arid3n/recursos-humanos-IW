@@ -102,7 +102,7 @@ export class LeaveRequestListComponent implements OnInit {
 
   openRejectionReason(request: LeaveRequestSummary): void {
     this.dialog.open(RejectionReasonDialogComponent, {
-      width: '500px',
+      width: '480px',
       data: {
         rejectionReason: request.rejectionReason,
         leaveType: request.leaveType,
@@ -115,7 +115,7 @@ export class LeaveRequestListComponent implements OnInit {
 
   confirmCancel(request: LeaveRequestSummary): void {
     const dialogRef = this.dialog.open(CancelConfirmDialogComponent, {
-      width: '460px',
+      width: '480px',
       data: { request }
     });
 

@@ -1,207 +1,144 @@
-.leave-request-container {
-  max-width: 680px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.form-card {
+  padding: 0.5rem;
+}
 
-  .form-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-  }
+.balance-badge-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  background: var(--app-primary-soft);
+  border: 1px solid var(--app-primary-border);
 
-  .header-avatar {
-    background-color: var(--mat-sys-primary, #005cbb);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-  }
-
-  .balance-badge-card {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    background: #f0f7ff;
-    border: 1px solid #c2e0ff;
-    border-radius: 8px;
-    padding: 0.85rem 1.25rem;
-    margin-bottom: 1.5rem;
-
-    .balance-info {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-
-      .label {
-        font-weight: 500;
-        color: #1a365d;
-      }
-
-      .badge {
-        background: #005cbb;
-        color: #ffffff;
-        font-weight: 700;
-        padding: 0.25rem 0.65rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-
-        &.badge-low {
-          background: #d32f2f;
-        }
-      }
-    }
-
-    .agreement-hint {
-      font-size: 0.85rem;
-      color: #4a5568;
-    }
-  }
-
-  .notice-banner {
+  .balance-info {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1.25rem;
-    color: #795548;
 
-    .notice-icon {
-      color: #f57f17;
+    .label {
+      font-weight: 500;
+      color: var(--app-primary-strong);
     }
 
-    .notice-text {
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-  }
-
-  .alert-banner {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1.1rem;
-    border-radius: 8px;
-    margin-bottom: 1.25rem;
-    font-size: 0.92rem;
-
-    &.alert-error {
-      background: #ffebee;
-      border: 1px solid #ffcdd2;
-      color: #c62828;
-    }
-
-    &.alert-success {
-      background: #e8f5e9;
-      border: 1px solid #c8e6c9;
-      color: #2e7d32;
-    }
-  }
-
-  .request-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .full-width {
-    width: 100%;
-  }
-
-  .option-icon {
-    vertical-align: middle;
-    margin-right: 0.5rem;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-  }
-
-  .calculating-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 0;
-    color: #555;
-    font-size: 0.9rem;
-  }
-
-  .breakdown-container {
-    background: #fafafa;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-
-    .breakdown-title {
-      margin: 0 0 0.85rem 0;
-      font-size: 0.95rem;
+    .badge {
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      background: var(--app-primary);
+      color: #ffffff;
       font-weight: 600;
-      color: #333;
+      font-size: 0.9rem;
+
+      &.badge-low {
+        background: var(--app-danger);
+      }
     }
+  }
 
-    .metrics-chips {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 0.75rem;
+  .agreement-hint {
+    font-size: 0.85rem;
+    color: var(--app-text-muted);
+  }
+}
 
-      .metric-chip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0.75rem 0.5rem;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
+.alert-banner {
+  margin-bottom: 1.25rem;
+}
 
-        .chip-num {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #333;
+.request-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.option-icon {
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.calculating-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  color: var(--app-text-muted);
+  font-size: 0.9rem;
+}
+
+.breakdown-container {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: var(--app-surface-alt);
+  border: 1px solid var(--app-border);
+
+  .breakdown-title {
+    margin: 0 0 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--app-text);
+  }
+
+  .metrics-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+
+    .metric-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem 0.5rem;
+      border-radius: 8px;
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+
+      .chip-num {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--app-text);
+      }
+
+      .chip-label {
+        margin-top: 0.2rem;
+        font-size: 0.78rem;
+        text-align: center;
+        color: var(--app-text-muted);
+      }
+
+      &.highlight {
+        border-color: var(--app-primary-border);
+        background: var(--app-primary-soft);
+
+        .chip-num,
+        .chip-label {
+          color: var(--app-primary);
         }
 
         .chip-label {
-          font-size: 0.78rem;
-          color: #666;
-          margin-top: 0.2rem;
-          text-align: center;
-        }
-
-        &.highlight {
-          border-color: #005cbb;
-          background: #f0f7ff;
-
-          .chip-num {
-            color: #005cbb;
-          }
-
-          .chip-label {
-            color: #004494;
-            font-weight: 600;
-          }
+          font-weight: 600;
         }
       }
     }
   }
+}
 
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1rem;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
 
-    .submit-button {
-      min-width: 200px;
-      padding: 0.6rem 1.5rem;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+  .submit-button {
+    min-width: 200px;
 
-      .btn-spinner {
-        margin-right: 0.5rem;
-      }
+    .btn-spinner {
+      display: inline-block;
+      margin-right: 0.5rem;
     }
   }
 }

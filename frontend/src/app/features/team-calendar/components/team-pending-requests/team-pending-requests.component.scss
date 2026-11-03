@@ -1,0 +1,37 @@
+.table-card {
+  min-height: 160px;
+  overflow: hidden;
+}
+
+.table-scroll-wrap {
+  overflow-x: auto;
+}
+
+.requests-table {
+  width: 100%;
+
+  .table-row:hover {
+    background-color: var(--app-surface-alt);
+  }
+}
+
+.employee-name {
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.type-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  mat-icon {
+    color: var(--app-primary);
+  }
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

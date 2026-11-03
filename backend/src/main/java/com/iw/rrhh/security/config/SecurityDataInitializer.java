@@ -90,7 +90,39 @@ public class SecurityDataInitializer implements CommandLineRunner {
                 log.info("Inicializada ficha de empleado para {}", rrhhUsername);
             }
 
-            // 2. Usuario y Empleado de Pruebas (Rol EMPLEADO)
+            // 2. Usuario y Empleado de Pruebas (Rol RESPONSABLE_EQUIPO) — HU-05
+            String managerUsername = "responsable@empresa.com";
+            User managerUser = userRepository.findByUsername(managerUsername).orElseGet(() -> {
+                User u = new User(managerUsername, passwordEncoder.encode(defaultPassword), UserRole.RESPONSABLE_EQUIPO);
+                return userRepository.save(u);
+            });
+
+            String managerNationalId = "11111111H";
+            if (employeeRepository.findByUserId(managerUser.getId()).isEmpty()
+                    && !employeeRepository.existsByEmail(managerUsername)
+                    && !employeeRepository.existsByNationalId(managerNationalId)) {
+                Employee teamManager = new Employee();
+                teamManager.setUser(managerUser);
+                teamManager.setFirstName("Carlos");
+                teamManager.setLastName("Ruiz Navarro");
+                teamManager.setNationalId(managerNationalId);
+                teamManager.setEmail(managerUsername);
+                teamManager.setHireDate(LocalDate.of(2021, 6, 1));
+                teamManager = employeeRepository.save(teamManager);
+
+                contractRecordRepository.save(new ContractRecord(
+                        teamManager,
+                        LocalDate.of(2021, 6, 1),
+                        "Responsable de Equipo de Desarrollo",
+                        "Tecnología",
+                        new BigDecimal("42000.00"),
+                        agreement,
+                        null,
+                        "SYSTEM"));
+                log.info("Inicializada ficha de responsable de equipo para {}", managerUsername);
+            }
+
+            // 3. Usuario y Empleado de Pruebas (Rol EMPLEADO)
             String empUsername = "empleado@empresa.com";
             User empUser = userRepository.findByUsername(empUsername).orElseGet(() -> {
                 User u = new User(empUsername, passwordEncoder.encode(defaultPassword), UserRole.EMPLEADO);
@@ -121,6 +153,15 @@ public class SecurityDataInitializer implements CommandLineRunner {
                         "SYSTEM"));
                 log.info("Inicializada ficha de empleado regular para {}", empUsername);
             }
+
+            // 4. Asignar el responsable de pruebas al empleado de pruebas si no tiene responsable (HU-05)
+            employeeRepository.findByUserId(empUser.getId())
+                    .filter(emp -> emp.getManager() == null)
+                    .ifPresent(emp -> employeeRepository.findByUserId(managerUser.getId()).ifPresent(mgr -> {
+                        emp.setManager(mgr);
+                        employeeRepository.save(emp);
+                        log.info("Asignado responsable de equipo a {}", empUsername);
+                    }));
         } catch (Exception ex) {
             log.warn("Advertencia durante la inicialización de datos de seguridad: {}", ex.getMessage());
         }
