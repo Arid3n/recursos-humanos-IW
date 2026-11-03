@@ -1,0 +1,65 @@
+.bell-button {
+  color: inherit;
+}
+
+.menu-header {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.menu-empty {
+  padding: 1rem;
+  color: #475569;
+}
+
+.notification-item {
+  height: auto;
+  min-height: 64px;
+  line-height: 1.35;
+  white-space: normal;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+
+  &.unread {
+    background: #eff6ff;
+  }
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 320px;
+}
+
+.notification-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.unread-icon {
+  margin: 0;
+  color: #1d4ed8;
+}
+
+.unread-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  text-transform: uppercase;
+}
+
+.notification-message {
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.notification-date {
+  font-size: 0.75rem;
+  color: #64748b;
+}

@@ -12,11 +12,17 @@
         <a routerLink="/profile" routerLinkActive="active" class="nav-btn">Mi Ficha y Saldo</a>
         <a routerLink="/leave/request" routerLinkActive="active" class="nav-btn">Solicitar Ausencia</a>
         <a routerLink="/leave/my-requests" routerLinkActive="active" class="nav-btn">Mis Solicitudes</a>
+        @if (authService.isResponsable()) {
+          <a routerLink="/team/requests" routerLinkActive="active" class="nav-btn">Solicitudes del Equipo</a>
+        }
         @if (authService.isRRHH()) {
           <a routerLink="/employees/new" routerLinkActive="active" class="nav-btn">Alta de Empleado</a>
         }
 
         <div class="user-profile">
+          @defer (on idle) {
+            <app-notification-bell></app-notification-bell>
+          }
           <div class="user-info">
             <span class="user-name">{{ authService.currentUser()?.username }}</span>
             <span class="role-badge" [attr.data-role]="authService.currentUser()?.role">
