@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: API de Calendario de Ausencias del Equipo (HU-06)
+  description: |
+    Calendario mensual de solo lectura con las ausencias aprobadas y pendientes de las personas
+    a cargo del responsable en sesión. Las coincidencias (2 o más personas ausentes en un día
+    laborable) se calculan en el servidor (Art. 16.3). El equipo se deriva de la sesión (Art. 10).
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - basicAuth: []
+
+paths:
+  /leave/team-calendar:
+    get:
+      summary: Calendario del mes para el equipo del responsable en sesión
+      operationId: getTeamCalendar
+      tags: [Team Calendar]
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: Mes a consultar en formato ISO `YYYY-MM`.
+          schema:
+            type: string
+            pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+            example: '2026-12'
+      responses:
+        '200':
+          description: Calendario del mes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamCalendarResponse'
+        '400':
+          description: Parámetro `month` ausente o con formato inválido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '401':
+          description: Credenciales no proporcionadas o inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RESPONSABLE_EQUIPO.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    LeaveType:
+      type: string
+      enum: [VACATION, PERMIT]
+
+    CalendarLeaveStatus:
+      type: string
+      enum: [PENDING, APPROVED]
+
+    CalendarDayType:
+      type: string
+      enum: [WORKING, WEEKEND, HOLIDAY]
+
+    TeamMemberResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: 'Laura Martínez Gómez' }
+
+    TeamCalendarEventResponse:
+      type: object
+      required: [requestId, employeeId, employeeName, leaveType, status, startDate, endDate]
+      properties:
+        requestId: { type: string, format: uuid }
+        employeeId: { type: string, format: uuid }
+        employeeName: { type: string }
+        leaveType: { $ref: '#/components/schemas/LeaveType' }
+        status: { $ref: '#/components/schemas/CalendarLeaveStatus' }
+        startDate:
+          type: string
+          format: date
+          description: Inicio de la solicitud completa (puede estar fuera del mes).
+        endDate:
+          type: string
+          format: date
+          description: Fin de la solicitud completa (puede estar fuera del mes).
+
+    TeamCalendarDayResponse:
+      type: object
+      required: [date, dayType, absentCount, hasConflict, events]
+      properties:
+        date: { type: string, format: date }
+        dayType: { $ref: '#/components/schemas/CalendarDayType' }
+        holidayName:
+          type: string
+          nullable: true
+          example: 'Inmaculada Concepción'
+        absentCount:
+          type: integer
+          minimum: 0
+          description: Empleados distintos ausentes ese día (0 en días no laborables).
+        hasConflict:
+          type: boolean
+          description: true si absentCount >= 2.
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/TeamCalendarEventResponse' }
+
+    TeamCalendarResponse:
+      type: object
+      required: [month, members, days]
+      properties:
+        month: { type: string, example: '2026-12' }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/TeamMemberResponse' }
+        days:
+          type: array
+          description: Un elemento por cada día del mes, en orden.
+          items: { $ref: '#/components/schemas/TeamCalendarDayResponse' }
+
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }

@@ -3,13 +3,19 @@ package com.iw.rrhh.leave.repository;
 import com.iw.rrhh.leave.domain.LeaveRequest;
 import com.iw.rrhh.leave.domain.LeaveStatus;
 import com.iw.rrhh.leave.domain.LeaveType;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -62,5 +68,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
     org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(UUID employeeId, org.springframework.data.domain.Pageable pageable);
 
     org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdAndStatusOrderByCreatedAtDesc(UUID employeeId, LeaveStatus status, org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Bandeja del responsable (HU-05): solicitudes de sus miembros directos en un estado, más antiguas primero.
+     */
+    @EntityGraph(attributePaths = "employee")
+    Page<LeaveRequest> findByEmployeeManagerIdAndStatusOrderByCreatedAtAsc(UUID managerId, LeaveStatus status, Pageable pageable);
+
+    /**
+     * Carga la solicitud con SELECT ... FOR UPDATE para serializar resoluciones concurrentes (Art. 13.2).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.id = :id")
+    Optional<LeaveRequest> findByIdForUpdate(@Param("id") UUID id);
 }
 

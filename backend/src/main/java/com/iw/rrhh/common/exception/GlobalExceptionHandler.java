@@ -128,6 +128,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
 
+    @ExceptionHandler(LeaveRequestAlreadyResolvedException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveAlreadyResolved(LeaveRequestAlreadyResolvedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Solicitud ya resuelta");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-already-resolved"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity<ProblemDetail> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
