@@ -1,6 +1,6 @@
 .app-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
@@ -23,13 +23,26 @@
     cursor: pointer;
 
     .logo-icon {
-      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--app-primary);
+      color: #ffffff;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
     }
 
     h1 {
       font-size: 1.25rem;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--app-text);
       margin: 0;
     }
   }
@@ -41,7 +54,7 @@
 
     .nav-btn {
       text-decoration: none;
-      color: #3b82f6;
+      color: var(--app-text-body);
       font-weight: 500;
       font-size: 0.95rem;
       padding: 0.5rem 1rem;
@@ -49,20 +62,21 @@
       transition: background 0.2s, color 0.2s;
 
       &:hover {
-        background: #eff6ff;
+        background: var(--app-primary-soft);
+        color: var(--app-primary);
       }
 
       &.active {
-        background: #dbeafe;
-        color: #1d4ed8;
+        background: var(--app-primary-soft);
+        color: var(--app-primary);
       }
 
       &.login-nav-btn {
-        background: #2563eb;
-        color: white;
+        background: var(--app-primary);
+        color: #ffffff;
 
         &:hover {
-          background: #1d4ed8;
+          background: var(--app-primary-strong);
         }
       }
     }
@@ -72,7 +86,7 @@
       align-items: center;
       gap: 1rem;
       padding-left: 1rem;
-      border-left: 1px solid #e2e8f0;
+      border-left: 1px solid var(--app-border);
 
       .user-info {
         display: flex;
@@ -83,7 +97,7 @@
         .user-name {
           font-size: 0.875rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--app-text);
         }
 
         .role-badge {
@@ -91,26 +105,9 @@
           font-weight: 700;
           padding: 0.15rem 0.5rem;
           border-radius: 9999px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--app-primary-soft);
+          color: var(--app-primary);
           margin-top: 2px;
-
-          &[data-role="RRHH"] {
-            background: #ede9fe;
-            color: #6d28d9;
-          }
-
-          &[data-role="RESPONSABLE_EQUIPO"] {
-            background: #e0f2fe;
-            color: #0369a1;
-          }
-
-          &[data-role="EMPLEADO"] {
-            background: #dcfce7;
-            color: #15803d;
-          }
         }
       }
 
@@ -118,9 +115,9 @@
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
-        color: #475569;
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
+        color: var(--app-text-body);
         font-size: 0.85rem;
         font-weight: 500;
         padding: 0.4rem 0.75rem;
@@ -128,14 +125,16 @@
         cursor: pointer;
         transition: all 0.2s ease;
 
-        .logout-icon {
-          font-size: 0.95rem;
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
         }
 
         &:hover {
-          background: #fee2e2;
-          border-color: #fca5a5;
-          color: #dc2626;
+          background: var(--app-primary-soft);
+          border-color: var(--app-primary-border);
+          color: var(--app-primary);
         }
       }
     }

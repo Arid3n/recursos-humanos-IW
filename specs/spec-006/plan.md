@@ -81,6 +81,7 @@ specs/spec-006/
 ```text
 backend/src/main/java/com/iw/rrhh/
 ├── common/service/HolidayCalendarService.java             # MODIFICADO (nombre del festivo)
+├── common/exception/GlobalExceptionHandler.java          # MODIFICADO (registro de 403, Art. 10.6)
 └── leave/
     ├── controller/TeamCalendarController.java             # NUEVO
     ├── domain/CalendarDayType.java                        # NUEVO (enum WORKING, WEEKEND, HOLIDAY)

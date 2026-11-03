@@ -26,7 +26,7 @@ Sin cambios de esquema ni migraciones. HU-06 es de solo lectura sobre:
 public enum CalendarDayType { WORKING, WEEKEND, HOLIDAY }
 ```
 
-Prioridad al clasificar: `WEEKEND` antes que `HOLIDAY` (un festivo en sábado se muestra como fin de semana con su nombre).
+Prioridad al clasificar: `WEEKEND` antes que `HOLIDAY`. `holidayName` se informa siempre que la fecha sea festivo, también si cae en fin de semana (se muestra como fin de semana con su nombre).
 
 ---
 
@@ -57,7 +57,7 @@ public record TeamMemberResponse(UUID id, String name) {}
 public record TeamCalendarDayResponse(
     LocalDate date,
     CalendarDayType dayType,
-    String holidayName,                      // null si no es festivo
+    String holidayName,                      // nombre si la fecha es festivo (también en fin de semana), si no null
     int absentCount,                         // empleados distintos ausentes (0 si no laborable)
     boolean hasConflict,                     // absentCount >= 2
     List<TeamCalendarEventResponse> events   // vacío si no laborable

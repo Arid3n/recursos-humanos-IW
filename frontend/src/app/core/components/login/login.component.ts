@@ -29,10 +29,10 @@ import { AuthService } from '../../services/auth.service';
         <!-- Logo / Header -->
         <div class="brand-header">
           <div class="brand-icon-wrapper">
-            <span class="brand-icon">💼</span>
+            <mat-icon aria-hidden="true">groups</mat-icon>
           </div>
-          <h1 class="brand-title">Recursos Humanos</h1>
-          <p class="brand-subtitle">Portal de Gestión y Trayectoria Laboral</p>
+          <h1 class="brand-title">Gestión de Recursos Humanos</h1>
+          <p class="brand-subtitle">Portal del empleado</p>
         </div>
 
         <mat-card class="login-card">
@@ -43,9 +43,9 @@ import { AuthService } from '../../services/auth.service';
 
           <mat-card-content>
             @if (errorMessage()) {
-              <div class="error-banner">
-                <span class="error-icon">⚠️</span>
-                <span class="error-text">{{ errorMessage() }}</span>
+              <div class="alert-banner alert-error" role="alert">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <span class="alert-text">{{ errorMessage() }}</span>
               </div>
             }
 
@@ -80,9 +80,9 @@ import { AuthService } from '../../services/auth.service';
                   matSuffix
                   type="button"
                   (click)="hidePassword.set(!hidePassword())"
-                  [attr.aria-label]="'Ocultar contraseña'"
+                  [attr.aria-label]="hidePassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
                 >
-                  <span>{{ hidePassword() ? '👁️' : '🔒' }}</span>
+                  <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
                 </button>
                 <mat-error *ngIf="form.get('password')?.hasError('required')">
                   La contraseña es obligatoria
@@ -111,7 +111,8 @@ import { AuthService } from '../../services/auth.service';
                 class="demo-chip"
                 (click)="fillDemoCredentials('rrhh@empresa.com', 'admin123')"
               >
-                <span>🔑 Usar rrhh@empresa.com (admin123)</span>
+                <mat-icon aria-hidden="true">key</mat-icon>
+                <span>Usar rrhh@empresa.com (admin123)</span>
               </button>
             </div>
           </mat-card-content>
@@ -126,7 +127,6 @@ import { AuthService } from '../../services/auth.service';
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     }
 
     .login-card-container {
@@ -156,37 +156,38 @@ import { AuthService } from '../../services/auth.service';
         justify-content: center;
         width: 64px;
         height: 64px;
-        background: white;
+        background: var(--app-primary);
+        color: #ffffff;
         border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(30, 41, 59, 0.08);
         margin-bottom: 0.75rem;
 
-        .brand-icon {
-          font-size: 2rem;
+        mat-icon {
+          font-size: 34px;
+          width: 34px;
+          height: 34px;
         }
       }
 
       .brand-title {
         font-size: 1.6rem;
-        font-weight: 700;
-        color: #0f172a;
+        font-weight: 600;
+        color: var(--app-text);
         margin: 0;
-        letter-spacing: -0.02em;
       }
 
       .brand-subtitle {
         font-size: 0.9rem;
-        color: #64748b;
+        color: var(--app-text-muted);
         margin-top: 0.25rem;
       }
     }
 
     .login-card {
-      border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
-      border: 1px solid #e2e8f0;
+      border-radius: var(--app-radius);
+      box-shadow: var(--app-shadow);
+      border: 1px solid var(--app-border);
       padding: 1rem;
-      background: #ffffff;
+      background: var(--app-surface);
 
       mat-card-header {
         padding-bottom: 1.25rem;
@@ -195,30 +196,17 @@ import { AuthService } from '../../services/auth.service';
       mat-card-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--app-text);
       }
 
       mat-card-subtitle {
-        color: #64748b;
+        color: var(--app-text-muted);
         font-size: 0.875rem;
       }
     }
 
-    .error-banner {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
+    .alert-banner {
       margin-bottom: 1.25rem;
-      font-size: 0.875rem;
-
-      .error-icon {
-        font-size: 1.1rem;
-      }
     }
 
     .login-form {
@@ -227,37 +215,18 @@ import { AuthService } from '../../services/auth.service';
       gap: 0.5rem;
     }
 
-    .full-width {
-      width: 100%;
-    }
-
     .submit-btn {
       width: 100%;
       height: 48px;
       border-radius: 8px;
       font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
       margin-top: 0.5rem;
-      background: #2563eb !important;
-      color: white !important;
-      transition: background-color 0.2s, transform 0.1s;
-
-      &:hover:not(:disabled) {
-        background: #1d4ed8 !important;
-        transform: translateY(-1px);
-      }
-
-      &:disabled {
-        background: #94a3b8 !important;
-        color: #f1f5f9 !important;
-      }
     }
 
     .demo-box {
       margin-top: 1.5rem;
       padding-top: 1.25rem;
-      border-top: 1px dashed #cbd5e1;
+      border-top: 1px solid var(--app-border);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -265,7 +234,7 @@ import { AuthService } from '../../services/auth.service';
 
       .demo-title {
         font-size: 0.8rem;
-        color: #64748b;
+        color: var(--app-text-muted);
         font-weight: 500;
       }
 
@@ -274,18 +243,25 @@ import { AuthService } from '../../services/auth.service';
         align-items: center;
         gap: 0.4rem;
         padding: 0.4rem 0.8rem;
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
         border-radius: 9999px;
+        font: inherit;
         font-size: 0.8rem;
-        color: #334155;
+        color: var(--app-text-body);
         cursor: pointer;
         transition: all 0.2s;
 
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+
         &:hover {
-          background: #e2e8f0;
-          border-color: #94a3b8;
-          color: #0f172a;
+          background: var(--app-primary-soft);
+          border-color: var(--app-primary-border);
+          color: var(--app-primary);
         }
       }
     }
@@ -325,7 +301,7 @@ export class LoginComponent {
         if (user.role === 'RRHH') {
           this.router.navigate(['/employees/new']);
         } else {
-          this.router.navigate(['/employees']);
+          this.router.navigate(['/profile']);
         }
       },
       error: (err) => {
@@ -337,7 +313,7 @@ export class LoginComponent {
         } else if (err.error?.detail) {
           this.errorMessage.set(err.error.detail);
         } else {
-          this.errorMessage.set('Error al conectar con el servidor. Verifique que el backend esté activo.');
+          this.errorMessage.set('No se pudo conectar con el servidor. Comprueba que el backend esté activo.');
         }
       }
     });

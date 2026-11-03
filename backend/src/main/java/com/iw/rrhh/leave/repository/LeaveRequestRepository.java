@@ -76,6 +76,26 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
     Page<LeaveRequest> findByEmployeeManagerIdAndStatusOrderByCreatedAtAsc(UUID managerId, LeaveStatus status, Pageable pageable);
 
     /**
+     * Calendario del equipo (HU-06): solicitudes de los miembros activos del responsable que solapan el rango.
+     */
+    @Query("""
+        SELECT lr FROM LeaveRequest lr
+        JOIN FETCH lr.employee e
+        WHERE e.manager.id = :managerId
+          AND e.active = true
+          AND lr.status IN :statuses
+          AND lr.startDate <= :rangeEnd
+          AND lr.endDate >= :rangeStart
+        ORDER BY e.lastName, e.firstName, lr.startDate
+    """)
+    List<LeaveRequest> findTeamCalendarRequests(
+        @Param("managerId") UUID managerId,
+        @Param("statuses") List<LeaveStatus> statuses,
+        @Param("rangeStart") LocalDate rangeStart,
+        @Param("rangeEnd") LocalDate rangeEnd
+    );
+
+    /**
      * Carga la solicitud con SELECT ... FOR UPDATE para serializar resoluciones concurrentes (Art. 13.2).
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

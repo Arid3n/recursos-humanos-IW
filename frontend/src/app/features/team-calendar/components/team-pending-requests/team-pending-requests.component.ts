@@ -78,7 +78,7 @@ export class TeamPendingRequestsComponent implements OnInit {
     const data: ResolveRequestDialogData = { mode, request };
     const dialogRef = this.dialog.open<ResolveRequestDialogComponent, ResolveRequestDialogData, ResolveRequestDialogResult>(
       ResolveRequestDialogComponent,
-      { width: '520px', data }
+      { width: '480px', data }
     );
 
     dialogRef.afterClosed().subscribe((result) => {

@@ -37,6 +37,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/team-calendar/components/team-pending-requests/team-pending-requests.component').then(m => m.TeamPendingRequestsComponent)
   },
   {
+    path: 'team/calendar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/team-calendar/components/team-calendar/team-calendar.component').then(m => m.TeamCalendarComponent)
+  },
+  {
     path: 'vacations',
     redirectTo: 'profile'
   },

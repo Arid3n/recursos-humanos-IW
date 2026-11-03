@@ -102,7 +102,7 @@ Como responsable de equipo, selecciono a una persona concreta de mi equipo en un
 
 ## Assumptions
 
-- El equipo de un responsable lo forman las personas que lo tienen asignado como responsable en su ficha (igual que en HU-05); las ausencias propias del responsable no aparecen en su calendario de equipo.
+- El equipo de un responsable lo forman las personas **activas** que lo tienen asignado como responsable en su ficha; las personas dadas de baja (HU-01) no afectan a la cobertura y no aparecen. A diferencia de la bandeja de HU-05, que sigue mostrando solicitudes pendientes de cualquier persona a cargo para poder resolverlas. Las ausencias propias del responsable no aparecen en su calendario de equipo.
 - Las ausencias pendientes cuentan para las coincidencias, porque el objetivo es anticipar problemas antes de aprobar.
 - Una ausencia ocupa los días laborables entre su fecha de inicio y de fin, usando el mismo calendario de festivos que el cómputo de días de HU-03.
 - La semana del calendario empieza en lunes y el mes inicial es el mes actual (zona horaria Europe/Madrid).

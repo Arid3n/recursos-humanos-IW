@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -23,22 +24,30 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
     MatSelectModule,
     MatDialogModule,
     MatSnackBarModule
   ],
   template: `
-    <div class="create-container">
-      <mat-card class="form-card">
-        <mat-card-header>
-          <mat-card-title>Alta de Nuevo Empleado</mat-card-title>
-          <mat-card-subtitle>Introduzca los datos personales y las condiciones contractuales iniciales</mat-card-subtitle>
-        </mat-card-header>
+    <div class="page-container create-container">
+      <div class="page-header">
+        <div class="page-heading">
+          <div class="page-icon">
+            <mat-icon>person_add</mat-icon>
+          </div>
+          <div>
+            <h1 class="page-title">Alta de Empleado</h1>
+            <p class="page-subtitle">Introduce los datos personales y las condiciones contractuales iniciales.</p>
+          </div>
+        </div>
+      </div>
 
+      <mat-card class="form-card surface-card">
         <mat-card-content>
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
             
-            <h3>1. Datos Personales e Identificativos</h3>
+            <h2 class="form-section-title">1. Datos personales</h2>
             <div class="row">
               <mat-form-field appearance="outline" class="col">
                 <mat-label>Nombre</mat-label>
@@ -62,23 +71,23 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Email Corporativo</mat-label>
+                <mat-label>Correo electrónico corporativo</mat-label>
                 <input matInput type="email" formControlName="email" placeholder="ana.gomez@empresa.com" required />
-                <mat-error *ngIf="form.get('email')?.hasError('required')">El email es obligatorio</mat-error>
+                <mat-error *ngIf="form.get('email')?.hasError('required')">El correo electrónico es obligatorio</mat-error>
                 <mat-error *ngIf="form.get('email')?.hasError('email')">Formato de correo no válido</mat-error>
               </mat-form-field>
             </div>
 
-            <h3>2. Condiciones Contractuales Iniciales (Vigentes)</h3>
+            <h2 class="form-section-title">2. Condiciones contractuales iniciales</h2>
             <div class="row">
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Fecha de Incorporación / Entrada en Vigor</mat-label>
+                <mat-label>Fecha de incorporación</mat-label>
                 <input matInput type="date" formControlName="hireDate" required />
                 <mat-error *ngIf="form.get('hireDate')?.hasError('required')">La fecha es obligatoria</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Puesto de Trabajo</mat-label>
+                <mat-label>Puesto</mat-label>
                 <input matInput formControlName="position" placeholder="Ej. Ingeniero/a de Software" required />
                 <mat-error *ngIf="form.get('position')?.hasError('required')">El puesto es obligatorio</mat-error>
               </mat-form-field>
@@ -92,7 +101,7 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Salario Bruto Anual (€)</mat-label>
+                <mat-label>Salario bruto anual (€)</mat-label>
                 <input matInput type="number" formControlName="salary" placeholder="Ej. 36000.00" min="0" step="100" required />
                 <mat-error *ngIf="form.get('salary')?.hasError('required')">El salario es obligatorio</mat-error>
                 <mat-error *ngIf="form.get('salary')?.hasError('min')">El salario no puede ser negativo</mat-error>
@@ -101,18 +110,18 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
 
             <div class="row">
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Convenio Colectivo</mat-label>
+                <mat-label>Convenio colectivo</mat-label>
                 <mat-select formControlName="collectiveAgreementId" required>
                   <mat-option [value]="1">Convenio General (22 días/año)</mat-option>
                   <mat-option [value]="2">Convenio TIC (23 días/año)</mat-option>
                 </mat-select>
-                <mat-error *ngIf="form.get('collectiveAgreementId')?.hasError('required')">Debe seleccionar un convenio</mat-error>
+                <mat-error *ngIf="form.get('collectiveAgreementId')?.hasError('required')">Selecciona un convenio</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="col">
-                <mat-label>Responsable de Equipo (Opcional solo para CEO)</mat-label>
+                <mat-label>Responsable de equipo</mat-label>
                 <mat-select formControlName="managerId">
-                  <mat-option [value]="null">-- Sin responsable (Solo CEO / Dirección General) --</mat-option>
+                  <mat-option [value]="null">Sin responsable (solo Dirección General)</mat-option>
                   @for (m of managers(); track m.id) {
                     <mat-option [value]="m.id">{{ m.firstName }} {{ m.lastName }} ({{ m.email }})</mat-option>
                   }
@@ -122,7 +131,8 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
 
             <div class="actions">
               <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || isSubmitting()">
-                {{ isSubmitting() ? 'Guardando...' : 'Dar de Alta Empleado' }}
+                <mat-icon>person_add</mat-icon>
+                {{ isSubmitting() ? 'Guardando...' : 'Dar de Alta' }}
               </button>
             </div>
           </form>
@@ -133,20 +143,22 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
   styles: [`
     .create-container {
       max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+      margin: 0 auto;
     }
     .form-card {
-      padding: 1.5rem;
-      border-radius: 12px;
+      padding: 1rem;
     }
-    h3 {
+    .form-section-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--app-text);
       margin: 1.5rem 0 1rem;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--app-border);
       padding-bottom: 0.5rem;
+
+      &:first-of-type {
+        margin-top: 0;
+      }
     }
     .row {
       display: flex;
@@ -219,6 +231,7 @@ export class EmployeeCreateComponent implements OnInit {
       next: (res) => {
         this.isSubmitting.set(false);
         const dialogRef = this.dialog.open(PasswordDialogComponent, {
+          width: '480px',
           data: {
             fullName: res.fullName,
             email: res.email,
@@ -242,7 +255,7 @@ export class EmployeeCreateComponent implements OnInit {
             }
           }
         }
-        this.snackBar.open(err.error?.detail || 'Error al guardar el empleado', 'Cerrar', {
+        this.snackBar.open(err.error?.detail || 'No se pudo guardar el empleado', 'Cerrar', {
           duration: 4000
         });
       }

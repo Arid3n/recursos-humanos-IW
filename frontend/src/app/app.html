@@ -1,7 +1,7 @@
 <header class="app-header">
   <div class="header-container">
     <a routerLink="/" class="brand">
-      <span class="logo-icon">👥</span>
+      <span class="logo-icon"><mat-icon aria-hidden="true">groups</mat-icon></span>
       <h1>Gestión de Recursos Humanos</h1>
     </a>
 
@@ -14,6 +14,7 @@
         <a routerLink="/leave/my-requests" routerLinkActive="active" class="nav-btn">Mis Solicitudes</a>
         @if (authService.isResponsable()) {
           <a routerLink="/team/requests" routerLinkActive="active" class="nav-btn">Solicitudes del Equipo</a>
+          <a routerLink="/team/calendar" routerLinkActive="active" class="nav-btn">Calendario del Equipo</a>
         }
         @if (authService.isRRHH()) {
           <a routerLink="/employees/new" routerLinkActive="active" class="nav-btn">Alta de Empleado</a>
@@ -25,12 +26,12 @@
           }
           <div class="user-info">
             <span class="user-name">{{ authService.currentUser()?.username }}</span>
-            <span class="role-badge" [attr.data-role]="authService.currentUser()?.role">
-              {{ authService.currentUser()?.role }}
-            </span>
+            @if (authService.currentUser(); as user) {
+              <span class="role-badge">{{ roleLabels[user.role] }}</span>
+            }
           </div>
-          <button (click)="onLogout()" class="logout-btn" title="Cerrar Sesión">
-            <span class="logout-icon">🚪</span>
+          <button type="button" (click)="onLogout()" class="logout-btn" title="Cerrar sesión">
+            <mat-icon aria-hidden="true">logout</mat-icon>
             <span>Salir</span>
           </button>
         </div>

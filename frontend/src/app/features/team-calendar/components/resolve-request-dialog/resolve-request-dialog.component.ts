@@ -28,8 +28,8 @@ export const REASON_MAX_LENGTH = 500;
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title class="dialog-title">
-      <mat-icon [class.approve-icon]="isApprove" [class.reject-icon]="!isApprove">
+    <h2 mat-dialog-title class="dialog-title" [class.dialog-title-danger]="!isApprove">
+      <mat-icon aria-hidden="true">
         {{ isApprove ? 'check_circle' : 'cancel' }}
       </mat-icon>
       <span>{{ isApprove ? 'Aprobar solicitud' : 'Rechazar solicitud' }}</span>
@@ -75,12 +75,7 @@ export const REASON_MAX_LENGTH = 500;
     </mat-dialog-actions>
   `,
   styles: [`
-    .dialog-title { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: #0f172a; }
-    .approve-icon { color: #15803d; }
-    .reject-icon { color: #b91c1c; }
-    .dialog-content { color: #334155; line-height: 1.5; }
-    .full-width { width: 100%; margin-top: 0.5rem; }
-    .dialog-actions { gap: 0.5rem; }
+    .full-width { margin-top: 0.5rem; }
   `]
 })
 export class ResolveRequestDialogComponent {

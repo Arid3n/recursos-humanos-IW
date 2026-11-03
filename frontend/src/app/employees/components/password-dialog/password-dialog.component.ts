@@ -16,32 +16,32 @@ export interface PasswordDialogData {
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule, MatSnackBarModule],
   template: `
-    <h2 mat-dialog-title>Alta Completada con Éxito</h2>
+    <h2 mat-dialog-title class="dialog-title">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      <span>Alta completada</span>
+    </h2>
     <mat-dialog-content class="dialog-content">
       <p>Se ha registrado correctamente el alta de <strong>{{ data.fullName }}</strong> ({{ data.email }}).</p>
       
       <div class="credentials-card">
-        <div class="card-label">Contraseña Temporal Generada:</div>
+        <div class="card-label">Contraseña temporal</div>
         <div class="password-box">
           <code>{{ data.temporaryPassword || 'No disponible' }}</code>
           <button mat-icon-button (click)="copyPassword()" aria-label="Copiar contraseña al portapapeles" title="Copiar contraseña">
             <mat-icon>content_copy</mat-icon>
           </button>
         </div>
-        <small class="hint">Facilite esta clave provisional al empleado. Se le solicitará cambiarla en su primer inicio de sesión.</small>
+        <small class="hint">Entrega esta contraseña provisional al empleado. Deberá cambiarla en su primer inicio de sesión.</small>
       </div>
     </mat-dialog-content>
-    <mat-dialog-actions align="end">
+    <mat-dialog-actions align="end" class="dialog-actions">
       <button mat-flat-button color="primary" [mat-dialog-close]="true">Entendido</button>
     </mat-dialog-actions>
   `,
   styles: [`
-    .dialog-content {
-      padding: 1rem 0;
-    }
     .credentials-card {
-      background: #f4f6f8;
-      border: 1px solid #e0e4e8;
+      background: var(--app-surface-alt);
+      border: 1px solid var(--app-border);
       border-radius: 8px;
       padding: 1rem;
       margin-top: 1rem;
@@ -49,14 +49,14 @@ export interface PasswordDialogData {
     .card-label {
       font-weight: 600;
       font-size: 0.9rem;
-      color: #334155;
+      color: var(--app-text-body);
     }
     .password-box {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #ffffff;
-      border: 1px dashed #cbd5e1;
+      background: var(--app-surface);
+      border: 1px dashed var(--app-border);
       padding: 0.5rem 0.75rem;
       border-radius: 6px;
       margin: 0.5rem 0;
@@ -64,11 +64,11 @@ export interface PasswordDialogData {
     code {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--app-text);
       letter-spacing: 0.5px;
     }
     .hint {
-      color: #64748b;
+      color: var(--app-text-muted);
       font-size: 0.8rem;
     }
   `]

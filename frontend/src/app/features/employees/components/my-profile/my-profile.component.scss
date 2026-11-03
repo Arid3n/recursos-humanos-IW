@@ -1,54 +1,15 @@
-.profile-page-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.avatar-circle {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.profile-header-card {
-  border-radius: 16px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--app-primary);
   color: #ffffff;
-  padding: 2rem;
-  box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
-
-  .header-content {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-
-    .avatar-circle {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      font-weight: 700;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-    }
-
-    .header-details {
-      h1 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-      }
-
-      .role-badge {
-        display: inline-block;
-        margin-top: 0.25rem;
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.85);
-      }
-    }
-  }
+  font-size: 1.35rem;
+  font-weight: 600;
 }
 
 .details-grid {
@@ -58,16 +19,24 @@
 }
 
 .section-card {
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
 
   mat-card-header {
     margin-bottom: 1rem;
-    mat-card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #1e293b;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--app-text);
+
+    mat-icon {
+      color: var(--app-primary);
     }
   }
 
@@ -80,8 +49,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid var(--app-border);
 
       &:last-child {
         border-bottom: none;
@@ -89,13 +59,13 @@
 
       .info-label {
         font-size: 0.875rem;
-        color: #64748b;
+        color: var(--app-text-muted);
         font-weight: 500;
       }
 
       .info-value {
         font-size: 0.95rem;
-        color: #1e293b;
+        color: var(--app-text);
         font-weight: 600;
         text-align: right;
       }
@@ -104,19 +74,5 @@
 }
 
 .balance-card {
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1rem;
 }
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 1rem;
-  color: #64748b;
-}
-

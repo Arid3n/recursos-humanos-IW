@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LeaveService } from '../../services/leave.service';
 import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.models';
@@ -15,6 +16,7 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
+    MatIconModule,
     MatProgressSpinnerModule
   ],
   template: `
@@ -22,9 +24,9 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
       <!-- Encabezado con selector de año -->
       <div class="widget-header">
         <div class="header-titles">
-          <h3>Saldo y Crédito de Vacaciones</h3>
+          <h2 class="section-title">Saldo de Vacaciones</h2>
           <span class="agreement-badge" *ngIf="balance()?.agreementName">
-            Régimen: {{ balance()?.agreementName }}
+            Convenio: {{ balance()?.agreementName }}
           </span>
         </div>
 
@@ -39,8 +41,8 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
       </div>
 
       <!-- Banner de ejercicio cerrado / solo lectura -->
-      <div *ngIf="balance()?.isClosedYear" class="closed-year-banner" role="status">
-        <span class="banner-icon">🔒</span>
+      <div *ngIf="balance()?.isClosedYear" class="closed-year-banner alert-banner alert-info" role="status">
+        <mat-icon aria-hidden="true">lock</mat-icon>
         <span>
           <strong>Ejercicio fiscal {{ selectedYear() }} consolidado (Solo lectura).</strong>
           Este balance refleja el cierre oficial del año y no admite nuevas solicitudes.
@@ -48,9 +50,9 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
       </div>
 
       <!-- Spinner de carga -->
-      <div *ngIf="loading()" class="loading-state">
-        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-        <span>Actualizando cálculo de saldo...</span>
+      <div *ngIf="loading()" class="loading-state" role="status">
+        <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
+        <span>Cargando saldo...</span>
       </div>
 
       <!-- Cuadrícula de 4 tarjetas de saldo -->
@@ -58,7 +60,7 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
         <!-- 1. Correspondientes -->
         <div class="metric-card entitled" tabindex="0" [attr.aria-label]="'Días correspondientes por convenio: ' + balance()?.entitledDays + ' días'">
           <div class="card-top">
-            <span>📋</span>
+            <mat-icon aria-hidden="true">event_available</mat-icon>
             <span>Correspondientes</span>
           </div>
           <div class="metric-value">
@@ -70,7 +72,7 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
         <!-- 2. Disfrutados -->
         <div class="metric-card spent" tabindex="0" [attr.aria-label]="'Días disfrutados y aprobados: ' + balance()?.spentDays + ' días'">
           <div class="card-top">
-            <span>🏖️</span>
+            <mat-icon aria-hidden="true">beach_access</mat-icon>
             <span>Disfrutados</span>
           </div>
           <div class="metric-value">
@@ -82,7 +84,7 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
         <!-- 3. Disponibles -->
         <div class="metric-card available" tabindex="0" [attr.aria-label]="'Días disponibles restantes: ' + balance()?.availableDays + ' días'">
           <div class="card-top">
-            <span>✨</span>
+            <mat-icon aria-hidden="true">savings</mat-icon>
             <span>Disponibles</span>
           </div>
           <div class="metric-value">
@@ -94,21 +96,21 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
         <!-- 4. En trámite -->
         <div class="metric-card pending" tabindex="0" [attr.aria-label]="'Días en solicitudes pendientes: ' + balance()?.pendingDays + ' días'">
           <div class="card-top">
-            <span>⏳</span>
+            <mat-icon aria-hidden="true">schedule</mat-icon>
             <span>En trámite</span>
           </div>
           <div class="metric-value">
             {{ balance()?.pendingDays }}<span class="metric-unit">días</span>
           </div>
-          <p class="metric-desc">Pendientes de resolución por responsable</p>
+          <p class="metric-desc">Pendientes de resolución por tu responsable</p>
         </div>
       </div>
 
       <!-- Desglose de solicitudes del año -->
       <div *ngIf="!loading()" class="requests-section">
-        <h4>Desglose de Ausencias en {{ selectedYear() }}</h4>
+        <h3 class="breakdown-title">Ausencias de {{ selectedYear() }}</h3>
         <div *ngIf="requests().length > 0; else noRequests">
-          <table class="requests-table" aria-label="Listado de solicitudes de vacaciones del año">
+          <table class="requests-table" aria-label="Solicitudes de ausencia del año">
             <thead>
               <tr>
                 <th scope="col">Tipo</th>
@@ -121,13 +123,21 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
             <tbody>
               <tr *ngFor="let req of requests()">
                 <td>{{ req.leaveType === 'VACATION' ? 'Vacaciones' : 'Permiso' }}</td>
-                <td>{{ req.startDate }}</td>
-                <td>{{ req.endDate }}</td>
+                <td>{{ req.startDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ req.endDate | date:'dd/MM/yyyy' }}</td>
                 <td><strong>{{ req.calculatedDays }}</strong></td>
                 <td>
-                  <span class="status-badge" [ngClass]="'status-' + req.status">
-                    {{ req.status === 'APPROVED' ? 'Aprobada' : (req.status === 'PENDING' ? 'Pendiente' : 'Rechazada') }}
-                  </span>
+                  @switch (req.status) {
+                    @case ('APPROVED') {
+                      <span class="status-badge status-approved"><mat-icon aria-hidden="true">check_circle</mat-icon>Aprobada</span>
+                    }
+                    @case ('PENDING') {
+                      <span class="status-badge status-pending"><mat-icon aria-hidden="true">schedule</mat-icon>Pendiente</span>
+                    }
+                    @default {
+                      <span class="status-badge status-rejected"><mat-icon aria-hidden="true">cancel</mat-icon>Rechazada</span>
+                    }
+                  }
                 </td>
               </tr>
             </tbody>
@@ -135,7 +145,7 @@ import { LeaveBalanceResponse, LeaveSummaryItem } from '../../models/leave.model
         </div>
         <ng-template #noRequests>
           <div class="empty-requests">
-            No constan solicitudes de ausencia formalizadas en el ejercicio {{ selectedYear() }}.
+            No hay solicitudes de ausencia en {{ selectedYear() }}.
           </div>
         </ng-template>
       </div>
