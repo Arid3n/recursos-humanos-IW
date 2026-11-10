@@ -1,6 +1,7 @@
 package com.iw.rrhh.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.iw.rrhh.performance.service.PerformanceReviewAlreadyFinalizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -144,6 +145,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
         problemDetail.setTitle("Solicitud ya resuelta");
         problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-already-resolved"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(PerformanceReviewAlreadyFinalizedException.class)
+    public ResponseEntity<ProblemDetail> handlePerformanceReviewAlreadyFinalized(
+            PerformanceReviewAlreadyFinalizedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Evaluación ya formalizada");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/performance-review-finalized"));
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
 

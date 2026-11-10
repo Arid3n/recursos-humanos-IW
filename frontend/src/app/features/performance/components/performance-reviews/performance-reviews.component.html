@@ -1,0 +1,153 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="page-heading">
+      <div class="page-icon">
+        <mat-icon aria-hidden="true">rate_review</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Evaluaciones de desempeño</h1>
+        <p class="page-subtitle">
+          {{ isManager ? 'Registra y consulta las evaluaciones de las personas de tu equipo.' : 'Revisa tus evaluaciones y registra tu conformidad.' }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  @if (isManager) {
+    <section class="review-form-card surface-card" aria-labelledby="create-review-title">
+      <h2 id="create-review-title">Nueva evaluación</h2>
+      @if (employees().length === 0) {
+        <p class="muted">No tienes personas activas asignadas a tu equipo.</p>
+      } @else {
+        <form (ngSubmit)="createReview()" #reviewForm="ngForm">
+          <div class="form-grid">
+            <label>
+              Empleado
+              <select name="employee" [(ngModel)]="selectedEmployeeId" required>
+                <option value="" disabled>Selecciona una persona</option>
+                @for (employee of employees(); track employee.id) {
+                  <option [value]="employee.id">{{ employee.fullName }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Periodo evaluado
+              <input name="period" [(ngModel)]="period" maxlength="50" placeholder="2026-ANUAL" required>
+            </label>
+            <label class="full-width">
+              Objetivos evaluados
+              <textarea name="objectives" [(ngModel)]="objectives" rows="3" maxlength="10000" required></textarea>
+            </label>
+            <label>
+              Valoración (1–5)
+              <select name="rating" [(ngModel)]="rating" required>
+                <option [ngValue]="1">1 — Insatisfactorio</option>
+                <option [ngValue]="2">2 — En desarrollo</option>
+                <option [ngValue]="3">3 — Cumple expectativas</option>
+                <option [ngValue]="4">4 — Supera expectativas</option>
+                <option [ngValue]="5">5 — Sobresaliente</option>
+              </select>
+            </label>
+            <label class="full-width">
+              Comentarios del responsable
+              <textarea name="comments" [(ngModel)]="comments" rows="3" maxlength="10000" required></textarea>
+            </label>
+          </div>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving() || reviewForm.invalid">
+            <mat-icon aria-hidden="true">send</mat-icon>
+            Enviar evaluación
+          </button>
+        </form>
+      }
+    </section>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="alert-text">{{ errorMessage() }}</p>
+      <button mat-stroked-button type="button" (click)="loadData()">Reintentar</button>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert-banner alert-success" role="status">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      <p class="alert-text">{{ successMessage() }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state surface-card" role="status">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando evaluaciones...</span>
+    </div>
+  } @else if (reviews().length === 0) {
+    <div class="empty-state surface-card">
+      <mat-icon aria-hidden="true">rate_review</mat-icon>
+      <h2>No hay evaluaciones registradas</h2>
+      <p>{{ isManager ? 'Cuando evalúes a una persona de tu equipo, aparecerá aquí.' : 'Cuando tu responsable registre una evaluación, aparecerá aquí.' }}</p>
+    </div>
+  } @else {
+    <section class="reviews-list" aria-label="Evaluaciones">
+      @for (review of reviews(); track review.id) {
+        <article class="review-card surface-card">
+          <header class="review-header">
+            <div>
+              <h2>{{ isManager ? review.employeeName : 'Periodo ' + review.period }}</h2>
+              <p>
+                {{ isManager ? 'Periodo ' + review.period + ' · Evaluado por ' + review.evaluatorName : 'Evaluado por ' + review.evaluatorName }}
+              </p>
+            </div>
+            <span class="status-badge" [class.status-pending]="review.status === 'PENDING_ACKNOWLEDGMENT'" [class.status-approved]="review.status === 'FINALIZED'">
+              {{ review.status === 'PENDING_ACKNOWLEDGMENT' ? 'Pendiente de conformidad' : 'Formalizada' }}
+            </span>
+          </header>
+
+          <div class="review-details">
+            <div>
+              <h3>Objetivos</h3>
+              <p>{{ review.objectives }}</p>
+            </div>
+            <div>
+              <h3>Valoración</h3>
+              <p><strong>{{ review.rating }}/5</strong> — {{ ratingLabel(review.rating) }}</p>
+            </div>
+            <div>
+              <h3>Comentarios del responsable</h3>
+              <p>{{ review.comments }}</p>
+            </div>
+            @if (review.employeeComments) {
+              <div>
+                <h3>Comentarios del empleado</h3>
+                <p>{{ review.employeeComments }}</p>
+              </div>
+            }
+          </div>
+
+          @if (!isManager && review.status === 'PENDING_ACKNOWLEDGMENT') {
+            <div class="acknowledgment">
+              <label [for]="'employee-comments-' + review.id">Comentarios del empleado (opcional)</label>
+              <textarea
+                [id]="'employee-comments-' + review.id"
+                [name]="'employee-comments-' + review.id"
+                [(ngModel)]="employeeComments[review.id]"
+                rows="3"
+                maxlength="10000">
+              </textarea>
+              <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="acknowledge(review)">
+                <mat-icon aria-hidden="true">verified</mat-icon>
+                Dar conformidad y formalizar
+              </button>
+            </div>
+          } @else if (review.status === 'FINALIZED') {
+            <p class="finalized-date">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              Formalizada el {{ review.finalizedAt | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+          }
+        </article>
+      }
+    </section>
+  }
+</div>

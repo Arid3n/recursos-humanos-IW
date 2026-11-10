@@ -12,6 +12,9 @@
         <a routerLink="/profile" routerLinkActive="active" class="nav-btn">Mi Ficha y Saldo</a>
         <a routerLink="/leave/request" routerLinkActive="active" class="nav-btn">Solicitar Ausencia</a>
         <a routerLink="/leave/my-requests" routerLinkActive="active" class="nav-btn">Mis Solicitudes</a>
+        @if (authService.isEmpleado() || authService.isResponsable()) {
+          <a routerLink="/performance-reviews" routerLinkActive="active" class="nav-btn">Evaluaciones</a>
+        }
         @if (authService.isResponsable()) {
           <a routerLink="/team/requests" routerLinkActive="active" class="nav-btn">Solicitudes del Equipo</a>
           <a routerLink="/team/calendar" routerLinkActive="active" class="nav-btn">Calendario del Equipo</a>
