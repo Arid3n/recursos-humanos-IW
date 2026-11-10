@@ -1,0 +1,153 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="page-heading">
+      <div class="page-icon">
+        <mat-icon aria-hidden="true">monitoring</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Informes de absentismo y vacaciones</h1>
+        <p class="page-subtitle">Analiza las ausencias aprobadas y el uso de vacaciones por departamento.</p>
+      </div>
+    </div>
+  </div>
+
+  <form class="filters-card surface-card" (submit)="$event.preventDefault(); generateReport()">
+    <div class="filter-field">
+      <label for="report-type">Tipo de informe</label>
+      <select id="report-type" [value]="reportType()" (change)="onTypeChange($event)">
+        <option value="ABSENTEEISM">Absentismo</option>
+        <option value="VACATION_USAGE">Uso de vacaciones</option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="report-period">Periodo</label>
+      <select id="report-period" [value]="periodPreset()" (change)="onPeriodPresetChange($event)">
+        <option value="CURRENT_YEAR">Año en curso</option>
+        <option value="PREVIOUS_YEAR">Año anterior</option>
+        <option value="CURRENT_QUARTER">Trimestre actual</option>
+        <option value="CUSTOM">Rango personalizado</option>
+      </select>
+    </div>
+
+    <div class="filter-field date-field">
+      <label for="report-start-date">Desde</label>
+      <input id="report-start-date" type="date" [value]="startDate()" (change)="onDateChange('startDate', $event)">
+    </div>
+
+    <div class="filter-field date-field">
+      <label for="report-end-date">Hasta</label>
+      <input id="report-end-date" type="date" [value]="endDate()" (change)="onDateChange('endDate', $event)">
+    </div>
+
+    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+      <mat-icon aria-hidden="true">search</mat-icon>
+      Generar informe
+    </button>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="alert-text">{{ errorMessage() }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state surface-card" role="status">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Generando informe...</span>
+    </div>
+  } @else if (report(); as result) {
+    @if (!result.hasData) {
+      <div class="empty-state surface-card" role="status">
+        <mat-icon class="empty-icon" aria-hidden="true">query_stats</mat-icon>
+        <h2>No hay datos para el periodo seleccionado</h2>
+        <p>
+          No existen registros aprobados de
+          {{ result.type === 'ABSENTEEISM' ? 'ausencias no vacacionales' : 'vacaciones' }}
+          entre {{ result.startDate | date:'dd/MM/yyyy' }} y {{ result.endDate | date:'dd/MM/yyyy' }}.
+        </p>
+      </div>
+    } @else {
+      <section class="report-card surface-card" aria-labelledby="report-results-title">
+        <div class="report-header">
+          <div>
+            <h2 id="report-results-title">
+              {{ result.type === 'ABSENTEEISM' ? 'Informe de absentismo' : 'Informe de uso de vacaciones' }}
+            </h2>
+            <p>{{ result.periodLabel }}</p>
+          </div>
+          <button mat-stroked-button type="button" (click)="exportCsv()" [disabled]="exporting()">
+            @if (exporting()) {
+              <mat-spinner diameter="18"></mat-spinner>
+            } @else {
+              <mat-icon aria-hidden="true">download</mat-icon>
+            }
+            Exportar CSV
+          </button>
+        </div>
+
+        <div class="table-scroll-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th scope="col">Departamento / empleado</th>
+                <th scope="col">Plantilla</th>
+                <th scope="col">{{ result.type === 'ABSENTEEISM' ? 'Días laborables teóricos' : 'Días correspondientes' }}</th>
+                <th scope="col">{{ result.type === 'ABSENTEEISM' ? 'Días de ausencia' : 'Días disfrutados' }}</th>
+                @if (result.type === 'VACATION_USAGE') {
+                  <th scope="col">Saldo remanente</th>
+                }
+                <th scope="col">{{ result.type === 'ABSENTEEISM' ? 'Absentismo' : 'Uso de vacaciones' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (department of result.departments; track department.department) {
+                <tr class="department-row">
+                  <td>
+                    <button
+                      type="button"
+                      class="expand-button"
+                      (click)="toggleDepartment(department)"
+                      [attr.aria-expanded]="isExpanded(department)"
+                      [attr.aria-label]="(isExpanded(department) ? 'Ocultar' : 'Mostrar') + ' empleados de ' + department.department">
+                      <mat-icon aria-hidden="true">{{ isExpanded(department) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                      <strong>{{ department.department }}</strong>
+                    </button>
+                  </td>
+                  <td>{{ department.headcount }}</td>
+                  <td>{{ department.totalEntitledDays | number:'1.0-2' }}</td>
+                  <td>{{ department.totalTakenDays | number:'1.0-2' }}</td>
+                  @if (result.type === 'VACATION_USAGE') {
+                    <td>{{ department.totalRemainingDays | number:'1.0-2' }}</td>
+                  }
+                  <td><strong>{{ department.metricPercentage | number:'1.1-2' }}%</strong></td>
+                </tr>
+                @if (isExpanded(department)) {
+                  @for (employee of department.employees; track employee.employeeId) {
+                    <tr class="employee-row">
+                      <td><span class="employee-name">{{ employee.employeeName }}</span></td>
+                      <td>—</td>
+                      <td>{{ employee.totalEntitledDays | number:'1.0-2' }}</td>
+                      <td>{{ employee.totalTakenDays | number:'1.0-2' }}</td>
+                      @if (result.type === 'VACATION_USAGE') {
+                        <td>{{ employee.totalRemainingDays | number:'1.0-2' }}</td>
+                      }
+                      <td>{{ employee.metricPercentage | number:'1.1-2' }}%</td>
+                    </tr>
+                  }
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (result.type === 'VACATION_USAGE') {
+          <p class="report-note">Los días correspondientes reflejan la asignación anual de vacaciones de cada año incluido en el periodo.</p>
+        } @else {
+          <p class="report-note">El absentismo se calcula como días de permisos aprobados entre días laborables teóricos.</p>
+        }
+      </section>
+    }
+  }
+</div>
