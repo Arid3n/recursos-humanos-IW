@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, rrhhGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -15,6 +15,11 @@ export const routes: Routes = [
     path: 'employees/new',
     canActivate: [authGuard],
     loadComponent: () => import('./employees/components/employee-create/employee-create.component').then(m => m.EmployeeCreateComponent)
+  },
+  {
+    path: 'reports',
+    canActivate: [rrhhGuard],
+    loadComponent: () => import('./features/reports/components/department-reports/department-reports.component').then(m => m.DepartmentReportsComponent)
   },
   {
     path: 'profile',
