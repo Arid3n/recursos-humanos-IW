@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, rrhhGuard } from './core/guards/auth.guard';
+import { authGuard, performanceReviewGuard, rrhhGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -20,6 +20,11 @@ export const routes: Routes = [
     path: 'reports',
     canActivate: [rrhhGuard],
     loadComponent: () => import('./features/reports/components/department-reports/department-reports.component').then(m => m.DepartmentReportsComponent)
+  },
+  {
+    path: 'performance-reviews',
+    canActivate: [performanceReviewGuard],
+    loadComponent: () => import('./features/performance/components/performance-reviews/performance-reviews.component').then(m => m.PerformanceReviewsComponent)
   },
   {
     path: 'profile',

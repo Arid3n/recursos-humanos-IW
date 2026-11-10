@@ -31,3 +31,16 @@ export const rrhhGuard: CanActivateFn = () => {
   alert('Acceso restringido: Se requiere rol de Recursos Humanos (RRHH).');
   return false;
 };
+
+export const performanceReviewGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return router.createUrlTree(['/login']);
+  }
+  if (authService.isEmpleado() || authService.isResponsable()) {
+    return true;
+  }
+  return router.createUrlTree(['/']);
+};
