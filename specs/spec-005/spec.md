@@ -19,6 +19,14 @@
 - Q: ¿Cuál es el canal oficial de entrega de las notificaciones al empleado? → A: Notificación interna persistida en la aplicación, visualizable en la cabecera de la interfaz con distintivo de no leída.
 - Q: ¿Puede un responsable delegar o resolver solicitudes de otro equipo? → A: No; la resolución se limita estrictamente a los miembros directos del equipo del responsable en sesión (Art. 10 de la Constitución).
 
+### Session 2026-11-16
+
+- Q: ¿Quién resuelve las solicitudes de un responsable de equipo y puede resolver las propias? → A: Nadie resuelve las propias; la solicitud de un responsable la resuelve su responsable superior (`manager_id`). Si no tiene superior, queda fuera de HU-05 (límite conocido).
+- Q: ¿Contra qué saldo se valida al aprobar una solicitud de vacaciones que cruza dos años naturales? → A: Los días computados se reparten por año natural y se exige saldo suficiente en cada año; si falla alguno, la aprobación se bloquea.
+- Q: ¿Qué respuesta HTTP se devuelve en solicitud ya resuelta, resuelta a la vez, retirada o con saldo insuficiente? → A: Ya resuelta o resuelta a la vez: `409`; retirada por el empleado: `404`; saldo insuficiente: `422`. El frontend recarga la bandeja tras cualquier `409` o `404`.
+- Q: ¿Qué límites tienen el motivo de rechazo y el comentario de aprobación? → A: Motivo de rechazo de 5 a 500 caracteres tras quitar espacios extremos; comentario de aprobación opcional, hasta 500 caracteres; texto plano. Si se supera el máximo, `400` con error junto al campo.
+- Q: ¿Puede aprobarse una solicitud pendiente con fechas en un año natural ya cerrado? → A: No; las fechas pasadas sólo se aprueban dentro del año natural en curso. Si alguna fecha cae en un año cerrado, la aprobación se bloquea con `422` y la solicitud permanece Pendiente (puede rechazarse).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Resolver solicitudes pendientes del equipo (Priority: P1)
@@ -63,10 +71,13 @@ Como empleado, recibo automáticamente una notificación dentro de la aplicació
 ### Edge Cases
 
 - **Aprobación concurrente sobre saldo ajustado**: si dos solicitudes de vacaciones pendientes del mismo empleado se aprueban a la vez y entre ambas superan el saldo disponible, solo una se aprueba; la otra se bloquea por saldo insuficiente y permanece Pendiente.
+- **Solicitud que cruza años naturales**: se valida el saldo de cada año con los días que le corresponden; basta que un año no tenga saldo para bloquear la aprobación (la solicitud permanece Pendiente).
 - **Resolución simultánea de la misma solicitud**: si dos operaciones intentan resolver la misma solicitud a la vez, solo una tiene éxito; la otra recibe el aviso de que ya está resuelta.
-- **Solicitud cancelada por el empleado antes de resolverse**: si el empleado retira la solicitud (HU-04) mientras el responsable tiene la bandeja abierta, el intento de resolución informa de que la solicitud ya no existe.
+- **Solicitud cancelada por el empleado antes de resolverse**: si el empleado retira la solicitud (HU-04) mientras el responsable tiene la bandeja abierta, el intento de resolución devuelve `404` e informa de que la solicitud ya no existe.
 - **Cambio de responsable con solicitudes pendientes**: la solicitud la resuelve el responsable asignado al empleado en el momento de la resolución; el responsable anterior deja de verla y de poder resolverla.
 - **Permisos (no vacaciones)**: aprobar un permiso no altera el saldo de vacaciones (según HU-03), pero sí genera notificación y aparece en el calendario.
+- **Solicitud propia del responsable**: no aparece en su bandeja y cualquier intento de resolverla se deniega (`403`); aparece en la bandeja de su responsable superior.
+- **Responsable sin superior**: sus solicitudes quedan Pendientes sin resolutor en HU-05 (límite conocido, fuera de alcance).
 - **Bandeja vacía**: si no hay solicitudes pendientes en el equipo, se muestra un mensaje explícito indicándolo.
 - **Responsable sin equipo**: un responsable sin personas a su cargo ve la bandeja vacía.
 
@@ -76,11 +87,12 @@ Como empleado, recibo automáticamente una notificación dentro de la aplicació
 
 - **FR-001**: El sistema DEBE mostrar al responsable únicamente las solicitudes en estado Pendiente de las personas cuyo responsable asignado es él (Art. 10).
 - **FR-002**: El sistema DEBE permitir al responsable aprobar una solicitud pendiente de su equipo, con un comentario opcional.
-- **FR-003**: El sistema DEBE permitir al responsable rechazar una solicitud pendiente de su equipo, exigiendo un motivo de al menos 5 caracteres.
+- **FR-003**: El sistema DEBE permitir al responsable rechazar una solicitud pendiente de su equipo, exigiendo un motivo de 5 a 500 caracteres una vez eliminados los espacios extremos. El comentario opcional de la aprobación admite hasta 500 caracteres. Ambos se tratan como texto plano; si se supera el máximo o el motivo queda por debajo del mínimo, el servidor devuelve `400` con el error asociado al campo.
 - **FR-004**: Las únicas transiciones de estado permitidas DEBEN ser Pendiente → Aprobada y Pendiente → Rechazada; una solicitud resuelta NO DEBE poder resolverse ni modificarse de nuevo (Art. 13).
+- **FR-004b**: Las respuestas de error de la resolución DEBEN ser: `409` si la solicitud ya está resuelta o se resolvió simultáneamente, `404` si el empleado la retiró, `422` si el saldo es insuficiente, `403` si está fuera de alcance. Tras un `409` o `404` el frontend DEBE recargar la bandeja.
 - **FR-005**: La resolución DEBE registrar quién la realizó y cuándo; el motivo o comentario, si existe, queda registrado de forma inmutable.
-- **FR-006**: El sistema DEBE denegar la resolución de solicitudes de personas que no pertenezcan al equipo del responsable en sesión, obteniendo la identidad del responsable de la sesión y nunca de datos enviados por el cliente (Art. 10).
-- **FR-007**: Al aprobar una solicitud de vacaciones, el sistema DEBE revalidar que el empleado dispone de saldo suficiente y bloquear la aprobación si no es así (Art. 12).
+- **FR-006**: El sistema DEBE denegar la resolución de solicitudes de personas que no pertenezcan al equipo del responsable en sesión, obteniendo la identidad del responsable de la sesión y nunca de datos enviados por el cliente (Art. 10). Un responsable NO DEBE poder resolver sus propias solicitudes (auto-aprobación): el sistema las deniega con `403` y las registra como acceso denegado. Las solicitudes de un responsable las resuelve su responsable superior; si no tiene superior asignado, nadie puede resolverlas en HU-05.
+- **FR-007**: Al aprobar una solicitud de vacaciones, el sistema DEBE revalidar que el empleado dispone de saldo suficiente y bloquear la aprobación si no es así (Art. 12). Si la solicitud cruza años naturales, los días computados se reparten por año y se exige saldo suficiente en cada uno; si falla alguno, la aprobación se bloquea indicando el año afectado.
 - **FR-008**: El saldo del empleado NO se almacena como contador: las solicitudes aprobadas pasan a contar automáticamente como días disfrutados en el cálculo derivado de HU-02 (Art. 12).
 - **FR-009**: Al aprobar o rechazar, el sistema DEBE generar automáticamente una notificación persistida para el empleado solicitante, con el resultado, el periodo y el motivo o comentario si existe (Art. 15).
 - **FR-010**: El cambio de estado, el efecto sobre el saldo y la creación de la notificación DEBEN realizarse en una única operación atómica: o se registra todo, o nada (Art. 13.7).
@@ -111,7 +123,7 @@ Como empleado, recibo automáticamente una notificación dentro de la aplicació
 - El equipo de un responsable lo forman las personas que lo tienen asignado como responsable en su ficha de empleado (asignación gestionada en HU-01).
 - El comentario opcional al aprobar se registra en el mismo campo de motivo de la solicitud y se incluye en la notificación.
 - La notificación interna en la aplicación es el único canal; no se envía correo electrónico.
-- Las solicitudes pendientes cuyas fechas ya han pasado pueden resolverse igualmente (regularizaciones).
+- Las solicitudes pendientes cuyas fechas ya han pasado pueden aprobarse (regularizaciones) sólo si todas sus fechas caen en el año natural en curso; si alguna cae en un año cerrado (HU-02), la aprobación se bloquea con `422` y la solicitud permanece Pendiente, aunque siempre puede rechazarse.
 - La bandeja muestra las solicitudes ordenadas por antigüedad (las más antiguas primero) para resolver primero las que más esperan, con paginación en bloques de 10 como en HU-04.
 - El calendario del equipo (HU-06) se desarrolla en `spec-006`; esta historia solo garantiza que la solicitud aprobada quede disponible para él.
 - El cálculo de saldo (HU-02), el cómputo de días (HU-03) y el seguimiento de solicitudes por el empleado (HU-04) ya existen y se reutilizan.
