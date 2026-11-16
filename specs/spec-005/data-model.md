@@ -1,7 +1,7 @@
 # Data Model: spec-005 — Aprobación o Rechazo de Solicitudes
 
 **Feature**: `spec-005` (HU-05)
-**Date**: 2026-11-03
+**Date**: 2026-11-03 · **Revisado**: 2026-11-16
 **Author**: Integrante 3
 
 ---
@@ -15,7 +15,7 @@ Sin columnas nuevas. Campos implicados en la resolución:
 | Campo | Tipo BD | Tipo Java | Regla en HU-05 |
 |---|---|---|---|
 | `status` | `VARCHAR(50)` | `LeaveStatus` | `PENDING` → `APPROVED` \| `REJECTED`. Inmutable una vez resuelta. |
-| `rejection_reason` | `TEXT` | `String` | Rechazo: obligatorio, ≥ 5 caracteres (sin espacios extremos). Aprobación: comentario opcional. |
+| `rejection_reason` | `TEXT` | `String` | Rechazo: obligatorio, 5–500 caracteres (sin espacios extremos). Aprobación: comentario opcional, ≤ 500. Texto plano. |
 | `resolved_by` | `UUID` FK `employees` | `Employee` | Responsable que resolvió (sobrescribe el valor provisional que pone HU-03 al crear). |
 | `resolved_at` | `TIMESTAMPTZ` | `Instant` | Momento de la resolución. |
 | `version` | `BIGINT` | `Long` | Bloqueo optimista (existente). |
@@ -58,7 +58,9 @@ Sin cambios de esquema. Se usa `manager` para determinar el equipo. Repositorio:
 
 ---
 
-## 2. Migración `V3__leave_resolution_constraints.sql`
+## 2. Migraciones
+
+### 2.1 `V3__leave_resolution_constraints.sql` (ya en `main`, no se modifica)
 
 | Objeto | Definición |
 |---|---|
@@ -68,6 +70,14 @@ Sin cambios de esquema. Se usa `manager` para determinar el equipo. Repositorio:
 No se restringen `resolved_by`/`resolved_at` en BD (compatibilidad con *fixtures* de HU-03/HU-04 y con `ON DELETE SET NULL`; ver `research.md` §1.6).
 
 **Reversión**: `DROP TRIGGER`, `DROP FUNCTION`, `ALTER TABLE leave_requests DROP CONSTRAINT …` (documentado como comentario en la migración).
+
+### 2.2 `V5__leave_resolution_reason_max_length.sql` (nueva)
+
+| Objeto | Definición |
+|---|---|
+| `chk_leave_rejection_reason_max` | `rejection_reason IS NULL OR char_length(rejection_reason) <= 500` |
+
+**Reversión**: `ALTER TABLE leave_requests DROP CONSTRAINT chk_leave_rejection_reason_max`. Se numera `V5` porque `V4` la usa HU-08.
 
 ---
 
@@ -133,9 +143,10 @@ Listados paginados con el `PageResponse<T>` común existente.
 
 | Repositorio | Método | Uso |
 |---|---|---|
-| `LeaveRequestRepository` | `@EntityGraph(attributePaths = "employee") Page<LeaveRequest> findByEmployeeManagerIdAndStatusOrderByCreatedAtAsc(UUID managerId, LeaveStatus status, Pageable)` | Bandeja del responsable (CA-1). Índice `idx_leave_employee_status`. |
+| `LeaveRequestRepository` | `@EntityGraph(attributePaths = "employee") Page<LeaveRequest> findByEmployeeManagerIdAndEmployeeIdNotAndStatusOrderByCreatedAtAsc(UUID managerId, UUID excludedEmployeeId, LeaveStatus status, Pageable)` (se invoca con `excludedEmployeeId = managerId`) | Bandeja del responsable (CA-1); excluye las solicitudes propias. Índice `idx_leave_employee_status`. |
 | `LeaveRequestRepository` | `@Lock(PESSIMISTIC_WRITE) @Query("SELECT lr FROM LeaveRequest lr WHERE lr.id = :id") Optional<LeaveRequest> findByIdForUpdate(UUID id)` | Resolución serializada por solicitud. |
 | `EmployeeRepository` | `@Lock(PESSIMISTIC_WRITE) @Query("SELECT e FROM Employee e WHERE e.id = :id") Optional<Employee> findByIdForUpdate(UUID id)` | Serializa aprobaciones de vacaciones del mismo empleado. |
+| `LeaveRequestRepository` | `List<LeaveRequest> findOverlappingByYear(UUID employeeId, LeaveType type, LeaveStatus status, LocalDate startOfYear, LocalDate endOfYear)` (`startDate <= endOfYear AND endDate >= startOfYear`) | Saldo de HU-02 con reparto por año (C5). Sustituye a `sumCalculatedDays` en `LeaveBalanceServiceImpl`. |
 | `NotificationRepository` | `Page<Notification> findByRecipientIdOrderByCreatedAtDesc(UUID, Pageable)` | Listado del empleado. |
 | `NotificationRepository` | `long countByRecipientIdAndReadFalse(UUID)` | Contador de no leídas. |
 
@@ -147,9 +158,22 @@ Listados paginados con el `PageResponse<T>` común existente.
 |---|---|---|
 | Solo rol `RESPONSABLE_EQUIPO` accede a bandeja y resolución | Art. 10 | `403` |
 | La solicitud debe ser de un miembro directo del responsable en sesión | FR-001, FR-006 | `403` |
-| La solicitud debe existir | Edge case cancelación | `404` |
-| Solo `PENDING` es resoluble | FR-004 | `409` |
-| Motivo de rechazo ≥ 5 caracteres | FR-003 | `400` (`invalidFields.reason`) |
-| `VACATION` aprobada no puede superar `availableDays` | FR-007 | `409` (`requestedDays`, `availableDays`) |
+| Nadie resuelve sus propias solicitudes (`request.employee.id == resolver.id`) | FR-006 (2026-11-16) | `403` + `WARN` de auditoría |
+| La solicitud debe existir (retirada por el empleado = borrada, HU-04) | Edge case retirada, FR-004b | `404` |
+| Solo `PENDING` es resoluble (también ante resolución simultánea) | FR-004, FR-004b | `409` |
+| Motivo de rechazo 5–500 caracteres tras `strip()`; comentario ≤ 500 | FR-003 | `400` (`invalidFields.reason` / `comment`) |
+| Aprobar con fechas en un año natural cerrado (< año actual, Europe/Madrid) | Assumptions (2026-11-16) | `422` (la solicitud sigue `PENDING`; se puede rechazar) |
+| `VACATION` aprobada: por cada año natural del periodo, días del año ≤ `availableDays` de ese año | FR-007 (2026-11-16) | `422` (`requestedDays`, `availableDays`, `year`) |
 | Una notificación por resolución, misma transacción | FR-009, FR-010 | — |
 | Notificaciones: solo las propias | FR-011 | `403` / `404` |
+
+**Componente de dominio nuevo** (`com.iw.rrhh.leave.service.LeaveDayAllocator`, sin estado, sobre `HolidayCalendarService.isWorkingDay`):
+
+| Método | Contrato |
+|---|---|
+| `Map<Integer,Integer> allocate(LocalDate start, LocalDate end, int calculatedDays)` | Reparto por año natural; la suma es siempre `calculatedDays`; años previos al último: `min(laborables de hoy, restante)`; último: restante. Un solo año: `{año: calculatedDays}`. |
+| `int daysInYear(LeaveRequest r, int year)` | Días de la solicitud que cuentan en `year` (0 si no lo toca). Lo usan el saldo (HU-02) y la validación de aprobación. |
+
+**Orden de evaluación al aprobar**: `404` → `403` (alcance/auto-resolución) → `409` → `422` año cerrado → `422` saldo por año.
+
+**Nuevo tipo**: `LeaveApprovalNotAllowedException` (`com.iw.rrhh.common.exception`) con `detail`, `year`, y opcionalmente `requestedDays`/`availableDays`; mapeada a `422` en `GlobalExceptionHandler`.

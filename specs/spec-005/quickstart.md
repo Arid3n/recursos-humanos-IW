@@ -1,7 +1,7 @@
 # Quickstart: spec-005 — Aprobación o Rechazo de Solicitudes
 
 **Feature**: `spec-005` (HU-05)
-**Date**: 2026-11-03
+**Date**: 2026-11-03 · **Revisado**: 2026-11-16
 **Author**: Integrante 3
 
 ---
@@ -9,7 +9,7 @@
 ## 1. Requisitos Previos
 
 - PostgreSQL activo: `docker compose up -d`
-- Backend: `cd backend && ./mvnw spring-boot:run` (aplica `V3__leave_resolution_constraints.sql`)
+- Backend: `cd backend && ./mvnw spring-boot:run` (aplica `V3` y `V5__leave_resolution_reason_max_length.sql`)
 - Frontend: `cd frontend && npm start` → `http://localhost:4200`
 - Usuarios de desarrollo (contraseña `admin123`, ver `research.md` §1.9):
   - `responsable@empresa.com` — `RESPONSABLE_EQUIPO`, responsable de `empleado@empresa.com`
@@ -34,7 +34,7 @@
 
 ### Escenario 3 — Rechazo con motivo (HU-05.CA-2)
 1. Pulsar "Rechazar" y dejar el motivo vacío o con menos de 5 caracteres.
-2. **Esperado**: el botón de confirmar no envía y se muestra el error junto al campo.
+2. **Esperado**: el botón de confirmar no envía y se muestra el error junto al campo. Un motivo de más de 500 caracteres también se rechaza (`400`, `invalidFields.reason`).
 3. Escribir un motivo válido y confirmar.
 4. **Esperado**: la solicitud desaparece de la bandeja; en "Mis Solicitudes" del empleado figura Rechazada con "Ver motivo"; el saldo no cambia.
 
@@ -61,7 +61,28 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 
 ### Escenario 7 — Saldo insuficiente al aprobar (HU-05.CA-5)
 1. Con dos solicitudes de vacaciones pendientes cuya suma supera el saldo disponible, aprobar la primera y después la segunda.
-2. **Esperado**: la segunda devuelve `409` "Saldo insuficiente de vacaciones" y permanece en la bandeja.
+2. **Esperado**: la segunda devuelve `422` "Saldo insuficiente de vacaciones" y permanece en la bandeja.
+
+### Escenario 8 — Vacaciones que cruzan años (HU-05.CA-5)
+1. Solicitud pendiente del 28/12 al 08/01 (año actual → siguiente). Preparar por *fixture* un empleado cuyo saldo disponible en el año siguiente sea menor que los días que le tocan (el año siguiente usa el convenio completo por defecto; hay que consumirlo con otras aprobadas, o usar un empleado incorporado ese año).
+2. Aprobar.
+3. **Esperado**: `422` con `year` = año con saldo insuficiente; la solicitud sigue `PENDING`.
+4. Con saldo suficiente en ambos años: `200`. Después, en "Mi Ficha y Saldo" (HU-02) los días «disfrutados» de **cada** año incluyen la parte que le corresponde (reparto: años previos con días laborables de hoy, el último año con el resto; suma = `calculatedDays`).
+5. Si cambian los festivos y la suma por año no coincide con `calculatedDays`, el reparto sigue sumando `calculatedDays` (el último año absorbe la diferencia).
+
+### Escenario 9 — Año cerrado (HU-05.CA-5)
+1. Solicitud pendiente con fechas en un año anterior al actual (preparada como *fixture*).
+2. Aprobar → `422`, sigue `PENDING`. Rechazarla con motivo → `200`.
+
+### Escenario 10 — Solicitud propia del responsable (HU-05.CA-1, Art. 10)
+1. Como `responsable@empresa.com`, crear una solicitud propia (HU-03).
+2. **Esperado**: no aparece en su bandeja; `POST .../approve` o `.../reject` sobre ella devuelve `403` y queda un `WARN` de auditoría.
+3. Con el superior del responsable (si existe y tiene rol `RESPONSABLE_EQUIPO`) sí aparece en su bandeja y puede resolverla.
+4. Si el responsable no tiene superior, o su superior no tiene ese rol, la solicitud queda `PENDING` y nadie puede resolverla en HU-05 (límite conocido; mejora pendiente en HU-01).
+
+### Escenario 11 — Solicitud retirada (HU-05.CA-3)
+1. Con la bandeja abierta, el empleado cancela la solicitud (HU-04).
+2. Aprobar desde la bandeja → `404`; la bandeja se recarga y la fila desaparece.
 
 ---
 
@@ -74,9 +95,9 @@ cd frontend && npx ng test --watch=false
 
 | CA | Cobertura esperada |
 |---|---|
-| HU-05.CA-1 | Bandeja solo con `PENDING` del equipo; `403` para otro equipo y para rol `EMPLEADO`; tras cambio de responsable, solo resuelve el nuevo. |
-| HU-05.CA-2 | Aprobación con/sin comentario; rechazo con motivo; `400` sin motivo o < 5 caracteres. |
-| HU-05.CA-3 | `409` al resolver una solicitud `APPROVED`/`REJECTED`; *trigger* de BD impide modificar su estado o motivo. |
+| HU-05.CA-1 | Bandeja solo con `PENDING` del equipo; `403` para otro equipo y para rol `EMPLEADO`; `403` al resolver una solicitud propia (también con `manager_id` autorreferenciado) y ausente de su bandeja; tras cambio de responsable, solo resuelve el nuevo. |
+| HU-05.CA-2 | Aprobación con/sin comentario; rechazo con motivo; `400` sin motivo, < 5 o > 500 caracteres; comentario > 500 → `400`; `CHECK` de BD rechaza > 500. |
+| HU-05.CA-3 | `409` al resolver una solicitud `APPROVED`/`REJECTED` y en resolución simultánea de la misma solicitud; `404` si el empleado la retiró; *trigger* de BD impide modificar su estado o motivo. |
 | Regresión | Suites de HU-03/HU-04 siguen en verde con `V3` aplicada. |
 | HU-05.CA-4 | Notificación creada en la resolución; listado, contador y marcado propios; `403` sobre notificación ajena; *rollback* conjunto si falla la notificación. |
-| HU-05.CA-5 | Saldo derivado refleja la aprobación; saldo insuficiente → `409`; aprobaciones concurrentes no dejan saldo negativo. |
+| HU-05.CA-5 | Saldo derivado refleja la aprobación (también el de **ambos** años en una solicitud que cruza años, con la regla de reparto); saldo insuficiente → `422`; cruce de años validado año a año; año cerrado → `422`; aprobaciones concurrentes no dejan saldo negativo. |
