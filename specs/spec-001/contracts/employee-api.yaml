@@ -97,6 +97,45 @@ paths:
         '204':
           description: Empleado inactivado exitosamente
 
+  /api/v1/employees/{id}/personal-data:
+    put:
+      summary: Actualizar datos personales no contractuales
+      operationId: updatePersonalData
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePersonalDataRequest'
+      responses:
+        '200':
+          description: Datos personales actualizados exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDetailResponse'
+        '400':
+          description: Error de validación en datos personales
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Acceso denegado (Solo rol RRHH)
+        '404':
+          description: Empleado no encontrado
+
   /api/v1/employees/{id}/contracts:
     post:
       summary: Registrar variación contractual inmutable (Append-Only)
@@ -299,6 +338,19 @@ components:
           format: date
         currentContract:
           $ref: '#/components/schemas/ContractHistoryItemResponse'
+
+    UpdatePersonalDataRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          maxLength: 100
+        lastName:
+          type: string
+          maxLength: 150
 
     ProblemDetail:
       type: object

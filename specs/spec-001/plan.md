@@ -91,7 +91,7 @@ backend/src/test/java/com/iw/rrhh/employee/
 └── EmployeeServiceTest.java           # Unit test de reglas de negocio
 
 frontend/src/app/
-├── features/employees/
+├── employees/
 │   ├── components/
 │   │   ├── employee-create/           # Formulario reactivo de alta
 │   │   ├── employee-detail/           # Detalle y variación contractual

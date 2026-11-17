@@ -3,18 +3,28 @@ import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { EmployeeService } from '../../services/employee.service';
 import { ContractHistoryItemResponse } from '../../models/employee.models';
+import { ContractVariationComponent } from '../contract-variation/contract-variation.component';
 
 @Component({
   selector: 'app-contract-history',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatCardModule, MatChipsModule],
+  imports: [CommonModule, MatTableModule, MatCardModule, MatChipsModule, MatButtonModule, MatIconModule, MatDialogModule],
   template: `
     <mat-card class="history-card">
-      <mat-card-header>
-        <mat-card-title>Trayectoria Contractual (Inmutable)</mat-card-title>
-        <mat-card-subtitle>Histórico cronológico de variaciones de puesto, departamento y condiciones salariales</mat-card-subtitle>
+      <mat-card-header class="history-header">
+        <div>
+          <mat-card-title>Trayectoria Contractual (Inmutable)</mat-card-title>
+          <mat-card-subtitle>Histórico cronológico de variaciones de puesto, departamento y condiciones salariales</mat-card-subtitle>
+        </div>
+        <button mat-stroked-button color="primary" type="button" (click)="openVariationDialog()" class="btn-new-variation">
+          <mat-icon>add_circle_outline</mat-icon>
+          Nueva Variación
+        </button>
       </mat-card-header>
 
       <mat-card-content>
@@ -74,6 +84,15 @@ import { ContractHistoryItemResponse } from '../../models/employee.models';
       margin-top: 1.5rem;
       border-radius: 12px;
     }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .btn-new-variation {
+      margin-left: auto;
+    }
     table {
       width: 100%;
       margin-top: 1rem;
@@ -88,6 +107,7 @@ import { ContractHistoryItemResponse } from '../../models/employee.models';
 export class ContractHistoryComponent implements OnInit {
   @Input({ required: true }) employeeId!: string;
   private readonly employeeService = inject(EmployeeService);
+  private readonly dialog = inject(MatDialog);
 
   history: ContractHistoryItemResponse[] = [];
   displayedColumns: string[] = ['effectiveFrom', 'position', 'department', 'salary', 'collectiveAgreement', 'manager', 'audit'];
@@ -102,6 +122,23 @@ export class ContractHistoryComponent implements OnInit {
     this.employeeService.getContractHistory(this.employeeId).subscribe({
       next: (data) => (this.history = data),
       error: () => (this.history = [])
+    });
+  }
+
+  openVariationDialog(): void {
+    const latestContract = this.history.length > 0 ? this.history[0] : undefined;
+    const dialogRef = this.dialog.open(ContractVariationComponent, {
+      data: {
+        employeeId: this.employeeId,
+        currentContract: latestContract
+      },
+      width: '600px'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loadHistory();
+      }
     });
   }
 }
