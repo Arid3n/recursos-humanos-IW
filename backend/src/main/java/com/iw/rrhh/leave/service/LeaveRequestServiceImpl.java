@@ -35,6 +35,23 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final UserRepository userRepository;
     private final LeaveBalanceService leaveBalanceService;
     private final HolidayCalendarService holidayCalendarService;
+    private final java.time.Clock clock;
+
+    public LeaveRequestServiceImpl(
+            LeaveRequestRepository leaveRequestRepository,
+            EmployeeRepository employeeRepository,
+            UserRepository userRepository,
+            LeaveBalanceService leaveBalanceService,
+            HolidayCalendarService holidayCalendarService,
+            java.time.Clock clock
+    ) {
+        this.leaveRequestRepository = leaveRequestRepository;
+        this.employeeRepository = employeeRepository;
+        this.userRepository = userRepository;
+        this.leaveBalanceService = leaveBalanceService;
+        this.holidayCalendarService = holidayCalendarService;
+        this.clock = clock;
+    }
 
     public LeaveRequestServiceImpl(
             LeaveRequestRepository leaveRequestRepository,
@@ -43,11 +60,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             LeaveBalanceService leaveBalanceService,
             HolidayCalendarService holidayCalendarService
     ) {
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.employeeRepository = employeeRepository;
-        this.userRepository = userRepository;
-        this.leaveBalanceService = leaveBalanceService;
-        this.holidayCalendarService = holidayCalendarService;
+        this(leaveRequestRepository, employeeRepository, userRepository, leaveBalanceService, holidayCalendarService, java.time.Clock.systemUTC());
     }
 
     @Override
@@ -79,6 +92,12 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         if (request.endDate().isBefore(request.startDate())) {
             throw new IllegalArgumentException("La fecha de fin no puede ser anterior a la de inicio");
         }
+        if (request.startDate().isBefore(LocalDate.now(clock))) {
+            throw new IllegalArgumentException("La fecha de inicio debe ser igual o posterior a la fecha actual");
+        }
+        if (request.leaveType() == LeaveType.PERMIT && (request.justification() == null || request.justification().trim().isEmpty())) {
+            throw new IllegalArgumentException("La justificación es obligatoria para ausencias de tipo permiso");
+        }
 
         Employee employee = getAuthenticatedEmployee();
 
@@ -99,12 +118,20 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new LeaveRequestOverlapException();
         }
 
-        // 3. Validación de saldo disponible si es VACATION (Art. 12, FR-004)
+        // 3. Validación de saldo disponible si es VACATION con reserva preventiva (Art. 12, FR-004)
         if (request.leaveType() == LeaveType.VACATION) {
             int year = request.startDate().getYear();
             LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(year);
-            if (workingDays > balance.availableDays()) {
-                throw new InsufficientLeaveBalanceException(workingDays, balance.availableDays());
+            int pendingDays = leaveRequestRepository.sumCalculatedDays(
+                    employee.getId(),
+                    LeaveType.VACATION,
+                    LeaveStatus.PENDING,
+                    LocalDate.of(year, 1, 1),
+                    LocalDate.of(year, 12, 31)
+            );
+            int availableWithPending = balance.availableDays() - pendingDays;
+            if (workingDays > availableWithPending) {
+                throw new InsufficientLeaveBalanceException(workingDays, availableWithPending);
             }
         }
 
@@ -114,7 +141,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 request.leaveType(),
                 request.startDate(),
                 request.endDate(),
-                workingDays
+                workingDays,
+                request.justification()
         );
         leaveRequest.setStatus(LeaveStatus.PENDING);
         if (employee.getManager() != null) {
@@ -135,6 +163,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 saved.getStartDate(),
                 saved.getEndDate(),
                 saved.getCalculatedDays(),
+                saved.getJustification(),
                 saved.getStatus(),
                 saved.getCreatedAt()
         );
@@ -187,7 +216,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new com.iw.rrhh.common.exception.LeaveRequestNotCancellableException("Solo se pueden cancelar solicitudes en estado PENDIENTE");
         }
 
-        leaveRequestRepository.delete(leaveRequest);
+        leaveRequest.cancel(java.time.Instant.now(clock));
+        leaveRequestRepository.save(leaveRequest);
     }
 
     private com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse mapToSummary(LeaveRequest lr) {
@@ -197,6 +227,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 lr.getStartDate(),
                 lr.getEndDate(),
                 lr.getCalculatedDays(),
+                lr.getJustification(),
                 lr.getStatus(),
                 lr.getStatus() == LeaveStatus.REJECTED ? lr.getRejectionReason() : null,
                 lr.getCreatedAt(),

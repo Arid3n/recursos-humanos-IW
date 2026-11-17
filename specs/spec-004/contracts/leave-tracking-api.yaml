@@ -14,7 +14,7 @@ paths:
       tags:
         - Leave Tracking
       security:
-        - basicAuth: []
+        - bearerAuth: []
       parameters:
         - name: page
           in: query
@@ -39,7 +39,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [PENDING, APPROVED, REJECTED]
+            enum: [PENDING, APPROVED, REJECTED, CANCELLED]
       responses:
         '200':
           description: Listado paginado de solicitudes recuperado con éxito.
@@ -60,7 +60,7 @@ paths:
       tags:
         - Leave Tracking
       security:
-        - basicAuth: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -71,7 +71,7 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Solicitud cancelada y descartada con éxito.
+          description: Solicitud cancelada con éxito (transiciona a estado CANCELLED).
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -95,9 +95,10 @@ paths:
 
 components:
   securitySchemes:
-    basicAuth:
+    bearerAuth:
       type: http
-      scheme: basic
+      scheme: bearer
+      bearerFormat: JWT
 
   responses:
     Unauthorized:
@@ -114,7 +115,7 @@ components:
 
     LeaveStatus:
       type: string
-      enum: [PENDING, APPROVED, REJECTED]
+      enum: [PENDING, APPROVED, REJECTED, CANCELLED]
 
     LeaveRequestSummaryResponse:
       type: object
@@ -142,6 +143,10 @@ components:
         calculatedDays:
           type: integer
           minimum: 1
+        justification:
+          type: string
+          nullable: true
+          description: Justificación aportada por el empleado al solicitar.
         status:
           $ref: '#/components/schemas/LeaveStatus'
         rejectionReason:

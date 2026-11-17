@@ -16,6 +16,22 @@ public record LeaveRequestResponse(
         LocalDate startDate,
         LocalDate endDate,
         Integer calculatedDays,
+        String justification,
         LeaveStatus status,
         Instant createdAt
-) {}
+) {
+    public LeaveRequestResponse(
+            UUID id,
+            UUID employeeId,
+            String employeeFullName,
+            UUID managerId,
+            LeaveType leaveType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer calculatedDays,
+            LeaveStatus status,
+            Instant createdAt
+    ) {
+        this(id, employeeId, employeeFullName, managerId, leaveType, startDate, endDate, calculatedDays, null, status, createdAt);
+    }
+}

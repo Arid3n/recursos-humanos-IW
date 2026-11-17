@@ -1,6 +1,6 @@
 export type LeaveType = 'VACATION' | 'PERMIT';
 
-export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface LeaveBalanceResponse {
   employeeId: string;
@@ -40,6 +40,7 @@ export interface CreateLeaveRequest {
   leaveType: LeaveType;
   startDate: string; // ISO YYYY-MM-DD
   endDate: string;   // ISO YYYY-MM-DD
+  justification?: string | null;
 }
 
 export interface LeaveRequestResponse {
@@ -51,6 +52,7 @@ export interface LeaveRequestResponse {
   startDate: string;
   endDate: string;
   calculatedDays: number;
+  justification: string | null;
   status: LeaveStatus;
   createdAt: string;
 }
@@ -70,6 +72,7 @@ export interface LeaveRequestSummary {
   startDate: string;
   endDate: string;
   calculatedDays: number;
+  justification: string | null;
   status: LeaveStatus;
   rejectionReason: string | null;
   createdAt: string;

@@ -20,37 +20,37 @@
 **Purpose**: Entidades, DTOs, servicios de cómputo y métodos de repositorio que bloquean la implementación de la historia de usuario
 
 - [x] T003 [P] Implement HolidayCalendarService excluding weekends and official holidays in backend/src/main/java/com/iw/rrhh/common/service/HolidayCalendarService.java
-- [x] T004 [P] Create DTO records CreateLeaveRequest, LeaveRequestResponse, and WorkingDaysCalculationResponse in backend/src/main/java/com/iw/rrhh/leave/dto/
-- [x] T005 [P] Add hasOverlappingRequests query to LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java
+- [x] T004 [P] Create DTO records CreateLeaveRequest (including justification), LeaveRequestResponse, and WorkingDaysCalculationResponse in backend/src/main/java/com/iw/rrhh/leave/dto/
+- [x] T005 [P] Add hasOverlappingRequests and sumPendingDaysByEmployeeIdAndYear queries to LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java
 - [x] T006 [P] Add business exceptions LeaveRequestOverlapException and InsufficientLeaveBalanceException mapped to RFC 9457 ProblemDetail in backend/src/main/java/com/iw/rrhh/common/exception/GlobalExceptionHandler.java
 
 ---
 
 ## Phase 3: User Story 1 - Solicitud de Vacaciones o Permisos (Priority: P1) 🎯 MVP
 
-**Goal**: Permitir al empleado autenticado cumplimentar un formulario para solicitar un periodo de vacaciones o un permiso especificando el tipo y las fechas, visualizando el cómputo oficial de días laborables antes de confirmar, validando que no excede el saldo de vacaciones ni solapa con ausencias previas, y registrando la solicitud en estado PENDING vinculada a su responsable.
+**Goal**: Permitir al empleado autenticado cumplimentar un formulario para solicitar un periodo de vacaciones o un permiso especificando el tipo, las fechas y la justificación requerida, visualizando el cómputo oficial de días laborables antes de confirmar, validando que no excede el saldo de vacaciones (deduciendo solicitudes pendientes previas), que no solicita fechas pasadas y no solapa con ausencias previas, registrando la solicitud en estado PENDING vinculada a su responsable.
 
-**Independent Test**: Ejecutar `LeaveRequestIntegrationTest` contra PostgreSQL real vía Testcontainers seleccionando un rango de fechas con saldo suficiente, comprobando que el servidor calcula los días laborables descontando festivos y fines de semana, persistiendo la solicitud en estado `PENDING` y verificando los rechazos por saldo insuficiente o solapamiento.
+**Independent Test**: Ejecutar `LeaveRequestIntegrationTest` contra PostgreSQL real vía Testcontainers seleccionando un rango de fechas con saldo suficiente, comprobando que el servidor calcula los días laborables descontando festivos y fines de semana, persistiendo la solicitud en estado `PENDING` y verificando los rechazos por saldo insuficiente (con pendientes), fechas pasadas (`startDate < hoy`), justificación faltante en permisos o solapamiento.
 
 ### Tests for User Story 1 (TDD - Tests First) 🧪
 
 - [x] T007 [P] [US1] Unit test for HolidayCalendarService verifying weekends and official holidays exclusion in backend/src/test/java/com/iw/rrhh/common/HolidayCalendarServiceTest.java
-- [x] T008 [P] [US1] Unit test for LeaveRequestService verifying balance check, overlap rejection, and manager assignment in backend/src/test/java/com/iw/rrhh/leave/LeaveRequestServiceTest.java
+- [x] T008 [P] [US1] Unit test for LeaveRequestService verifying balance check (deducting pending requests), past date rejection (startDate < hoy), mandatory justification on PERMIT, overlap rejection, and manager assignment in backend/src/test/java/com/iw/rrhh/leave/LeaveRequestServiceTest.java
 - [x] T009 [P] [US1] Integration test testCreateLeaveRequest_Success_And_Validations with real PostgreSQL via Testcontainers in backend/src/test/java/com/iw/rrhh/leave/LeaveRequestIntegrationTest.java
 
 ### Implementation for User Story 1 (Backend)
 
-- [x] T010 [US1] Implement LeaveRequestService and LeaveRequestServiceImpl with working days calculation, overlap detection, vacation balance validation, and PENDING persistence in backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestServiceImpl.java
+- [x] T010 [US1] Implement LeaveRequestService and LeaveRequestServiceImpl with working days calculation, overlap detection, vacation balance validation deducting pending requests, startDate >= hoy validation, mandatory justification for PERMIT, and PENDING persistence in backend/src/main/java/com/iw/rrhh/leave/service/LeaveRequestServiceImpl.java
 - [x] T011 [US1] Implement LeaveRequestController exposing GET /api/v1/leave/requests/calculate-days and POST /api/v1/leave/requests in backend/src/main/java/com/iw/rrhh/leave/controller/LeaveRequestController.java
 
 ### Implementation for User Story 1 (Frontend)
 
-- [x] T012 [P] [US1] Define TypeScript interfaces CreateLeaveRequest, LeaveRequestResponse, and WorkingDaysCalculationResponse in frontend/src/app/features/leave/models/leave.models.ts
+- [x] T012 [P] [US1] Define TypeScript interfaces CreateLeaveRequest (with justification), LeaveRequestResponse, and WorkingDaysCalculationResponse in frontend/src/app/features/leave/models/leave.models.ts
 - [x] T013 [US1] Add calculateWorkingDays and createLeaveRequest methods in frontend/src/app/features/leave/services/leave.service.ts
-- [x] T014 [US1] Implement LeaveRequestCreateComponent reactive form with mat-select, mat-date-range-input, debounced days calculation, advance notice recommendation warning (< 7 days), and balance check in frontend/src/app/features/leave/components/leave-request-create/leave-request-create.component.ts
+- [x] T014 [US1] Implement LeaveRequestCreateComponent reactive form with mat-select, mat-date-range-input (with minDate = today), conditional justification field (required if PERMIT), debounced days calculation, advance notice recommendation warning (< 7 days), and balance check in frontend/src/app/features/leave/components/leave-request-create/leave-request-create.component.ts
 - [x] T015 [P] [US1] Implement accessible template and styling for LeaveRequestCreateComponent with WCAG 2.1 AA in frontend/src/app/features/leave/components/leave-request-create/leave-request-create.component.html
 - [x] T016 [US1] Register /leave/request route in frontend/src/app/app.routes.ts and add navigation item in frontend/src/app/app.html
-- [x] T017 [P] [US1] Unit test LeaveRequestCreateComponent verifying form validation and API interaction in frontend/src/app/features/leave/components/leave-request-create/leave-request-create.component.spec.ts
+- [x] T017 [P] [US1] Unit test LeaveRequestCreateComponent verifying form validation (justification required on PERMIT, minDate) and API interaction in frontend/src/app/features/leave/components/leave-request-create/leave-request-create.component.spec.ts
 
 ---
 
@@ -108,3 +108,14 @@ Task: "Define TypeScript interfaces in frontend/src/app/features/leave/models/le
 3. Completar Phase 3: User Story 1 (Backend + Frontend de creación de solicitud).
 4. **Validación Independiente**: Probar el flujo completo creando una solicitud válida, verificando que se rechaza si solapa o excede saldo y comprobando el cálculo de días laborables.
 5. Ejecutar Phase 4: Polish & Quickstart.
+
+---
+
+## Phase 5: Convergence
+
+- [x] T020 Add justification field (max 255 chars) to CreateLeaveRequest and LeaveRequestResponse DTOs and map to LeaveRequest entity per HU03-FR-001 (missing)
+- [x] T021 Implement validation in LeaveRequestServiceImpl requiring justification for PERMIT and optional for VACATION per HU03-FR-001 (missing)
+- [x] T022 Implement validation in LeaveRequestServiceImpl rejecting requests where startDate is before LocalDate.now() with ProblemDetail per HU03-FR-005 (missing)
+- [x] T023 Implement preventive balance deduction in LeaveRequestServiceImpl subtracting pending vacation days from available balance before validation per HU03-FR-004 (missing)
+- [x] T024 Add unit and integration tests in LeaveRequestServiceTest and LeaveRequestIntegrationTest for justification, past date rejection, and cumulative pending balance deduction per HU03-SC-003, HU03-SC-004 (missing)
+- [x] T025 Update LeaveRequestCreateComponent with justification control, dynamic required validator on PERMIT, and update tests in leave-request-create.component.spec.ts per HU03-FR-001 (missing)

@@ -77,6 +77,27 @@
           </mat-error>
         </mat-form-field>
 
+        <!-- Justificación / Observaciones -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>
+            {{ form.get('leaveType')?.value === 'PERMIT' ? 'Motivo / Justificación *' : 'Observaciones (opcional)' }}
+          </mat-label>
+          <textarea
+            matInput
+            formControlName="justification"
+            rows="3"
+            maxlength="255"
+            placeholder="Indica el motivo o detalles relevantes de la ausencia..."
+            aria-label="Justificación o motivo de la ausencia"></textarea>
+          <mat-hint align="end">{{ form.get('justification')?.value?.length || 0 }}/255</mat-hint>
+          <mat-error *ngIf="form.get('justification')?.hasError('required')">
+            La justificación es obligatoria para solicitudes de permiso
+          </mat-error>
+          <mat-error *ngIf="form.get('justification')?.hasError('maxlength')">
+            La justificación no puede exceder 255 caracteres
+          </mat-error>
+        </mat-form-field>
+
         <!-- Previsualización interactiva de días laborables (Art. 14) -->
         <div *ngIf="calculatingDays()" class="calculating-indicator">
           <mat-progress-spinner mode="indeterminate" diameter="24"></mat-progress-spinner>

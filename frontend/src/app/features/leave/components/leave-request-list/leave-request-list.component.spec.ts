@@ -24,6 +24,7 @@ describe('LeaveRequestListComponent', () => {
     startDate: '2026-07-06',
     endDate: '2026-07-10',
     calculatedDays: 5,
+    justification: 'Vacaciones de verano',
     status: 'PENDING',
     rejectionReason: null,
     createdAt: '2026-06-01T10:00:00Z',
@@ -36,6 +37,7 @@ describe('LeaveRequestListComponent', () => {
     startDate: '2026-08-10',
     endDate: '2026-08-11',
     calculatedDays: 2,
+    justification: 'Mudanza',
     status: 'APPROVED',
     rejectionReason: null,
     createdAt: '2026-06-15T09:30:00Z',
@@ -48,17 +50,31 @@ describe('LeaveRequestListComponent', () => {
     startDate: '2026-09-01',
     endDate: '2026-09-05',
     calculatedDays: 5,
+    justification: null,
     status: 'REJECTED',
     rejectionReason: 'Coincidencia de personal crítico en el departamento',
     createdAt: '2026-07-01T08:00:00Z',
     canCancel: false
   };
 
+  const mockCancelledRequest: LeaveRequestSummary = {
+    id: 'req-004',
+    leaveType: 'VACATION',
+    startDate: '2026-10-01',
+    endDate: '2026-10-05',
+    calculatedDays: 5,
+    justification: null,
+    status: 'CANCELLED',
+    rejectionReason: null,
+    createdAt: '2026-08-01T08:00:00Z',
+    canCancel: false
+  };
+
   const mockPageResponse: PageResponse<LeaveRequestSummary> = {
-    content: [mockPendingRequest, mockApprovedRequest, mockRejectedRequest],
+    content: [mockPendingRequest, mockApprovedRequest, mockRejectedRequest, mockCancelledRequest],
     page: 0,
     size: 10,
-    totalElements: 3,
+    totalElements: 4,
     totalPages: 1,
     first: true,
     last: true
@@ -100,12 +116,12 @@ describe('LeaveRequestListComponent', () => {
 
     expect(component).toBeTruthy();
     expect(mockLeaveService.getMyRequests).toHaveBeenCalledWith(0, 10, undefined);
-    expect(component.requests().length).toBe(3);
-    expect(component.totalElements()).toBe(3);
+    expect(component.requests().length).toBe(4);
+    expect(component.totalElements()).toBe(4);
 
     const compiled = fixture.nativeElement as HTMLElement;
     const rows = compiled.querySelectorAll('.table-row');
-    expect(rows.length).toBe(3);
+    expect(rows.length).toBe(4);
   });
 
   it('should filter by status when filter is selected (HU-04.CA-4)', () => {
@@ -118,6 +134,10 @@ describe('LeaveRequestListComponent', () => {
     expect(component.selectedStatus()).toBe('PENDING');
     expect(component.pageIndex).toBe(0);
     expect(mockLeaveService.getMyRequests).toHaveBeenCalledWith(0, 10, 'PENDING');
+
+    component.setFilter('CANCELLED');
+    expect(component.selectedStatus()).toBe('CANCELLED');
+    expect(mockLeaveService.getMyRequests).toHaveBeenCalledWith(0, 10, 'CANCELLED');
   });
 
   it('should handle pagination changes', () => {

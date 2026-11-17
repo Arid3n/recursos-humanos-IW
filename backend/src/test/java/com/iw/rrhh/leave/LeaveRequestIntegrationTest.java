@@ -209,7 +209,8 @@ public class LeaveRequestIntegrationTest {
         CreateLeaveRequest request = new CreateLeaveRequest(
                 LeaveType.PERMIT,
                 LocalDate.of(2026, 7, 6),
-                LocalDate.of(2026, 7, 8)
+                LocalDate.of(2026, 7, 8),
+                "Permiso debidamente acreditado"
         );
 
         mockMvc.perform(post("/leave/requests")
@@ -218,6 +219,7 @@ public class LeaveRequestIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.leaveType").value("PERMIT"))
                 .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.justification").value("Permiso debidamente acreditado"))
                 .andExpect(jsonPath("$.calculatedDays").value(3));
     }
 
@@ -264,5 +266,58 @@ public class LeaveRequestIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Debe rechazar con 400 si el tipo es PERMIT y no se incluye justificación")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_PermitWithoutJustification_Rejected() throws Exception {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.PERMIT,
+                LocalDate.of(2026, 7, 6),
+                LocalDate.of(2026, 7, 8),
+                ""
+        );
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail", containsString("La justificación es obligatoria para ausencias de tipo permiso")));
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Debe rechazar con 400 si la fecha de inicio es anterior a la fecha actual")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_PastDate_Rejected() throws Exception {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.VACATION,
+                LocalDate.of(2026, 5, 10), // Anterior al reloj de test (2026-06-01)
+                LocalDate.of(2026, 5, 15)
+        );
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail", containsString("La fecha de inicio debe ser igual o posterior a la fecha actual")));
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Permite justificación opcional en solicitudes de vacaciones y la retorna")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_VacationWithOptionalJustification() throws Exception {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.VACATION,
+                LocalDate.of(2026, 7, 6),
+                LocalDate.of(2026, 7, 10),
+                "Vacaciones de verano en familia"
+        );
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.justification").value("Vacaciones de verano en familia"));
     }
 }

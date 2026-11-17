@@ -174,7 +174,8 @@ public class LeaveRequestTrackingIntegrationTest {
         mockMvc.perform(post("/leave/requests/" + saved.getId() + "/cancel"))
                 .andExpect(status().isNoContent());
 
-        assertThat(leaveRequestRepository.findById(saved.getId())).isEmpty();
+        LeaveRequest cancelled = leaveRequestRepository.findById(saved.getId()).orElseThrow();
+        assertThat(cancelled.getStatus()).isEqualTo(LeaveStatus.CANCELLED);
     }
 
     @Test
