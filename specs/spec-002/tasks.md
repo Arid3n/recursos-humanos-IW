@@ -43,7 +43,7 @@
 ### Implementation for User Story 1
 
 - [x] T012 [US1] Implement LeaveBalanceService and LeaveBalanceServiceImpl.getMyLeaveBalance calculating dynamic balance from contract and LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/service/LeaveBalanceServiceImpl.java
-- [x] T013 [US1] Implement EmployeeProfileController exposing GET /api/v1/employees/me using SecurityContext authentication in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeProfileController.java
+- [x] T013 [US1] Expose GET /api/v1/employees/me in EmployeeController using SecurityContext authentication in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeController.java
 - [x] T014 [US1] Implement LeaveBalanceController exposing GET /api/v1/leave/balances/me and GET /api/v1/leave/requests/me in backend/src/main/java/com/iw/rrhh/leave/controller/LeaveBalanceController.java
 - [x] T015 [P] [US1] Create TypeScript interfaces LeaveBalanceResponse, LeaveSummaryItem, and EmployeeProfile in frontend/src/app/features/leave/models/leave.models.ts
 - [x] T016 [US1] Implement LeaveService HTTP client for /balances/me and /requests/me in frontend/src/app/features/leave/services/leave.service.ts

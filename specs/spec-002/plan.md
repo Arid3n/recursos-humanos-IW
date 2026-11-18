@@ -1,7 +1,7 @@
 # Implementation Plan: spec-002 — Consulta de Ficha y Saldo de Vacaciones
 
 **Branch**: `spec-002` | **Date**: 2026-10-29 | **Spec**: [specs/spec-002/spec.md](spec.md)  
-**Input**: Especificación HU-02 (clarificada con 4 decisiones cerradas)  
+**Input**: Especificación HU-02 (clarificada con 5 decisiones cerradas)  
 
 ---
 
@@ -68,7 +68,7 @@ specs/spec-002/
 backend/src/main/java/com/iw/rrhh/
 ├── employee/
 │   ├── controller/
-│   │   └── EmployeeProfileController.java     # Endpoint GET /api/v1/employees/me
+│   │   └── EmployeeController.java            # Endpoint GET /api/v1/employees/me (consolidado)
 │   └── dto/
 │       └── EmployeeProfileResponse.java
 ├── leave/

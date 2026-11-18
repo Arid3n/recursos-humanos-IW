@@ -12,51 +12,51 @@
 
 ## 1. Requirement Completeness
 
-- [ ] CHK001 Are the 4 mandatory components of leave balance (entitled days, spent days, pending days, available days) explicitly enumerated? [Completeness, Spec §FR-002, Constitution Art. 12]
-- [ ] CHK002 Are basic personal and contractual profile fields (names, national ID, email, hire date, current position, department, agreement, manager) specified for the employee profile view? [Completeness, Spec §1. Acceptance Scenario 1, Contracts §EmployeeProfileResponse]
-- [ ] CHK003 Is the dynamic on-demand calculation mechanism defined from source of truth without relying on manually editable balance columns or tables? [Completeness, Spec §FR-003, Constitution Art. 12]
-- [ ] CHK004 Is the formula for mid-year hire date prorating explicitly defined with rounding rules? [Completeness, Spec §Clarifications, Spec §FR-006]
-- [ ] CHK005 Is the historical closed-year consultation mechanism specified with read-only access and closed-year badge? [Completeness, Spec §Clarifications, Spec §FR-007]
+- [x] CHK001 Are the 4 mandatory components of leave balance (entitled days, spent days, pending days, available days) explicitly enumerated? [Completeness, Spec §FR-002, Constitution Art. 12]
+- [x] CHK002 Are basic personal and contractual profile fields (names, national ID, email, hire date, current position, department, agreement, manager) specified for the employee profile view? [Completeness, Spec §1. Acceptance Scenario 1, Contracts §EmployeeProfileResponse]
+- [x] CHK003 Is the dynamic on-demand calculation mechanism defined from source of truth without relying on manually editable balance columns or tables? [Completeness, Spec §FR-003, Constitution Art. 12]
+- [x] CHK004 Is the formula for mid-year hire date prorating explicitly defined with rounding rules? [Completeness, Spec §Clarifications, Spec §FR-006]
+- [x] CHK005 Is the historical closed-year consultation mechanism specified with read-only access and closed-year badge? [Completeness, Spec §Clarifications, Spec §FR-007]
 
 ## 2. Requirement Clarity & Precision
 
-- [ ] CHK006 Is the mathematical invariant `correspondientes == disfrutados + disponibles` specified with zero-floor constraint (`availableDays >= 0`)? [Clarity, Spec §SC-002, Data Model §2]
-- [ ] CHK007 Is the caller identity extraction mechanism defined using server-side security context (`SecurityContextHolder`) rather than client-supplied parameters? [Clarity, Spec §FR-001, Constitution Art. 10.5]
-- [ ] CHK008 Is the reference date for contractual conditions in past years specified (December 31st of the target year)? [Clarity, Research §Decision 3, Data Model §2]
-- [ ] CHK009 Are pending requests defined as informational indicators that do not reduce officially available days until approved? [Clarity, Spec §Assumptions, Spec §FR-002]
+- [x] CHK006 Is the mathematical invariant `correspondientes == disfrutados + disponibles` specified with zero-floor constraint (`availableDays >= 0`)? [Clarity, Spec §SC-002, Data Model §2]
+- [x] CHK007 Is the caller identity extraction mechanism defined using server-side security context (`SecurityContextHolder`) rather than client-supplied parameters? [Clarity, Spec §FR-001, Constitution Art. 10.5]
+- [x] CHK008 Is the reference date for contractual conditions in past years specified (December 31st of the target year)? [Clarity, Research §Decision 3, Data Model §2]
+- [x] CHK009 Are pending requests defined as informational indicators that do not reduce officially available days until approved? [Clarity, Spec §Assumptions, Spec §FR-002]
 
 ## 3. Requirement Consistency & Constitutional Invariants
 
-- [ ] CHK010 Does the leave balance calculation strictly adhere to the constitutional invariant of being a derived value (Art. 12) rather than a mutable counter? [Consistency, Constitution Art. 12, Spec §FR-003]
-- [ ] CHK011 Is scope authorization strictly enforced in the service layer, restricting `EMPLEADO` to their own record, `RESPONSABLE_EQUIPO` to their subordinates, and granting full access to `RRHH`? [Consistency, Constitution Art. 10, Spec §FR-005]
-- [ ] CHK012 Are unauthorized cross-employee access attempts consistently rejected with HTTP 403 Forbidden in RFC 9457 Problem Details format? [Consistency, Constitution Art. 10, Art. 19, Spec §Acceptance Scenario 4]
-- [ ] CHK013 Does the calendar year computation align with the constitutional business date representation (`LocalDate` in Europe/Madrid) spanning January 1 to December 31? [Consistency, Constitution Art. 14, Spec §Assumptions]
+- [x] CHK010 Does the leave balance calculation strictly adhere to the constitutional invariant of being a derived value (Art. 12) rather than a mutable counter? [Consistency, Constitution Art. 12, Spec §FR-003]
+- [x] CHK011 Is scope authorization strictly enforced in the service layer, restricting `EMPLEADO` to their own record, `RESPONSABLE_EQUIPO` to their subordinates, and granting full access to `RRHH`? [Consistency, Constitution Art. 10, Spec §FR-005]
+- [x] CHK012 Are unauthorized cross-employee access attempts consistently rejected with HTTP 403 Forbidden in RFC 9457 Problem Details format? [Consistency, Constitution Art. 10, Art. 19, Spec §Acceptance Scenario 4]
+- [x] CHK013 Does the calendar year computation align with the constitutional business date representation (`LocalDate` in Europe/Madrid) spanning January 1 to December 31? [Consistency, Constitution Art. 14, Spec §Assumptions]
 
 ## 4. Acceptance Criteria Quality & Measurability
 
-- [ ] CHK014 Is success criterion SC-001 ("display profile and balance in less than 800ms") objectively measurable? [Measurability, Spec §SC-001]
-- [ ] CHK015 Is success criterion SC-002 ("100% mathematical coherence") verifiable through automated unit and integration tests? [Measurability, Spec §SC-002, Quickstart §2.1]
-- [ ] CHK016 Is success criterion SC-003 ("0% cross-employee data leaks with negative authorization tests") backed by explicit security tests? [Measurability, Spec §SC-003, Tasks §T024]
-- [ ] CHK017 Are HTTP status codes (200 OK, 400 Bad Request, 403 Forbidden, 404 Not Found) explicitly documented for all API outcomes? [Measurability, Contracts §leave-balance-api.yaml]
+- [x] CHK014 Is success criterion SC-001 ("display profile and balance in less than 800ms") objectively measurable? [Measurability, Spec §SC-001]
+- [x] CHK015 Is success criterion SC-002 ("100% mathematical coherence") verifiable through automated unit and integration tests? [Measurability, Spec §SC-002, Quickstart §2.1]
+- [x] CHK016 Is success criterion SC-003 ("0% cross-employee data leaks with negative authorization tests") backed by explicit security tests? [Measurability, Spec §SC-003, Tasks §T024]
+- [x] CHK017 Are HTTP status codes (200 OK, 400 Bad Request, 403 Forbidden, 404 Not Found) explicitly documented for all API outcomes? [Measurability, Contracts §leave-balance-api.yaml]
 
 ## 5. Scenario & Edge Case Coverage
 
-- [ ] CHK018 Are requirements defined for employees with exhausted balance (0 available days without negative numbers)? [Edge Cases, Spec §Edge Cases, Data Model §LeaveBalance]
-- [ ] CHK019 Are requirements defined for immediate recalculation when a collective agreement variation occurs without manual intervention? [Coverage, Spec §Acceptance Scenario 2, Research §Decision 1]
-- [ ] CHK020 Are requirements defined for immediate recalculation when a leave request transition to APPROVED occurs? [Coverage, Spec §Acceptance Scenario 3, Research §Decision 1]
-- [ ] CHK021 Are requirements defined for employees with hire date in the future relative to the queried historical year (0 days)? [Edge Cases, Data Model §2]
+- [x] CHK018 Are requirements defined for employees with exhausted balance (0 available days without negative numbers)? [Edge Cases, Spec §Edge Cases, Data Model §LeaveBalance]
+- [x] CHK019 Are requirements defined for immediate recalculation when a collective agreement variation occurs without manual intervention? [Coverage, Spec §Acceptance Scenario 2, Research §Decision 1]
+- [x] CHK020 Are requirements defined for immediate recalculation when a leave request transition to APPROVED occurs? [Coverage, Spec §Acceptance Scenario 3, Research §Decision 1]
+- [x] CHK021 Are requirements defined for employees with hire date in the future relative to the queried historical year (0 days)? [Edge Cases, Data Model §2]
 
 ## 6. Non-Functional & Security Requirements
 
-- [ ] CHK022 Are personal and contractual data protected against leakage in logs, query parameters, or stack traces? [Security, Constitution Art. 20]
-- [ ] CHK023 Are WCAG 2.1 AA accessibility requirements specified for metric cards, status indicators, and keyboard navigation? [Accessibility, Constitution Art. 21, Plan §Constraints]
-- [ ] CHK024 Are loading states and error states defined for asynchronous data retrieval? [Usability, Constitution Art. 21.4]
+- [x] CHK022 Are personal and contractual data protected against leakage in logs, query parameters, or stack traces? [Security, Constitution Art. 20]
+- [x] CHK023 Are WCAG 2.1 AA accessibility requirements specified for metric cards, status indicators, and keyboard navigation? [Accessibility, Constitution Art. 21, Plan §Constraints]
+- [x] CHK024 Are loading states and error states defined for asynchronous data retrieval? [Usability, Constitution Art. 21.4]
 
 ## 7. Dependencies & Assumptions Validation
 
-- [ ] CHK025 Is the dependency on existing `leave_requests`, `employees`, and `contract_records` schema validated and documented? [Dependency, Plan §Storage, Data Model §1]
-- [ ] CHK026 Is the assumption of calendar-year basis (Jan 1 - Dec 31) validated against company policy? [Assumption, Spec §4. Assumptions]
-- [ ] CHK027 Are contracts synchronized with the OpenAPI 3.0 specification in `/contracts/leave-balance-api.yaml`? [Traceability, Contracts §leave-balance-api.yaml]
+- [x] CHK025 Is the dependency on existing `leave_requests`, `employees`, and `contract_records` schema validated and documented? [Dependency, Plan §Storage, Data Model §1]
+- [x] CHK026 Is the assumption of calendar-year basis (Jan 1 - Dec 31) validated against company policy? [Assumption, Spec §4. Assumptions]
+- [x] CHK027 Are contracts synchronized with the OpenAPI 3.0 specification in `/contracts/leave-balance-api.yaml`? [Traceability, Contracts §leave-balance-api.yaml]
 
 ---
 

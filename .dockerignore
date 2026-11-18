@@ -1,0 +1,16 @@
+# .dockerignore
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+target/
+backend/target/
+.git/
+.gitignore
+*.log*
+.env*
+coverage/
+.angular/
+frontend/.angular/
+.idea/
+.vscode/

@@ -14,6 +14,9 @@
 - Q: ¿Cómo se reflejan las solicitudes pendientes en el saldo mostrado al empleado? → A: El desglose oficial normativo mantiene `Correspondientes - Disfrutados = Disponibles`; adicionalmente se muestra un indicador informativo "En trámite (pendientes)" para que el empleado conozca su crédito proyectado.
 - Q: ¿Puede el empleado consultar el saldo y ausencias de años fiscales pasados? → A: Sí, la interfaz incluye un selector de año (por defecto el año en curso) que permite consultar el balance histórico consolidado de años anteriores en modo solo lectura.
 
+### Session 2026-11-17
+- Q: ¿Qué permisos de consulta sobre el saldo de vacaciones tienen los roles de Responsable de Equipo y Recursos Humanos respecto a otros empleados? → A: RRHH puede consultar el saldo de cualquier empleado; el Responsable de Equipo únicamente el de las personas que pertenezcan a su equipo directo; y el Empleado solo el suyo propio, denegando con 403 Forbidden cualquier consulta fuera de estos alcances.
+
 ---
 
 ## 1. User Scenarios & Testing *(mandatory)*
@@ -46,10 +49,10 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
    - **When** una de sus solicitudes de 5 días es aprobada (HU-05),
    - **Then** al volver a consultar su ficha el contador de disfrutados incrementa en 5 y el disponible refleja inmediatamente 10.
 
-4. **Intento de acceso a ficha ajena (Alcance negativo)**:
-   - **Given** un empleado autenticado con ID `A`,
-   - **When** intenta consultar la ficha o saldo de otro empleado con ID `B` (ya sea por URL directa o manipulando el parámetro de API),
-   - **Then** el sistema rechaza la petición con código HTTP `403 Forbidden` (o `404 Not Found`), garantizando la privacidad de los datos personales.
+4. **Control de acceso y privacidad de saldo (Alcance negativo y por rol)**:
+   - **Given** un usuario autenticado en el sistema,
+   - **When** intenta consultar la ficha o saldo de otro empleado,
+   - **Then** el sistema permite el acceso únicamente si el solicitante tiene rol `RRHH` o es el `RESPONSABLE_EQUIPO` directo del empleado consultado; en cualquier otro caso (rol `EMPLEADO` o responsable de equipo ajeno), rechaza la petición con código HTTP `403 Forbidden`.
 
 ### Edge Cases
 - **Empleado contratado a mitad de año:** El cómputo de días correspondientes aplica la fórmula proporcional a los meses activos restantes del año natural.
@@ -65,7 +68,7 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
 - **FR-002**: La ficha personal DEBE presentar el saldo de vacaciones desglosado en: *días correspondientes*, *días disfrutados* y *días disponibles* (Art. 12), con un indicador complementario de *días en trámite*.
 - **FR-003**: El saldo DEBE ser un valor estrictamente calculado y derivado de la fuente de verdad (días de convenio menos días aprobados), impidiendo contadores editables manualmente.
 - **FR-004**: Los cambios contractuales de convenio o la aprobación de solicitudes DEBEN reflejarse de forma inmediata en el cálculo del saldo.
-- **FR-005**: El acceso a la ficha de otro empleado DEBE estar estrictamente denegado para el rol `EMPLEADO`.
+- **FR-005**: El acceso a la ficha y saldo de vacaciones de otro empleado DEBE estar denegado para el rol `EMPLEADO`; el rol `RESPONSABLE_EQUIPO` únicamente puede consultar el saldo de los miembros de su equipo directo; y el rol `RRHH` puede consultar el saldo de cualquier empleado de la plantilla (Art. 10 de la Constitución).
 - **FR-006**: Para incorporaciones durante el año en curso, el sistema DEBE prorratear los días correspondientes según los meses restantes hasta fin de año.
 - **FR-007**: La vista DEBE permitir consultar el saldo correspondiente a ejercicios fiscales anteriores en modo solo lectura.
 
