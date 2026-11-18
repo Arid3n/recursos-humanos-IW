@@ -31,6 +31,7 @@
 1. Pulsar "Aprobar" en una solicitud de vacaciones, añadir un comentario opcional y confirmar.
 2. **Esperado**: mensaje de éxito; la solicitud desaparece de la bandeja.
 3. Como `empleado@empresa.com`, en "Mi Ficha y Saldo" (HU-02) los días aparecen como disfrutados y "Disponibles" se reduce; en "Mis Solicitudes" (HU-04) aparece como Aprobada.
+4. Como `responsable@empresa.com`, en el calendario del equipo (HU-06) la ausencia aprobada aparece en el mes correspondiente (FR-012).
 
 ### Escenario 3 — Rechazo con motivo (HU-05.CA-2)
 1. Pulsar "Rechazar" y dejar el motivo vacío o con menos de 5 caracteres.

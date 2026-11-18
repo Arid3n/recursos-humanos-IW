@@ -56,7 +56,7 @@ La funcionalidad **HU-05 (`spec-005`)** permite al responsable de equipo consult
 | **Art. 22** (Tests obligatorios) | Autorización negativa, transición inválida, saldo insuficiente y concurrencia sobre el saldo cubiertos. | ✅ |
 | **Art. 23** (Simplicidad) | Reutiliza `LeaveBalanceService`, `PageResponse` y el patrón de servicio existente; sin dependencias nuevas. | ✅ |
 
-**Re-evaluación post-diseño**: ✅ Sin violaciones. No aplica *Complexity Tracking*.
+**Re-evaluación post-diseño**: ✅ Sin violaciones propias de HU-05. Un límite heredado de HU-03 (N1) se registra en *Complexity Tracking*.
 
 ---
 
@@ -166,4 +166,8 @@ frontend/src/app/
 
 ## Complexity Tracking
 
-No aplica: el diseño no introduce violaciones de la constitución.
+El diseño de HU-05 no introduce violaciones de la constitución. Se registra un límite heredado de HU-03 que HU-05 no corrige (Art. 26):
+
+| Límite | Qué se incumple | Por qué es necesario | Alternativa descartada |
+|---|---|---|---|
+| **N1** · HU-03 valida el saldo sólo en el año de inicio (`LeaveRequestServiceImpl`, y `sumCalculatedDays` para las pendientes) | Art. 12.5 de forma parcial: una solicitud que cruza años puede crearse sin saldo suficiente en el año siguiente. HU-05 lo contiene: la aprobación revalida cada año y bloquea con `422` (Art. 12.6, SC-006). | HU-03 está entregada y es otra historia: cambiar su comportamiento exige actualizar antes su spec y tests (Art. 1.3) y arriesga regresiones fuera del alcance de HU-05. El fallo es seguro (la solicitud queda Pendiente y puede rechazarse). | Que HU-03 valide por año con `LeaveDayAllocator`: viable, queda como mejora pendiente de HU-03. |
