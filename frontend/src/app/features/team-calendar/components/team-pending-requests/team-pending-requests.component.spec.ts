@@ -119,7 +119,7 @@ describe('TeamPendingRequestsComponent', () => {
 
   it('should show the server error and reload when the request was already resolved (HU-05.CA-3)', () => {
     mockService.approve = vi.fn().mockReturnValue(
-      throwError(() => ({ error: { detail: 'La solicitud ya ha sido resuelta y no puede volver a resolverse' } }))
+      throwError(() => ({ status: 409, error: { detail: 'La solicitud ya ha sido resuelta y no puede volver a resolverse' } }))
     );
     const fixture = TestBed.createComponent(TeamPendingRequestsComponent);
     fixture.detectChanges();
@@ -132,5 +132,52 @@ describe('TeamPendingRequestsComponent', () => {
       expect.any(Object)
     );
     expect(mockService.getTeamPendingRequests).toHaveBeenCalledTimes(2);
+  });
+
+  it('should show the message and reload the list after a 404 because the employee withdrew the request (HU-05.CA-3)', () => {
+    mockService.approve = vi.fn().mockReturnValue(
+      throwError(() => ({ status: 404, error: { detail: 'La solicitud ya no existe: el empleado la retiró' } }))
+    );
+    const fixture = TestBed.createComponent(TeamPendingRequestsComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openResolveDialog(pendingRequest, 'approve');
+
+    expect(mockSnackBar.open).toHaveBeenCalledWith('La solicitud ya no existe: el empleado la retiró', 'Cerrar', expect.any(Object));
+    expect(mockService.getTeamPendingRequests).toHaveBeenCalledTimes(2);
+  });
+
+  it('should show the problem detail and keep the row (no reload) after a 422 (HU-05.CA-5)', () => {
+    mockService.approve = vi.fn().mockReturnValue(
+      throwError(() => ({ status: 422, error: { detail: 'El saldo de 2027 no es suficiente: se necesitan 4 días y hay 2 disponibles' } }))
+    );
+    const fixture = TestBed.createComponent(TeamPendingRequestsComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openResolveDialog(pendingRequest, 'approve');
+
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'El saldo de 2027 no es suficiente: se necesitan 4 días y hay 2 disponibles',
+      'Cerrar',
+      expect.any(Object)
+    );
+    expect(mockService.getTeamPendingRequests).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance.requests().length).toBe(1);
+  });
+
+  it('should show a generic message without internal details for unexpected errors (Art. 19.4)', () => {
+    mockService.approve = vi.fn().mockReturnValue(
+      throwError(() => ({ status: 500, error: { detail: 'NullPointerException at LeaveResolutionServiceImpl' } }))
+    );
+    const fixture = TestBed.createComponent(TeamPendingRequestsComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openResolveDialog(pendingRequest, 'approve');
+
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      expect.not.stringContaining('NullPointerException'),
+      'Cerrar',
+      expect.any(Object)
+    );
   });
 });

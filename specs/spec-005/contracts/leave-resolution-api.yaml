@@ -39,7 +39,7 @@ paths:
       description: |
         En una única transacción: revalida el saldo por cada año natural del periodo (solo VACATION),
         pasa la solicitud a APPROVED, registra quién y cuándo resolvió, y crea la notificación al empleado.
-        Orden de comprobaciones: 404, 403 (alcance o solicitud propia), 409, 422 (año cerrado), 422 (saldo).
+        Orden de comprobaciones: 404 (no existe), 403 (alcance o solicitud propia), 404 (retirada por el empleado, CANCELLED), 409, 422 (año cerrado), 422 (saldo).
         No se aprueban solicitudes con fechas en un año natural cerrado.
       operationId: approveLeaveRequest
       tags: [Leave Resolution]
@@ -206,7 +206,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
     NotFound:
-      description: El recurso no existe (p. ej. solicitud retirada por el empleado, que la elimina).
+      description: El recurso no existe (p. ej. solicitud retirada por el empleado: HU-04 la pasa a `CANCELLED` y HU-05 la trata como inexistente).
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }

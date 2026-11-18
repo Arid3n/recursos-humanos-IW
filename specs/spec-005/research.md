@@ -58,7 +58,7 @@
 - **Alcance deliberadamente limitado** (resultado de `/speckit-analyze`):
   - No se añade `CHECK` que obligue a `resolved_at`/`resolved_by` no nulos en solicitudes resueltas: los tests de integración existentes de HU-03/HU-04 (`LeaveRequestIntegrationTest`, `LeaveBalanceIntegrationTest`, `LeaveRequestTrackingIntegrationTest`) crean solicitudes `APPROVED`/`REJECTED` sin esos campos como *fixtures*. El registro de quién y cuándo (Art. 13.6) lo garantizan los métodos de dominio y los tests de HU-05.
   - El *trigger* no protege `resolved_by`/`resolved_at`: la FK `resolved_by ... ON DELETE SET NULL` (V1) ejecuta un `UPDATE` sobre filas resueltas al borrar un empleado, y el *trigger* lo bloquearía.
-- **Límite de 500 caracteres (2026-11-16)**: nueva migración `V5__leave_resolution_reason_max_length.sql` (V4 ya la usa HU-08) con `CHECK chk_leave_rejection_reason_max (rejection_reason IS NULL OR char_length(rejection_reason) <= 500)`. Reversión: `ALTER TABLE leave_requests DROP CONSTRAINT chk_leave_rejection_reason_max`. Si otra rama ocupa V5, renumerar al integrar.
+- **Límite de 500 caracteres (2026-11-16)**: nueva migración `V6__leave_resolution_reason_max_length.sql` (V4 la usa HU-08 y V5 la usa HU-04: estado `CANCELLED`) con `CHECK chk_leave_rejection_reason_max (rejection_reason IS NULL OR char_length(rejection_reason) <= 500)`. Reversión: `ALTER TABLE leave_requests DROP CONSTRAINT chk_leave_rejection_reason_max`. Si otra rama ocupa V6, renumerar al integrar.
 
 ### 1.7 Notificaciones (Art. 15)
 
@@ -92,7 +92,7 @@
 ### 1.12 Año cerrado (2026-11-16)
 
 - **Decisión**: Al aprobar, si `startDate.getYear() < Year.now(clock, Europe/Madrid)` (o cualquier año del tramo), se lanza `LeaveApprovalNotAllowedException` (`422`) antes de consultar el saldo. El rechazo no tiene esta restricción. `Clock` ya está inyectado (Art. 22.5).
-- **Orden de comprobaciones al aprobar**: existe (`404`) → alcance y auto-resolución (`403`) → estado `PENDING` (`409`) → año cerrado (`422`) → saldo por año (`422`).
+- **Orden de comprobaciones al aprobar**: existe (`404`) → alcance y auto-resolución (`403`) → retirada por el empleado, estado `CANCELLED` (`404`) → estado `PENDING` (`409`) → año cerrado (`422`) → saldo por año (`422`).
 
 ### 1.14 Saldo de HU-02 con solicitudes que cruzan años (aclaración C5, 2026-11-16)
 

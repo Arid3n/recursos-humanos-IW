@@ -71,13 +71,13 @@ No se restringen `resolved_by`/`resolved_at` en BD (compatibilidad con *fixtures
 
 **Reversión**: `DROP TRIGGER`, `DROP FUNCTION`, `ALTER TABLE leave_requests DROP CONSTRAINT …` (documentado como comentario en la migración).
 
-### 2.2 `V5__leave_resolution_reason_max_length.sql` (nueva)
+### 2.2 `V6__leave_resolution_reason_max_length.sql` (nueva)
 
 | Objeto | Definición |
 |---|---|
 | `chk_leave_rejection_reason_max` | `rejection_reason IS NULL OR char_length(rejection_reason) <= 500` |
 
-**Reversión**: `ALTER TABLE leave_requests DROP CONSTRAINT chk_leave_rejection_reason_max`. Se numera `V5` porque `V4` la usa HU-08.
+**Reversión**: `ALTER TABLE leave_requests DROP CONSTRAINT chk_leave_rejection_reason_max`. Se numera `V6` porque `V4` la usa HU-08 y `V5` (HU-04: estado `CANCELLED`) ya está en `main`.
 
 ---
 
@@ -159,7 +159,7 @@ Listados paginados con el `PageResponse<T>` común existente.
 | Solo rol `RESPONSABLE_EQUIPO` accede a bandeja y resolución | Art. 10 | `403` |
 | La solicitud debe ser de un miembro directo del responsable en sesión | FR-001, FR-006 | `403` |
 | Nadie resuelve sus propias solicitudes (`request.employee.id == resolver.id`) | FR-006 (2026-11-16) | `403` + `WARN` de auditoría |
-| La solicitud debe existir (retirada por el empleado = borrada, HU-04) | Edge case retirada, FR-004b | `404` |
+| La solicitud debe existir (retirada por el empleado = estado `CANCELLED` en HU-04; se trata como inexistente) | Edge case retirada, FR-004b | `404` |
 | Solo `PENDING` es resoluble (también ante resolución simultánea) | FR-004, FR-004b | `409` |
 | Motivo de rechazo 5–500 caracteres tras `strip()`; comentario ≤ 500 | FR-003 | `400` (`invalidFields.reason` / `comment`) |
 | Aprobar con fechas en un año natural cerrado (< año actual, Europe/Madrid) | Assumptions (2026-11-16) | `422` (la solicitud sigue `PENDING`; se puede rechazar) |
@@ -174,6 +174,6 @@ Listados paginados con el `PageResponse<T>` común existente.
 | `Map<Integer,Integer> allocate(LocalDate start, LocalDate end, int calculatedDays)` | Reparto por año natural; la suma es siempre `calculatedDays`; años previos al último: `min(laborables de hoy, restante)`; último: restante. Un solo año: `{año: calculatedDays}`. |
 | `int daysInYear(LeaveRequest r, int year)` | Días de la solicitud que cuentan en `year` (0 si no lo toca). Lo usan el saldo (HU-02) y la validación de aprobación. |
 
-**Orden de evaluación al aprobar**: `404` → `403` (alcance/auto-resolución) → `409` → `422` año cerrado → `422` saldo por año.
+**Orden de evaluación al aprobar**: `404` (no existe) → `403` (alcance/auto-resolución) → `404` (retirada: `CANCELLED`) → `409` → `422` año cerrado → `422` saldo por año.
 
 **Nuevo tipo**: `LeaveApprovalNotAllowedException` (`com.iw.rrhh.common.exception`) con `detail`, `year`, y opcionalmente `requestedDays`/`availableDays`; mapeada a `422` en `GlobalExceptionHandler`.

@@ -148,6 +148,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
 
+    @ExceptionHandler(LeaveApprovalNotAllowedException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveApprovalNotAllowed(LeaveApprovalNotAllowedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+        problemDetail.setTitle("Aprobación no permitida");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-approval-not-allowed"));
+        problemDetail.setProperty("year", ex.getYear());
+        if (ex.getRequestedDays() != null) {
+            problemDetail.setProperty("requestedDays", ex.getRequestedDays());
+        }
+        if (ex.getAvailableDays() != null) {
+            problemDetail.setProperty("availableDays", ex.getAvailableDays());
+        }
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(problemDetail);
+    }
+
     @ExceptionHandler(PerformanceReviewAlreadyFinalizedException.class)
     public ResponseEntity<ProblemDetail> handlePerformanceReviewAlreadyFinalized(
             PerformanceReviewAlreadyFinalizedException ex) {

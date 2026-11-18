@@ -1,6 +1,8 @@
 package com.iw.rrhh.leave;
 
-import com.iw.rrhh.common.exception.InsufficientLeaveBalanceException;
+import com.iw.rrhh.common.exception.LeaveApprovalNotAllowedException;
+import com.iw.rrhh.common.service.HolidayCalendarService;
+import com.iw.rrhh.leave.service.LeaveDayAllocator;
 import com.iw.rrhh.common.exception.LeaveRequestAlreadyResolvedException;
 import com.iw.rrhh.employee.domain.Employee;
 import com.iw.rrhh.employee.repository.EmployeeRepository;
@@ -77,6 +79,7 @@ class LeaveResolutionServiceTest {
                 userRepository,
                 leaveBalanceService,
                 notificationService,
+                new LeaveDayAllocator(new HolidayCalendarService()),
                 Clock.fixed(NOW, ZoneOffset.UTC)
         );
 
@@ -203,16 +206,123 @@ class LeaveResolutionServiceTest {
     }
 
     @Test
-    @DisplayName("HU-05.CA-5: aprobar vacaciones que superan el saldo disponible se bloquea sin notificar")
+    @DisplayName("HU-05.CA-5: aprobar vacaciones que superan el saldo disponible lanza 422 con año y días, sin notificar")
     void approve_insufficientBalance() {
         LeaveRequest request = pendingRequest(LeaveType.VACATION, 5);
         balanceAvailable(3);
 
         assertThatThrownBy(() -> service.approve(requestId, null))
-                .isInstanceOf(InsufficientLeaveBalanceException.class);
+                .isInstanceOfSatisfying(LeaveApprovalNotAllowedException.class, ex -> {
+                    assertThat(ex.getYear()).isEqualTo(2026);
+                    assertThat(ex.getRequestedDays()).isEqualTo(5);
+                    assertThat(ex.getAvailableDays()).isEqualTo(3);
+                });
 
         assertThat(request.getStatus()).isEqualTo(LeaveStatus.PENDING);
         verifyNoInteractions(notificationService);
+    }
+
+    private LeaveRequest pendingRequest(LeaveType type, LocalDate start, LocalDate end, int days) {
+        LeaveRequest request = new LeaveRequest(member, type, start, end, days);
+        request.setId(requestId);
+        when(leaveRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(request));
+        return request;
+    }
+
+    private void balanceAvailable(int year, int availableDays) {
+        lenient().when(employeeRepository.findByIdForUpdate(member.getId())).thenReturn(Optional.of(member));
+        when(leaveBalanceService.getEmployeeLeaveBalance(member.getId(), year)).thenReturn(
+                new LeaveBalanceResponse(member.getId(), year, 22, 22 - availableDays, 0, availableDays, false, "General"));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-1: un responsable no puede resolver sus propias solicitudes aunque su manager_id apunte a sí mismo")
+    void selfResolution_accessDenied() {
+        manager.setManager(manager);
+        LeaveRequest request = new LeaveRequest(manager, LeaveType.VACATION,
+                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5), 5);
+        request.setId(requestId);
+        when(leaveRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> service.approve(requestId, null)).isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> service.reject(requestId, "Motivo suficiente")).isInstanceOf(AccessDeniedException.class);
+
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.PENDING);
+        verifyNoInteractions(notificationService, leaveBalanceService);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: aprobar con fechas en un año cerrado lanza 422 sin consultar el saldo; rechazar sí es posible")
+    void closedYear_approveBlocked_rejectAllowed() {
+        LeaveRequest request = pendingRequest(LeaveType.VACATION, LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 5), 5);
+
+        assertThatThrownBy(() -> service.approve(requestId, null))
+                .isInstanceOfSatisfying(LeaveApprovalNotAllowedException.class,
+                        ex -> assertThat(ex.getYear()).isEqualTo(2025));
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.PENDING);
+        verifyNoInteractions(leaveBalanceService, notificationService);
+        verify(employeeRepository, never()).findByIdForUpdate(any());
+
+        service.reject(requestId, "Fuera de plazo");
+
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.REJECTED);
+        verify(notificationService).createNotification(eq(member), eq("Solicitud rechazada"), any());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: vacaciones que cruzan años con saldo insuficiente en el segundo año lanza 422 con ese año")
+    void crossYear_secondYearInsufficient() {
+        LeaveRequest request = pendingRequest(LeaveType.VACATION, LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), 8);
+        balanceAvailable(2026, 10);
+        balanceAvailable(2027, 3);
+
+        assertThatThrownBy(() -> service.approve(requestId, null))
+                .isInstanceOfSatisfying(LeaveApprovalNotAllowedException.class, ex -> {
+                    assertThat(ex.getYear()).isEqualTo(2027);
+                    assertThat(ex.getRequestedDays()).isEqualTo(4);
+                    assertThat(ex.getAvailableDays()).isEqualTo(3);
+                });
+
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.PENDING);
+        verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: vacaciones que cruzan años con saldo suficiente en ambos años se aprueban")
+    void crossYear_bothYearsSufficient_approved() {
+        LeaveRequest request = pendingRequest(LeaveType.VACATION, LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), 8);
+        balanceAvailable(2026, 4);
+        balanceAvailable(2027, 4);
+
+        service.approve(requestId, null);
+
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        verify(notificationService).createNotification(eq(member), eq("Solicitud aprobada"), any());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-3: una solicitud CANCELLED (retirada por el empleado en HU-04) se trata como inexistente (404)")
+    void cancelledRequest_isNotFound() {
+        LeaveRequest request = pendingRequest(LeaveType.VACATION, 5);
+        request.setStatus(LeaveStatus.CANCELLED);
+
+        assertThatThrownBy(() -> service.approve(requestId, null)).isInstanceOf(java.util.NoSuchElementException.class);
+        assertThatThrownBy(() -> service.reject(requestId, "Motivo suficiente")).isInstanceOf(java.util.NoSuchElementException.class);
+
+        assertThat(request.getStatus()).isEqualTo(LeaveStatus.CANCELLED);
+        verifyNoInteractions(notificationService, leaveBalanceService);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-1: una solicitud CANCELLED de otro equipo sigue devolviendo 403 (el alcance se comprueba antes)")
+    void cancelledRequest_otherTeam_stillForbidden() {
+        Employee otherManager = new Employee();
+        otherManager.setId(UUID.randomUUID());
+        member.setManager(otherManager);
+        LeaveRequest request = pendingRequest(LeaveType.VACATION, 5);
+        request.setStatus(LeaveStatus.CANCELLED);
+
+        assertThatThrownBy(() -> service.approve(requestId, null)).isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

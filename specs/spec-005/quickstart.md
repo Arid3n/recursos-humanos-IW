@@ -9,7 +9,7 @@
 ## 1. Requisitos Previos
 
 - PostgreSQL activo: `docker compose up -d`
-- Backend: `cd backend && ./mvnw spring-boot:run` (aplica `V3` y `V5__leave_resolution_reason_max_length.sql`)
+- Backend: `cd backend && ./mvnw spring-boot:run` (aplica `V3` y `V6__leave_resolution_reason_max_length.sql`)
 - Frontend: `cd frontend && npm start` → `http://localhost:4200`
 - Usuarios de desarrollo (contraseña `admin123`, ver `research.md` §1.9):
   - `responsable@empresa.com` — `RESPONSABLE_EQUIPO`, responsable de `empleado@empresa.com`

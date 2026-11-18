@@ -38,6 +38,26 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
         @Param("endOfYear") LocalDate endOfYear
     );
 
+    /**
+     * Solicitudes que tocan el año (aunque empiecen antes o terminen después). Base del saldo derivado
+     * con reparto por año natural (HU-02, aclaración C5 de HU-05).
+     */
+    @Query("""
+        SELECT lr FROM LeaveRequest lr
+        WHERE lr.employee.id = :employeeId
+          AND lr.leaveType = :leaveType
+          AND lr.status = :status
+          AND lr.startDate <= :endOfYear
+          AND lr.endDate >= :startOfYear
+    """)
+    List<LeaveRequest> findOverlappingByYear(
+        @Param("employeeId") UUID employeeId,
+        @Param("leaveType") LeaveType leaveType,
+        @Param("status") LeaveStatus status,
+        @Param("startOfYear") LocalDate startOfYear,
+        @Param("endOfYear") LocalDate endOfYear
+    );
+
     @Query("""
         SELECT lr FROM LeaveRequest lr
         WHERE lr.employee.id = :employeeId
@@ -71,9 +91,11 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
 
     /**
      * Bandeja del responsable (HU-05): solicitudes de sus miembros directos en un estado, más antiguas primero.
+     * Se invoca con {@code excludedEmployeeId = managerId} para excluir las solicitudes propias (nadie se resuelve a sí mismo).
      */
     @EntityGraph(attributePaths = "employee")
-    Page<LeaveRequest> findByEmployeeManagerIdAndStatusOrderByCreatedAtAsc(UUID managerId, LeaveStatus status, Pageable pageable);
+    Page<LeaveRequest> findByEmployeeManagerIdAndEmployeeIdNotAndStatusOrderByCreatedAtAsc(
+            UUID managerId, UUID excludedEmployeeId, LeaveStatus status, Pageable pageable);
 
     /**
      * Calendario del equipo (HU-06): solicitudes de los miembros activos del responsable que solapan el rango.

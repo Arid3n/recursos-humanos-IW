@@ -18,7 +18,7 @@ La funcionalidad **HU-05 (`spec-005`)** permite al responsable de equipo consult
 
 **Primary Dependencies**: Spring Boot 3.4.3 (Web, Security, Data JPA, Validation, Flyway) · Angular Material 21 (table, paginator, dialog, menu, badge, snack-bar)
 
-**Storage**: PostgreSQL 16 — tablas existentes `leave_requests` y `notifications` (V1). Migración `V3__leave_resolution_constraints.sql` (ya integrada en `main`, no se modifica) y nueva `V5__leave_resolution_reason_max_length.sql` con el límite de 500 caracteres (V4 ya está ocupada por HU-08).
+**Storage**: PostgreSQL 16 — tablas existentes `leave_requests` y `notifications` (V1). Migración `V3__leave_resolution_constraints.sql` (ya integrada en `main`, no se modifica) y nueva `V6__leave_resolution_reason_max_length.sql` con el límite de 500 caracteres (V4 la usa HU-08 y V5 la usa HU-04, ya en `main`).
 
 **Testing**: JUnit 5 + Mockito (unitarios de servicio) · Spring Boot Test + MockMvc + Testcontainers PostgreSQL (integración) · Vitest (componentes y servicios Angular)
 
@@ -114,7 +114,7 @@ backend/src/main/
 │   └── security/config/SecurityDataInitializer.java       # MODIFICADO (usuario responsable de pruebas)
 └── resources/db/migration/
     ├── V3__leave_resolution_constraints.sql               # EXISTENTE en main (no se modifica)
-    └── V5__leave_resolution_reason_max_length.sql         # NUEVO (CHECK ≤ 500)
+    └── V6__leave_resolution_reason_max_length.sql         # NUEVO (CHECK ≤ 500)
 
 backend/src/test/java/com/iw/rrhh/
 ├── leave/LeaveResolutionServiceTest.java                  # NUEVO (unitario)
@@ -148,7 +148,7 @@ frontend/src/app/
 | 1 | Sin auto-resolución; la solicitud de un responsable la resuelve su superior | Comprobación explícita `request.employee.id != resolver.id` y exclusión en la bandeja; sin superior, nadie resuelve | `research.md` §1.1, §1.11 |
 | 2 | Saldo por año natural en solicitudes que cruzan años | Reparto de días por año con `HolidayCalendarService`; se valida cada año | `research.md` §1.4 |
 | 3 | `409` resuelta/simultánea · `404` retirada · `422` saldo insuficiente | `LeaveApprovalNotAllowedException` → `422` solo en la aprobación de HU-05; HU-03 mantiene `409` | `research.md` §1.4, `data-model.md` §5 |
-| 4 | Motivo 5–500, comentario ≤ 500 | DTO ya conforme; nuevo `CHECK` en V5 | `research.md` §1.6 |
+| 4 | Motivo 5–500, comentario ≤ 500 | DTO ya conforme; nuevo `CHECK` en V6 | `research.md` §1.6 |
 | 5 | No se aprueban fechas de años cerrados | Comprobación con `Clock` (año < año actual en Europe/Madrid) → `422` | `research.md` §1.12 |
 | 6 (C4) | Total = `calculatedDays`; años previos al último con días laborables de hoy (tope `calculatedDays`); el último año recibe el resto | `LeaveDayAllocator.allocate(start, end, calculatedDays)` | `research.md` §1.4 |
 | 7 (C5) | El saldo de HU-02 cuenta la solicitud que cruza años en ambos; año futuro con saldo normal; sin saldo → `422` con el año | Nueva consulta de solapamiento + suma con el reparto en `LeaveBalanceServiceImpl`; `sumCalculatedDays` deja de usarse | `research.md` §1.14 |

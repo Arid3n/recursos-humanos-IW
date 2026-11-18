@@ -1,5 +1,6 @@
 package com.iw.rrhh.leave.service;
 
+import com.iw.rrhh.common.config.ClockConfig;
 import com.iw.rrhh.employee.domain.ContractRecord;
 import com.iw.rrhh.employee.domain.Employee;
 import com.iw.rrhh.employee.repository.ContractRecordRepository;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,16 +35,23 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
     private final UserRepository userRepository;
     private final ContractRecordRepository contractRecordRepository;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final LeaveDayAllocator leaveDayAllocator;
+    private final Clock clock;
 
     public LeaveBalanceServiceImpl(
             EmployeeRepository employeeRepository,
             UserRepository userRepository,
             ContractRecordRepository contractRecordRepository,
-            LeaveRequestRepository leaveRequestRepository) {
+            LeaveRequestRepository leaveRequestRepository,
+            LeaveDayAllocator leaveDayAllocator,
+            Clock clock) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.contractRecordRepository = contractRecordRepository;
         this.leaveRequestRepository = leaveRequestRepository;
+        this.leaveDayAllocator = leaveDayAllocator;
+        // El año "en curso" se evalúa en la zona de negocio, no en la del servidor (Art. 14.2)
+        this.clock = clock.withZone(ClockConfig.BUSINESS_ZONE);
     }
 
     @Override
@@ -84,7 +93,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
     @Override
     public List<LeaveSummaryItemResponse> getMyLeaveRequests(Integer year) {
         Employee employee = getAuthenticatedEmployee();
-        int targetYear = (year != null) ? year : LocalDate.now().getYear();
+        int targetYear = (year != null) ? year : LocalDate.now(clock).getYear();
         LocalDate startOfYear = LocalDate.of(targetYear, 1, 1);
         LocalDate endOfYear = LocalDate.of(targetYear, 12, 31);
 
@@ -105,12 +114,13 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
     }
 
     private LeaveBalanceResponse calculateBalance(Employee employee, Integer year) {
-        int currentYear = LocalDate.now().getYear();
+        LocalDate today = LocalDate.now(clock);
+        int currentYear = today.getYear();
         int targetYear = (year != null) ? year : currentYear;
         boolean isClosedYear = targetYear < currentYear;
 
         // Fecha de referencia contractual: 31 de diciembre si el año ya cerró, o la fecha actual
-        LocalDate referenceDate = isClosedYear ? LocalDate.of(targetYear, 12, 31) : LocalDate.now();
+        LocalDate referenceDate = isClosedYear ? LocalDate.of(targetYear, 12, 31) : today;
 
         Optional<ContractRecord> contractOpt = contractRecordRepository.findCurrentContract(employee.getId(), referenceDate);
 
@@ -137,11 +147,9 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         LocalDate startOfYear = LocalDate.of(targetYear, 1, 1);
         LocalDate endOfYear = LocalDate.of(targetYear, 12, 31);
 
-        int spentDays = leaveRequestRepository.sumCalculatedDays(
-                employee.getId(), LeaveType.VACATION, LeaveStatus.APPROVED, startOfYear, endOfYear);
-
-        int pendingDays = leaveRequestRepository.sumCalculatedDays(
-                employee.getId(), LeaveType.VACATION, LeaveStatus.PENDING, startOfYear, endOfYear);
+        // Una solicitud que cruza años cuenta en cada año con los días que le tocan (HU-05, aclaración C5)
+        int spentDays = sumDaysInYear(employee, LeaveStatus.APPROVED, targetYear, startOfYear, endOfYear);
+        int pendingDays = sumDaysInYear(employee, LeaveStatus.PENDING, targetYear, startOfYear, endOfYear);
 
         int availableDays = Math.max(0, entitledDays - spentDays);
 
@@ -155,6 +163,14 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
                 isClosedYear,
                 agreementName
         );
+    }
+
+    private int sumDaysInYear(Employee employee, LeaveStatus status, int year, LocalDate startOfYear, LocalDate endOfYear) {
+        return leaveRequestRepository
+                .findOverlappingByYear(employee.getId(), LeaveType.VACATION, status, startOfYear, endOfYear)
+                .stream()
+                .mapToInt(request -> leaveDayAllocator.daysInYear(request, year))
+                .sum();
     }
 
     private Employee getAuthenticatedEmployee() {

@@ -15,6 +15,7 @@ import com.iw.rrhh.leave.dto.WorkingDaysCalculationResponse;
 import com.iw.rrhh.leave.repository.LeaveRequestRepository;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +38,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final HolidayCalendarService holidayCalendarService;
     private final java.time.Clock clock;
 
+    @Autowired
     public LeaveRequestServiceImpl(
             LeaveRequestRepository leaveRequestRepository,
             EmployeeRepository employeeRepository,

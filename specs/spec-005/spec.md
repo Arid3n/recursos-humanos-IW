@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-27 · **Actualizada**: 2026-11-03
 
-**Status**: Draft
+**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-18)
 
 **Historia de Usuario**: HU-05 · **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 
@@ -77,7 +77,7 @@ Como empleado, recibo automáticamente una notificación dentro de la aplicació
 - **Aprobación concurrente sobre saldo ajustado**: si dos solicitudes de vacaciones pendientes del mismo empleado se aprueban a la vez y entre ambas superan el saldo disponible, solo una se aprueba; la otra se bloquea por saldo insuficiente y permanece Pendiente.
 - **Solicitud que cruza años naturales** (el saldo de HU-02 de ambos años refleja el reparto tras aprobar): se valida el saldo de cada año con los días que le corresponden; basta que un año no tenga saldo para bloquear la aprobación (la solicitud permanece Pendiente). **Límite conocido (N1)**: HU-03 sólo valida el saldo del año de inicio al crearla, por lo que puede existir una solicitud que cruza años y no es aprobable; el responsable puede rechazarla con motivo y el empleado crear otra. Mejora pendiente en HU-03.
 - **Resolución simultánea de la misma solicitud**: si dos operaciones intentan resolver la misma solicitud a la vez, solo una tiene éxito; la otra recibe el aviso de que ya está resuelta.
-- **Solicitud cancelada por el empleado antes de resolverse**: si el empleado retira la solicitud (HU-04) mientras el responsable tiene la bandeja abierta, el intento de resolución devuelve `404` e informa de que la solicitud ya no existe.
+- **Solicitud cancelada por el empleado antes de resolverse**: si el empleado retira la solicitud (HU-04) mientras el responsable tiene la bandeja abierta, la solicitud pasa a `CANCELLED` (HU-04) y el intento de resolución la trata como inexistente: devuelve `404` e informa de que la solicitud ya no existe (comprobado tras el alcance: fuera de alcance sigue siendo `403`).
 - **Cambio de responsable con solicitudes pendientes**: la solicitud la resuelve el responsable asignado al empleado en el momento de la resolución; el responsable anterior deja de verla y de poder resolverla.
 - **Permisos (no vacaciones)**: aprobar un permiso no altera el saldo de vacaciones (según HU-03), pero sí genera notificación y aparece en el calendario.
 - **Solicitud propia del responsable**: no aparece en su bandeja y cualquier intento de resolverla se deniega (`403`); aparece en la bandeja de su responsable superior.

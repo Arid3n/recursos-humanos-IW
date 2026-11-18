@@ -7,6 +7,7 @@ import com.iw.rrhh.employee.repository.EmployeeRepository;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,15 @@ class PerformanceReviewIntegrationTest {
     private ObjectMapper objectMapper;
 
     private final Map<UUID, UserIdentity> userIdentities = new HashMap<>();
+
+    /**
+     * Las evaluaciones formalizadas son inmutables (trigger de V4), así que no se pueden borrar fila a fila.
+     * TRUNCATE no dispara triggers de fila y evita que otras suites no puedan borrar a los empleados evaluados.
+     */
+    @AfterEach
+    void cleanUpReviews() {
+        jdbcTemplate.execute("TRUNCATE TABLE performance_reviews");
+    }
 
     @Test
     @DisplayName("HU-08: responsable crea y empleado formaliza una evaluación inmutable")
