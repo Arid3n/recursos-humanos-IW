@@ -28,7 +28,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,7 +60,8 @@ class LeaveRequestServiceTest {
     @Mock
     private HolidayCalendarService holidayCalendarService;
 
-    @InjectMocks
+    private final Clock clock = Clock.fixed(Instant.parse("2026-06-01T10:00:00Z"), ZoneOffset.UTC);
+
     private LeaveRequestServiceImpl leaveRequestService;
 
     private Employee employee;
@@ -68,6 +72,15 @@ class LeaveRequestServiceTest {
 
     @BeforeEach
     void setUp() {
+        leaveRequestService = new LeaveRequestServiceImpl(
+                leaveRequestRepository,
+                employeeRepository,
+                userRepository,
+                leaveBalanceService,
+                holidayCalendarService,
+                clock
+        );
+
         user = new User("empleado@empresa.com", "hash", UserRole.EMPLEADO);
 
         manager = new Employee();
@@ -153,7 +166,8 @@ class LeaveRequestServiceTest {
         CreateLeaveRequest request = new CreateLeaveRequest(
                 LeaveType.PERMIT,
                 LocalDate.of(2026, 7, 6),
-                LocalDate.of(2026, 7, 7)
+                LocalDate.of(2026, 7, 7),
+                "Permiso de mudanza debidamente documentado"
         );
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
@@ -228,6 +242,69 @@ class LeaveRequestServiceTest {
         assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("no contiene ningún día laborable");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar solicitud de tipo PERMIT si no se proporciona justificación")
+    void testCreateLeaveRequest_PermitRequiresJustification_ThrowsException() {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.PERMIT,
+                LocalDate.of(2026, 7, 6),
+                LocalDate.of(2026, 7, 7),
+                ""
+        );
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("La justificación es obligatoria para ausencias de tipo permiso");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar solicitud con fecha de inicio anterior a la fecha actual del sistema")
+    void testCreateLeaveRequest_PastStartDate_ThrowsException() {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.VACATION,
+                LocalDate.of(2026, 5, 20), // Anterior al reloj (2026-06-01)
+                LocalDate.of(2026, 5, 25)
+        );
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("La fecha de inicio debe ser igual o posterior a la fecha actual");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Debe descontar días en estado PENDING al verificar saldo de vacaciones disponible (FR-004)")
+    void testCreateLeaveRequest_DeductsPendingVacationsFromBalance() {
+        CreateLeaveRequest request = new CreateLeaveRequest(
+                LeaveType.VACATION,
+                LocalDate.of(2026, 7, 6),
+                LocalDate.of(2026, 7, 10) // 5 días laborables
+        );
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
+        when(employeeRepository.findByUserId(user.getId())).thenReturn(Optional.of(employee));
+        when(holidayCalendarService.countWorkingDays(request.startDate(), request.endDate())).thenReturn(5);
+        when(leaveRequestRepository.hasOverlappingRequests(eq(employeeId), eq(request.startDate()), eq(request.endDate()), any()))
+                .thenReturn(false);
+        // Saldo total disponible sin contar pendientes: 8 días
+        when(leaveBalanceService.getMyLeaveBalance(2026)).thenReturn(
+                new LeaveBalanceResponse(employeeId, 2026, 22, 14, 0, 8, false, "Convenio TIC")
+        );
+        // Ya tiene 4 días reservados en PENDING: disponible efectivo = 8 - 4 = 4 días
+        when(leaveRequestRepository.sumCalculatedDays(eq(employeeId), eq(LeaveType.VACATION), eq(LeaveStatus.PENDING), any(), any()))
+                .thenReturn(4);
+
+        // Pide 5 días teniendo solo 4 disponibles efectivos -> debe fallar con InsufficientLeaveBalanceException
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(request))
+                .isInstanceOf(InsufficientLeaveBalanceException.class)
+                .hasMessageContaining("4");
 
         verify(leaveRequestRepository, never()).save(any());
     }

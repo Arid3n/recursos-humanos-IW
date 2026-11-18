@@ -41,6 +41,7 @@ describe('LeaveRequestCreateComponent', () => {
     startDate: '2026-07-06',
     endDate: '2026-07-10',
     calculatedDays: 5,
+    justification: null,
     status: 'PENDING',
     createdAt: '2026-11-01T12:00:00Z'
   };
@@ -113,5 +114,21 @@ describe('LeaveRequestCreateComponent', () => {
 
     expect(mockLeaveService.createLeaveRequest).toHaveBeenCalled();
     expect(component.successMessage()).toContain('¡Solicitud registrada correctamente en estado Pendiente!');
+  });
+
+  it('should require justification when leaveType is PERMIT and allow optional for VACATION', () => {
+    const fixture = TestBed.createComponent(LeaveRequestCreateComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // Default VACATION: justification optional
+    expect(component.form.get('justification')?.valid).toBe(true);
+
+    // Switch to PERMIT: justification required
+    component.form.get('leaveType')?.setValue('PERMIT');
+    expect(component.form.get('justification')?.valid).toBe(false);
+
+    component.form.get('justification')?.setValue('Asunto médico justificado');
+    expect(component.form.get('justification')?.valid).toBe(true);
   });
 });

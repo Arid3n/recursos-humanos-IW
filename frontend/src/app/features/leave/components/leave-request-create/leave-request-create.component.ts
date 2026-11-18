@@ -50,12 +50,26 @@ export class LeaveRequestCreateComponent implements OnInit {
   form: FormGroup = this.fb.group({
     leaveType: ['VACATION' as LeaveType, Validators.required],
     startDate: [null as Date | null, Validators.required],
-    endDate: [null as Date | null, Validators.required]
+    endDate: [null as Date | null, Validators.required],
+    justification: ['', [Validators.maxLength(255)]]
   });
 
   ngOnInit(): void {
     this.loadCurrentBalance();
     this.setupDateListeners();
+    this.setupTypeListener();
+  }
+
+  private setupTypeListener(): void {
+    this.form.get('leaveType')?.valueChanges.subscribe((type: LeaveType) => {
+      const justificationCtrl = this.form.get('justification');
+      if (type === 'PERMIT') {
+        justificationCtrl?.setValidators([Validators.required, Validators.maxLength(255)]);
+      } else {
+        justificationCtrl?.setValidators([Validators.maxLength(255)]);
+      }
+      justificationCtrl?.updateValueAndValidity();
+    });
   }
 
   loadCurrentBalance(): void {
@@ -147,11 +161,12 @@ export class LeaveRequestCreateComponent implements OnInit {
       return;
     }
 
-    const { leaveType, startDate, endDate } = this.form.value;
+    const { leaveType, startDate, endDate, justification } = this.form.value;
     const payload: CreateLeaveRequest = {
       leaveType,
       startDate: this.formatDate(startDate),
-      endDate: this.formatDate(endDate)
+      endDate: this.formatDate(endDate),
+      justification: justification?.trim() || null
     };
 
     this.submitting.set(true);
@@ -164,7 +179,7 @@ export class LeaveRequestCreateComponent implements OnInit {
         this.successMessage.set(
           `¡Solicitud registrada correctamente en estado Pendiente! Días computados: ${res.calculatedDays}.`
         );
-        this.form.patchValue({ startDate: null, endDate: null });
+        this.form.patchValue({ startDate: null, endDate: null, justification: '' });
         this.workingDaysInfo.set(null);
         this.shortNoticeWarning.set(false);
         this.loadCurrentBalance();

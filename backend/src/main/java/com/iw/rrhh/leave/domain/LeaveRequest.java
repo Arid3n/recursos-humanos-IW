@@ -38,6 +38,9 @@ public class LeaveRequest {
     @Column(nullable = false, length = 50)
     private LeaveStatus status = LeaveStatus.PENDING;
 
+    @Column(name = "justification")
+    private String justification;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
@@ -59,11 +62,16 @@ public class LeaveRequest {
     public LeaveRequest() {}
 
     public LeaveRequest(Employee employee, LeaveType leaveType, LocalDate startDate, LocalDate endDate, Integer calculatedDays) {
+        this(employee, leaveType, startDate, endDate, calculatedDays, null);
+    }
+
+    public LeaveRequest(Employee employee, LeaveType leaveType, LocalDate startDate, LocalDate endDate, Integer calculatedDays, String justification) {
         this.employee = employee;
         this.leaveType = leaveType;
         this.startDate = startDate;
         this.endDate = endDate;
         this.calculatedDays = calculatedDays;
+        this.justification = justification;
         this.status = LeaveStatus.PENDING;
     }
 
@@ -79,6 +87,17 @@ public class LeaveRequest {
      */
     public void reject(Employee resolver, String reason, Instant now) {
         resolve(LeaveStatus.REJECTED, resolver, reason, now);
+    }
+
+    /**
+     * Transición PENDING → CANCELLED (HU-04). El empleado retira su solicitud en trámite.
+     */
+    public void cancel(Instant now) {
+        if (this.status != LeaveStatus.PENDING) {
+            throw new com.iw.rrhh.common.exception.LeaveRequestNotCancellableException("Solo se pueden cancelar solicitudes en estado PENDIENTE");
+        }
+        this.status = LeaveStatus.CANCELLED;
+        this.resolvedAt = now;
     }
 
     private void resolve(LeaveStatus newStatus, Employee resolver, String reason, Instant now) {
@@ -137,6 +156,14 @@ public class LeaveRequest {
 
     public void setCalculatedDays(Integer calculatedDays) {
         this.calculatedDays = calculatedDays;
+    }
+
+    public String getJustification() {
+        return justification;
+    }
+
+    public void setJustification(String justification) {
+        this.justification = justification;
     }
 
     public LeaveStatus getStatus() {

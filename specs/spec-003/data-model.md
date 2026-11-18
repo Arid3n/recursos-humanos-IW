@@ -20,8 +20,9 @@ Representa el registro formal de la solicitud de ausencia creada por el empleado
 | `leaveType` / `leave_type` | `LeaveType` | `VARCHAR(50)` | `NOT NULL, CHECK (leave_type IN ('VACATION', 'PERMIT'))` | Tipo de ausencia solicitada |
 | `startDate` / `start_date` | `LocalDate` | `DATE` | `NOT NULL` | Fecha de inicio del periodo |
 | `endDate` / `end_date` | `LocalDate` | `DATE` | `NOT NULL, CHECK (end_date >= start_date)` | Fecha de finalización del periodo |
-| `calculatedDays` / `calculated_days` | `Integer` | `INTEGER` | `NOT NULL, CHECK (calculated_days >= 0)` | Días laborables computados por el servidor |
-| `status` / `status` | `LeaveStatus` | `VARCHAR(50)` | `NOT NULL, CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))` | Nace estrictamente en `PENDING` |
+| `calculatedDays` / `calculated_days` | `Integer` | `INTEGER` | `NOT NULL, CHECK (calculated_days >= 1)` | Días laborables computados por el servidor (entero positivo) |
+| `justification` / `justification` | `String` | `TEXT` | `NULL` permitido solo si `leave_type = 'VACATION'`, obligatorio si `leave_type = 'PERMIT'` | Justificación aportada por el empleado (hasta 255 caracteres) |
+| `status` / `status` | `LeaveStatus` | `VARCHAR(50)` | `NOT NULL, CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'))` | Nace estrictamente en `PENDING` |
 | `rejectionReason` / `rejection_reason` | `String` | `TEXT` | `NULL` al crearse | Justificación en caso de rechazo posterior (HU-05) |
 | `resolvedBy` / `resolved_by` | `Employee` | `UUID` | `REFERENCES employees(id) ON DELETE SET NULL` | Asignado automáticamente al `manager` del empleado |
 | `resolvedAt` / `resolved_at` | `Instant` | `TIMESTAMPTZ` | `NULL` al crearse | Momento en que el responsable resolverá (HU-05) |
@@ -38,7 +39,8 @@ public enum LeaveType {
 public enum LeaveStatus {
     PENDING,
     APPROVED,
-    REJECTED
+    REJECTED,
+    CANCELLED
 }
 ```
 
@@ -47,18 +49,20 @@ public enum LeaveStatus {
 ## 2. Invariants & Business Constraints
 
 1. **Estado inicial estricto (Art. 13, FR-003)**:
-   - Toda solicitud DEBE crearse en estado `PENDING`. No es posible crear solicitudes en estado `APPROVED` o `REJECTED` desde el endpoint de creación.
+   - Toda solicitud DEBE crearse en estado `PENDING`. No es posible crear solicitudes en estado `APPROVED`, `REJECTED` o `CANCELLED` desde el endpoint de creación.
 2. **Validación de fechas (FR-005)**:
-   - `endDate >= startDate`. Si `endDate < startDate`, se rechaza con error de validación RFC 9457 asociado al campo `endDate`.
+   - `endDate >= startDate` y `startDate >= LocalDate.now()`. Si `endDate < startDate`, se rechaza con error de validación RFC 9457 asociado al campo `endDate`. Si `startDate < LocalDate.now()`, se rechaza con error asociado al campo `startDate`.
 3. **Cómputo en días hábiles (Art. 14, FR-002)**:
-   - Solo se contabilizan de lunes a viernes, restando fines de semana y festivos oficiales parametrizados.
+   - Solo se contabilizan de lunes a viernes, restando fines de semana y festivos oficiales parametrizados. La unidad mínima indivisible es 1 día laborable entero (`calculatedDays >= 1`).
    - Si `calculatedDays == 0`, la solicitud es rechazada con error explicativo ("El rango seleccionado no contiene ningún día laborable").
 4. **No solapamiento (FR-007, SC-002)**:
-   - No puede existir ninguna solicitud previa del mismo empleado en estado `PENDING` o `APPROVED` cuyo intervalo temporal coincida o se solape (`startDate <= :newEndDate AND endDate >= :newStartDate`).
-5. **Tope de saldo disponible (Art. 12, FR-004, SC-003)**:
-   - Para `leaveType == VACATION`, `calculatedDays <= leaveBalanceService.getMyLeaveBalance(startDate.getYear()).availableDays()`.
+   - No puede existir ninguna solicitud previa del mismo empleado en estado `PENDING` o `APPROVED` cuyo intervalo temporal coincida o se solape (`startDate <= :newEndDate AND endDate >= :newStartDate`). Las solicitudes `CANCELLED` quedan liberadas y no computan.
+5. **Tope de saldo disponible con reserva preventiva (Art. 12, FR-004, SC-003)**:
+   - Para `leaveType == VACATION`, `calculatedDays <= (leaveBalanceService.getMyLeaveBalance(startDate.getYear()).availableDays() - leaveRequestRepository.sumPendingDaysByEmployeeIdAndYear(employeeId, startDate.getYear()))`.
    - Para `leaveType == PERMIT`, no se valida ni se descuenta saldo de vacaciones (FR-008).
-6. **Asignación de responsable (FR-006)**:
+6. **Justificación obligatoria en permisos (FR-001)**:
+   - Si `leaveType == PERMIT`, el campo `justification` es obligatorio (no nulo ni en blanco, máx. 255 caracteres). Si `leaveType == VACATION`, es opcional.
+7. **Asignación de responsable (FR-006)**:
    - El sistema vincula la solicitud al responsable de equipo configurado en `employee.manager`.
 
 ---
@@ -81,7 +85,10 @@ public record CreateLeaveRequest(
     LocalDate startDate,
 
     @NotNull(message = "La fecha de fin es obligatoria")
-    LocalDate endDate
+    LocalDate endDate,
+
+    @Size(max = 255, message = "La justificación no puede superar 255 caracteres")
+    String justification
 ) {}
 ```
 
@@ -104,6 +111,7 @@ public record LeaveRequestResponse(
     LocalDate startDate,
     LocalDate endDate,
     Integer calculatedDays,
+    String justification,
     LeaveStatus status,
     Instant createdAt
 ) {}
@@ -143,5 +151,18 @@ boolean hasOverlappingRequests(
     @Param("employeeId") UUID employeeId,
     @Param("startDate") LocalDate startDate,
     @Param("endDate") LocalDate endDate
+);
+
+@Query("""
+    SELECT COALESCE(SUM(lr.calculatedDays), 0)
+    FROM LeaveRequest lr
+    WHERE lr.employee.id = :employeeId
+      AND lr.leaveType = 'VACATION'
+      AND lr.status = 'PENDING'
+      AND EXTRACT(YEAR FROM lr.startDate) = :year
+""")
+int sumPendingDaysByEmployeeIdAndYear(
+    @Param("employeeId") UUID employeeId,
+    @Param("year") int year
 );
 ```

@@ -116,6 +116,11 @@ components:
           type: string
           format: date
           example: '2026-07-10'
+        justification:
+          type: string
+          maxLength: 255
+          description: Justificación obligatoria si leaveType == PERMIT, opcional en VACATION.
+          example: 'Asunto de deber inexcusable / mudanza'
 
     LeaveRequestResponse:
       type: object
@@ -159,6 +164,10 @@ components:
         calculatedDays:
           type: integer
           example: 5
+        justification:
+          type: string
+          nullable: true
+          example: 'Asunto médico'
         status:
           $ref: '#/components/schemas/LeaveStatus'
         createdAt:
@@ -214,6 +223,7 @@ components:
         - PENDING
         - APPROVED
         - REJECTED
+        - CANCELLED
       description: Estado canónico del ciclo de vida
 
     ProblemDetail:

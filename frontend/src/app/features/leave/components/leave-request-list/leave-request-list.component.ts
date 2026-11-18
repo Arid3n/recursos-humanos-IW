@@ -40,6 +40,7 @@ export class LeaveRequestListComponent implements OnInit {
     'leaveType',
     'dates',
     'calculatedDays',
+    'justification',
     'status',
     'createdAt',
     'actions'
@@ -59,7 +60,8 @@ export class LeaveRequestListComponent implements OnInit {
     { label: 'Todas', value: null, icon: 'list_alt' },
     { label: 'Pendientes', value: 'PENDING', icon: 'schedule' },
     { label: 'Aprobadas', value: 'APPROVED', icon: 'check_circle' },
-    { label: 'Rechazadas', value: 'REJECTED', icon: 'cancel' }
+    { label: 'Rechazadas', value: 'REJECTED', icon: 'cancel' },
+    { label: 'Canceladas', value: 'CANCELLED', icon: 'block' }
   ];
 
   ngOnInit(): void {

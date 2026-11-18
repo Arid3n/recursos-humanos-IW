@@ -19,7 +19,8 @@ Entidad existente mapeada en `com.iw.rrhh.leave.domain.LeaveRequest`.
 | `start_date` | `DATE` | `LocalDate` | Fecha inicio ausencia. |
 | `end_date` | `DATE` | `LocalDate` | Fecha fin ausencia (`>= start_date`). |
 | `calculated_days` | `INTEGER` | `Integer` | Días hábiles laborables calculados. |
-| `status` | `VARCHAR(50)` | `LeaveStatus` | `PENDING`, `APPROVED`, `REJECTED`. |
+| `justification` | `TEXT` | `String` | Justificación aportada por el empleado (opcional en VACATION, obligatoria en PERMIT). |
+| `status` | `VARCHAR(50)` | `LeaveStatus` | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`. |
 | `rejection_reason` | `TEXT` | `String` | Motivo de rechazo (obligatorio si `REJECTED`). |
 | `resolved_by` | `UUID` | `Employee` | FK a responsable que resolvió. |
 | `resolved_at` | `TIMESTAMPTZ` | `Instant` | Momento de resolución. |
@@ -46,6 +47,7 @@ public record LeaveRequestSummaryResponse(
     LocalDate startDate,
     LocalDate endDate,
     Integer calculatedDays,
+    String justification,
     LeaveStatus status,
     String rejectionReason,
     Instant createdAt,
@@ -92,7 +94,7 @@ stateDiagram-v2
     [*] --> PENDING: Solicitud registrada (HU-03)
     PENDING --> APPROVED: Aprobada por Responsable (HU-05)
     PENDING --> REJECTED: Rechazada con motivo (HU-05)
-    PENDING --> [*]: Cancelada por Empleado (HU-04, 204 No Content)
+    PENDING --> CANCELLED: Cancelada por Empleado (HU-04, 204 No Content / transiciona a CANCELLED)
     
     APPROVED --> CancelAttempt: Intento de cancelar por empleado
     CancelAttempt --> APPROVED: Rechazado (409 Conflict)

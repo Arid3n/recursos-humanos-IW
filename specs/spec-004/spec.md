@@ -8,6 +8,13 @@
 
 ## Clarifications
 
+### Session 2026-11-17
+- Q: ¿Cómo deben persistirse y representarse en el sistema las solicitudes en estado Pendiente que el empleado decide cancelar? → A: Estado formal `CANCELLED` (`CANCELADA`): la solicitud transiciona a estado `CANCELLED`, permanece visible en el historial con opción de filtrado específico y libera inmediatamente el rango de fechas para no bloquear nuevas solicitudes.
+- Q: ¿Qué impacto tiene la cancelación de una solicitud pendiente sobre el saldo disponible del empleado? → A: Al cancelar una solicitud de vacaciones en estado `PENDING`, los días retenidos preventivamente se liberan de inmediato, restableciendo el saldo disponible para futuras solicitudes.
+- Q: ¿Debe mostrarse la justificación del empleado en el seguimiento de solicitudes de HU-04? → A: Sí; el DTO y la interfaz de HU-04 incluyen el campo `justification` para que el empleado pueda revisar el motivo aportado tanto en vacaciones como en permisos.
+- Q: ¿Cuál es el formato del cómputo de días mostrado en el listado de HU-04? → A: Números enteros de días laborables (`calculatedDays` como `Integer >= 1`), ya que la unidad mínima de ausencia es la jornada completa.
+- Q: ¿Pueden figurar solicitudes con fechas pasadas en el listado de HU-04? → A: Sí; el histórico de HU-04 presenta todas las solicitudes registradas por el empleado con anterioridad en cualquier estado, garantizando la trazabilidad histórica aunque las nuevas solicitudes requieran `startDate >= hoy`.
+
 ### Session 2026-10-27
 - Q: ¿Puede el empleado cancelar una solicitud suya mientras permanezca en estado Pendiente? → A: Sí; el empleado puede cancelar/retirar directamente cualquier solicitud en estado Pendiente, liberando el periodo sin penalización.
 - Q: ¿Puede el empleado cancelar una solicitud que ya ha sido Aprobada? → A: No de forma unilateral; una vez Aprobada, la ausencia consolida saldo y calendario, requiriendo solicitar su revocación o ajuste al responsable de equipo.
@@ -30,7 +37,7 @@ Como empleado, quiero consultar un listado histórico de todas mis solicitudes d
 1. **Listado completo de solicitudes del empleado**:
    - **Given** un empleado autenticado que ha registrado diversas solicitudes,
    - **When** accede a su bandeja "Mis Solicitudes",
-   - **Then** visualiza una tabla ordenada con columnas: tipo (Vacaciones / Permiso), fecha de inicio, fecha de fin, días laborables, estado actual y fecha de solicitud.
+   - **Then** visualiza una tabla ordenada con columnas: tipo (Vacaciones / Permiso), fecha de inicio, fecha de fin, días laborables, justificación del empleado, estado actual y fecha de solicitud.
 
 2. **Detalle de motivo de rechazo**:
    - **Given** una solicitud en estado `Rechazada` con una justificación ("Coincidencia de personal crítico"),
@@ -40,10 +47,10 @@ Como empleado, quiero consultar un listado histórico de todas mis solicitudes d
 3. **Cancelación de solicitud en estado Pendiente**:
    - **Given** una solicitud registrada que aún se encuentra en estado `Pendiente`,
    - **When** el empleado pulsa en el botón "Cancelar solicitud" y confirma,
-   - **Then** la solicitud queda cancelada/descartada y deja de aparecer como pendiente para su responsable.
+   - **Then** la solicitud transiciona al estado `CANCELADA` (`CANCELLED`), permanece visible en su historial, libera preventivamente los días de vacaciones retenidos para el saldo disponible, libera las fechas para nuevas solicitudes y deja de aparecer como pendiente para su responsable.
 
 4. **Filtrado dinámico por estado**:
-   - **Given** un historial con solicitudes pendientes, aprobadas y rechazadas,
+   - **Given** un historial con solicitudes pendientes, aprobadas, rechazadas y canceladas,
    - **When** el empleado selecciona el filtro "Pendiente",
    - **Then** la vista actualiza el listado mostrando únicamente aquellas solicitudes en dicho estado.
 
@@ -62,19 +69,20 @@ Como empleado, quiero consultar un listado histórico de todas mis solicitudes d
 
 ### Functional Requirements
 - **FR-001**: El sistema DEBE exponer un endpoint de listado paginado de solicitudes para el empleado en sesión, ordenado por `created_at DESC`.
-- **FR-002**: Cada elemento del listado DEBE incluir: id, tipo, fechas de inicio y fin, días laborables, estado (`PENDING`, `APPROVED`, `REJECTED`), fecha de creación y motivo de rechazo si aplica.
-- **FR-003**: La vista DEBE permitir filtrar por estado mediante un selector accesible (`Todas`, `Pendiente`, `Aprobada`, `Rechazada`).
+- **FR-002**: Cada elemento del listado DEBE incluir: id, tipo, fechas de inicio y fin, días laborables, justificación del empleado (`justification`), estado (`PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`), fecha de creación y motivo de rechazo si aplica.
+- **FR-003**: La vista DEBE permitir filtrar por estado mediante un selector accesible (`Todas`, `Pendiente`, `Aprobada`, `Rechazada`, `Cancelada`).
 - **FR-004**: Si una solicitud está en estado `REJECTED`, el motivo (`rejectionReason`) DEBE ser visible para el empleado en la interfaz.
 - **FR-005**: El backend DEBE rechazar cualquier intento de consultar o cancelar solicitudes ajenas por parte de un usuario con rol `EMPLEADO`.
-- **FR-006**: El empleado DEBE poder cancelar sus propias solicitudes siempre y cuando su estado sea estrictamente `PENDING`.
+- **FR-006**: El empleado DEBE poder cancelar sus propias solicitudes siempre y cuando su estado sea estrictamente `PENDING`, transicionando la entidad al estado `CANCELLED` y liberando el saldo preventivo retenido y las fechas reservadas.
 
 ### Key Entities
 - **LeaveRequestSummary (DTO de Consulta)**:
   - `id`: Identificador.
   - `leaveType`: Tipo de ausencia.
   - `startDate`, `endDate`: Rango temporal.
-  - `calculatedDays`: Días cómputo.
-  - `status`: Estado de la petición.
+  - `calculatedDays`: Días cómputo (entero `Integer >= 1`).
+  - `justification`: Motivo o justificación aportada por el empleado.
+  - `status`: Estado de la petición (`PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`).
   - `rejectionReason`: Justificación en caso de rechazo.
   - `createdAt`: Fecha de solicitud.
   - `canCancel`: Booleano `true` si `status == 'PENDING'`.

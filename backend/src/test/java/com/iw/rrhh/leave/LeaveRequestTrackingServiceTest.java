@@ -30,7 +30,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.security.Principal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +61,8 @@ class LeaveRequestTrackingServiceTest {
     @Mock
     private HolidayCalendarService holidayCalendarService;
 
-    @InjectMocks
+    private final Clock clock = Clock.fixed(Instant.parse("2026-06-01T10:00:00Z"), ZoneOffset.UTC);
+
     private LeaveRequestServiceImpl leaveRequestService;
 
     private Employee employee;
@@ -67,6 +71,15 @@ class LeaveRequestTrackingServiceTest {
 
     @BeforeEach
     void setUp() {
+        leaveRequestService = new LeaveRequestServiceImpl(
+                leaveRequestRepository,
+                employeeRepository,
+                userRepository,
+                leaveBalanceService,
+                holidayCalendarService,
+                clock
+        );
+
         user = new User("empleado@empresa.com", "encodedPass", UserRole.EMPLEADO);
         user.setId(UUID.randomUUID());
 
@@ -155,7 +168,9 @@ class LeaveRequestTrackingServiceTest {
 
         leaveRequestService.cancelRequest(principal, requestId);
 
-        verify(leaveRequestRepository).delete(pending);
+        assertThat(pending.getStatus()).isEqualTo(LeaveStatus.CANCELLED);
+        verify(leaveRequestRepository).save(pending);
+        verify(leaveRequestRepository, never()).delete(any());
     }
 
     @Test
