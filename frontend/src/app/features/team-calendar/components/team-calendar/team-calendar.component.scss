@@ -214,3 +214,34 @@
   align-items: center;
 }
 
+.day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--app-border, #d6d3d1);
+  border-radius: 8px;
+
+  &.conflict {
+    border: 2px solid #c2410c;
+  }
+}
+
+.day-item-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--app-text);
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}

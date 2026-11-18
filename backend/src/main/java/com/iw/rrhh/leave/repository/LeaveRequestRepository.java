@@ -99,11 +99,13 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
 
     /**
      * Calendario del equipo (HU-06): solicitudes de los miembros activos del responsable que solapan el rango.
+     * Excluye al propio responsable, aunque su manager_id apunte a sí mismo (sus ausencias no aparecen en su calendario).
      */
     @Query("""
         SELECT lr FROM LeaveRequest lr
         JOIN FETCH lr.employee e
         WHERE e.manager.id = :managerId
+          AND e.id <> :managerId
           AND e.active = true
           AND lr.status IN :statuses
           AND lr.startDate <= :rangeEnd

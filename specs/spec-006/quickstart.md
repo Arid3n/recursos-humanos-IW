@@ -1,7 +1,7 @@
 # Quickstart: spec-006 — Calendario de Ausencias del Equipo
 
 **Feature**: `spec-006` (HU-06)
-**Date**: 2026-11-03
+**Date**: 2026-11-03 · **Revisado**: 2026-11-18
 **Author**: Integrante 3
 
 ---
@@ -18,6 +18,7 @@
 1. Como `rrhh@empresa.com`, dar de alta un segundo empleado con responsable "Carlos Ruiz Navarro" (HU-01) y otro empleado sin ese responsable.
 2. Con cada empleado, crear solicitudes (HU-03) en el mismo mes: Laura y el segundo empleado con al menos un día laborable en común; el empleado ajeno en esas mismas fechas.
 3. Como `responsable@empresa.com`, aprobar una de las dos solicitudes del equipo (HU-05) y rechazar alguna otra solicitud del equipo de otro día.
+4. Con el segundo empleado, crear una tercera solicitud y retirarla (HU-04, estado `CANCELLED`) en un día distinto.
 
 ---
 
@@ -60,6 +61,24 @@
 3. Seleccionar "Todo el equipo".
 4. **Esperado**: reaparecen todas las ausencias. El filtro no contiene al empleado ajeno.
 
+### Escenario 6 — Solicitud retirada (HU-06.CA-2, aclaración 2026-11-18)
+1. En el mes preparado, localizar el día de la solicitud retirada (preparación, paso 4).
+2. **Esperado**: no aparece ninguna ausencia ese día y no cuenta para las coincidencias.
+
+### Escenario 7 — Pantalla estrecha (FR-003b)
+1. Reducir la ventana a menos de 600 px (o emulación de móvil).
+2. **Esperado**: en lugar de la cuadrícula aparece una lista vertical de los días laborables con ausencias, con nombre, tipo, estado, leyenda y, en los días coincidentes, el icono de advertencia con el texto «N ausencias coincidentes». El título, la navegación de meses y el filtro siguen disponibles. Al ensanchar la ventana vuelve la cuadrícula.
+
+### Escenario 8 — Sin datos de motivo (FR-002)
+1. Llamar a la API con una solicitud rechazada y otra con justificación en el mes:
+   ```bash
+   curl -s -u responsable@empresa.com:admin123 "http://localhost:8080/api/v1/leave/team-calendar?month=2026-12"
+   ```
+2. **Esperado**: ningún evento contiene `rejectionReason`, `justification` ni texto de motivo; el detalle del diálogo muestra solo nombre, tipo, rango y estado.
+
+### Escenario 9 — Navegación sin límite (FR-003)
+1. Pulsar «Mes siguiente» o «Mes anterior» varios años: **Esperado**: los botones nunca se deshabilitan y los meses vacíos muestran «No hay ausencias en este mes».
+
 ---
 
 ## 3. Tests Automatizados
@@ -74,6 +93,7 @@ cd frontend && npx ng test --watch=false
 | CA | Cobertura esperada |
 |---|---|
 | HU-06.CA-1 | Días del mes completos y ordenados; eventos solo en días laborables dentro del rango; ausencia que cruza el cambio de mes; navegación pide el mes correcto; detalle con rango completo. |
-| HU-06.CA-2 | `status` `PENDING`/`APPROVED` en eventos; `REJECTED` excluida; UI con icono + texto + leyenda. |
+| HU-06.CA-2 | `status` `PENDING`/`APPROVED` en eventos; `REJECTED` y `CANCELLED` excluidas de eventos y recuento; JSON sin `rejectionReason`/`justification`; UI con icono + texto + leyenda. |
 | HU-06.CA-3 | `hasConflict` y `absentCount` con ≥ 2 empleados distintos; 1 ausencia no es coincidencia; fines de semana/festivos sin recuento; filtro mantiene el resalte. |
-| HU-06.CA-4 | Otro equipo excluido de eventos, recuento y miembros; empleado inactivo excluido; `403` con rol `EMPLEADO`; `400` con mes inválido. |
+| HU-06.CA-4 | Otro equipo excluido de eventos, recuento y miembros; empleado inactivo excluido; el propio responsable (también con `manager_id` autorreferenciado) excluido; `403` con rol `EMPLEADO`; `400` con mes inválido; mes lejano (p. ej. 2031-01) responde `200`. |
+| FR-003b | Vista de lista bajo 600 px con los mismos datos y marca de coincidencia con icono + texto; vuelve la cuadrícula en pantallas anchas; mes inicial en Europe/Madrid. |

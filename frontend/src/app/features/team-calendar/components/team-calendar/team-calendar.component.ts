@@ -1,5 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,6 +17,15 @@ import { AbsenceDetailDialogComponent } from '../absence-detail-dialog/absence-d
 /** Casilla de la cuadrícula: null para los huecos anteriores/posteriores al mes. */
 export type CalendarCell = TeamCalendarDay | null;
 
+/** Zona horaria de negocio (Art. 14.2): el mes inicial es el mes actual en Madrid, no en la zona del navegador. */
+const BUSINESS_TIME_ZONE = 'Europe/Madrid';
+const BUSINESS_YEAR_MONTH_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: BUSINESS_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit'
+});
+const DAY_LABEL_FORMAT = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric' });
+
 const MONTH_TITLE_FORMAT = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
 
 @Component({
@@ -26,6 +38,13 @@ const MONTH_TITLE_FORMAT = new Intl.DateTimeFormat('es-ES', { month: 'long', yea
 export class TeamCalendarComponent implements OnInit {
   private readonly teamCalendarService = inject(TeamCalendarService);
   private readonly dialog = inject(MatDialog);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  /** Pantalla estrecha (< 600 px): lista de días con ausencias en lugar de la cuadrícula (FR-003b). */
+  readonly isNarrow = toSignal(
+    this.breakpointObserver.observe(Breakpoints.XSmall).pipe(map(state => state.matches)),
+    { initialValue: false }
+  );
 
   readonly weekDays = [
     { short: 'Lun', full: 'Lunes' },
@@ -38,7 +57,7 @@ export class TeamCalendarComponent implements OnInit {
   ];
 
   /** Primer día del mes visible (hora local). */
-  readonly visibleMonth = signal<Date>(this.firstDayOfMonth(new Date()));
+  readonly visibleMonth = signal<Date>(this.currentMonthInBusinessZone());
   readonly calendar = signal<TeamCalendar | null>(null);
   readonly loading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
@@ -83,6 +102,11 @@ export class TeamCalendarComponent implements OnInit {
     return weeks;
   });
 
+  /** Días laborables del mes con ausencias visibles (vista de lista); fines de semana y festivos no aparecen. */
+  readonly daysWithAbsences = computed<TeamCalendarDay[]>(() =>
+    this.visibleDays().filter(day => day.dayType === 'WORKING' && day.events.length > 0)
+  );
+
   readonly hasMembers = computed(() => (this.calendar()?.members.length ?? 0) > 0);
 
   readonly hasAbsences = computed(() => this.visibleDays().some(day => day.events.length > 0));
@@ -123,6 +147,10 @@ export class TeamCalendarComponent implements OnInit {
     });
   }
 
+  dayLabel(day: TeamCalendarDay): string {
+    return DAY_LABEL_FORMAT.format(this.parseDate(day.date));
+  }
+
   dayNumber(day: TeamCalendarDay): number {
     return this.parseDate(day.date).getDate();
   }
@@ -141,8 +169,10 @@ export class TeamCalendarComponent implements OnInit {
     this.loadCalendar();
   }
 
-  private firstDayOfMonth(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), 1);
+  /** Primer día del mes actual según el calendario de Europe/Madrid. */
+  private currentMonthInBusinessZone(): Date {
+    const [year, month] = BUSINESS_YEAR_MONTH_FORMAT.format(new Date()).split('-').map(Number);
+    return new Date(year, month - 1, 1);
   }
 
   /** Interpreta "YYYY-MM-DD" como fecha local, sin desplazamiento de zona horaria. */

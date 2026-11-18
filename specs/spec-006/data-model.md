@@ -1,7 +1,7 @@
 # Data Model: spec-006 — Calendario de Ausencias del Equipo
 
 **Feature**: `spec-006` (HU-06)
-**Date**: 2026-11-03
+**Date**: 2026-11-03 · **Revisado**: 2026-11-18
 **Author**: Integrante 3
 
 ---
@@ -12,8 +12,8 @@ Sin cambios de esquema ni migraciones. HU-06 es de solo lectura sobre:
 
 | Entidad (tabla) | Campos usados | Regla |
 |---|---|---|
-| `LeaveRequest` (`leave_requests`) | `id`, `employee`, `leave_type`, `start_date`, `end_date`, `status` | Solo `PENDING` y `APPROVED`; rango que solapa el mes visible. |
-| `Employee` (`employees`) | `id`, `first_name`, `last_name`, `manager_id`, `active` | Equipo = `manager_id` = responsable en sesión y `active = true`. |
+| `LeaveRequest` (`leave_requests`) | `id`, `employee`, `leave_type`, `start_date`, `end_date`, `status` | Solo `PENDING` y `APPROVED` (`REJECTED` y `CANCELLED` quedan fuera); rango que solapa el mes visible. No se leen `rejection_reason` ni la justificación. |
+| `Employee` (`employees`) | `id`, `first_name`, `last_name`, `manager_id`, `active` | Equipo = `manager_id` = responsable en sesión, `active = true` y distinto del propio responsable. |
 
 **Nota**: en solicitudes `PENDING`, `resolved_by` contiene el responsable asignado en HU-03 (ver `specs/spec-005/research.md` §1.1); HU-06 no lo usa.
 
@@ -80,7 +80,7 @@ public record TeamCalendarEventResponse(
 
 | Repositorio | Método | Uso |
 |---|---|---|
-| `LeaveRequestRepository` | `List<LeaveRequest> findTeamCalendarRequests(UUID managerId, List<LeaveStatus> statuses, LocalDate rangeStart, LocalDate rangeEnd)` con `JOIN FETCH lr.employee` (ver `research.md` §1.3) | Ausencias del equipo que solapan el mes. Índice `idx_leave_calendar`. |
+| `LeaveRequestRepository` | `List<LeaveRequest> findTeamCalendarRequests(UUID managerId, List<LeaveStatus> statuses, LocalDate rangeStart, LocalDate rangeEnd)` con `JOIN FETCH lr.employee` y `e.id <> :managerId` (ver `research.md` §1.3) | Ausencias del equipo que solapan el mes. Índice `idx_leave_calendar`. |
 | `EmployeeRepository` | `findByManagerIdAndActiveTrue(UUID)` (existente) | Miembros del filtro. |
 
 ---
@@ -91,7 +91,10 @@ public record TeamCalendarEventResponse(
 |---|---|---|
 | Solo rol `RESPONSABLE_EQUIPO` | Art. 10, FR-011 | `403` en otro caso |
 | Solo personas del equipo del responsable en sesión | FR-001, FR-010 | Otros equipos nunca se consultan |
-| Solo `PENDING` y `APPROVED` | FR-001, FR-005 | `REJECTED` excluidas en la consulta |
+| Solo `PENDING` y `APPROVED` | FR-001, FR-005 | `REJECTED` y `CANCELLED` excluidas en la consulta |
+| Sin datos de motivo | FR-002, Art. 20.1 | Los DTO no tienen campo de justificación |
+| El responsable no ve sus propias ausencias | Assumptions | Excluido de la consulta y de `members` |
+| Sin límite de meses | FR-003 | Cualquier `YearMonth` válido |
 | Consulta acotada al mes | FR-003, Art. 16.4 | Parámetro `month` obligatorio, `400` si inválido |
 | Eventos solo en días laborables | FR-008 | Fines de semana y festivos sin eventos ni recuento |
-| `hasConflict` si ≥ 2 empleados distintos ausentes | FR-006, Art. 16.3 | Calculado en servidor |
+| `hasConflict` si ≥ 2 empleados distintos ausentes, sea cual sea el tamaño del equipo | FR-006, Art. 16.3 | Calculado en servidor |

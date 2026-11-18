@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -186,6 +187,69 @@ class TeamCalendarIntegrationTest {
                 .andExpect(jsonPath("$.days[*].events[*].requestId", not(hasItem(inactive.getId().toString()))))
                 .andExpect(jsonPath("$.members[*].id", not(hasItem(memberB.getId().toString()))))
                 .andExpect(jsonPath("$.members[*].id", not(hasItem(inactiveA.getId().toString()))));
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-2: una solicitud retirada por el empleado (CANCELLED, HU-04) no aparece ni cuenta para las coincidencias")
+    void cancelledRequestExcluded() throws Exception {
+        request(memberA1, LocalDate.of(2026, 12, 17), LocalDate.of(2026, 12, 17), LeaveStatus.APPROVED);
+        LeaveRequest toCancel = request(memberA2, LocalDate.of(2026, 12, 17), LocalDate.of(2026, 12, 17), LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/cancel", toCancel.getId())
+                        .with(user(MEMBER_A2).roles(UserRole.EMPLEADO.name())))
+                .andExpect(status().is2xxSuccessful());
+        org.assertj.core.api.Assertions.assertThat(leaveRequestRepository.findById(toCancel.getId()).orElseThrow().getStatus())
+                .isEqualTo(LeaveStatus.CANCELLED);
+
+        mockMvc.perform(get(URL).param("month", "2026-12").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days[16].events", hasSize(1)))
+                .andExpect(jsonPath("$.days[16].absentCount", is(1)))
+                .andExpect(jsonPath("$.days[16].hasConflict", is(false)))
+                .andExpect(jsonPath("$.days[*].events[*].requestId", not(hasItem(toCancel.getId().toString()))));
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-1: la respuesta no contiene motivos de rechazo ni justificaciones (FR-002)")
+    void responseHasNoReasonOrJustification() throws Exception {
+        request(memberA1, LocalDate.of(2026, 12, 18), LocalDate.of(2026, 12, 18), LeaveStatus.REJECTED);
+        LeaveRequest withJustification = new LeaveRequest(memberA2, LeaveType.PERMIT,
+                LocalDate.of(2026, 12, 21), LocalDate.of(2026, 12, 21), 1, "Cita médica privada");
+        withJustification.setStatus(LeaveStatus.APPROVED);
+        leaveRequestRepository.save(withJustification);
+
+        String body = mockMvc.perform(get(URL).param("month", "2026-12").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days[20].events", hasSize(1)))
+                .andReturn().getResponse().getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(body)
+                .doesNotContain("rejectionReason", "justification", "Motivo previo de rechazo", "Cita médica privada");
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-4: el propio responsable, aunque su manager_id apunte a sí mismo, no aparece en eventos ni en miembros")
+    void selfReferencingManagerExcluded() throws Exception {
+        managerA.setManager(managerA);
+        employeeRepository.save(managerA);
+        LeaveRequest own = request(managerA, LocalDate.of(2026, 12, 22), LocalDate.of(2026, 12, 22), LeaveStatus.PENDING);
+
+        mockMvc.perform(get(URL).param("month", "2026-12").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days[*].events[*].requestId", not(hasItem(own.getId().toString()))))
+                .andExpect(jsonPath("$.members[*].id", not(hasItem(managerA.getId().toString()))))
+                .andExpect(jsonPath("$.members", hasSize(2)));
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-1: cualquier mes válido es consultable, también años lejanos (FR-003)")
+    void farMonthsAreQueryable() throws Exception {
+        mockMvc.perform(get(URL).param("month", "2031-01").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days", hasSize(31)));
+        mockMvc.perform(get(URL).param("month", "2020-02").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days", hasSize(29)));
     }
 
     @Test

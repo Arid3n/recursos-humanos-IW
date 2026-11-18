@@ -4,8 +4,12 @@ info:
   description: |
     Calendario mensual de solo lectura con las ausencias aprobadas y pendientes de las personas
     a cargo del responsable en sesión. Las coincidencias (2 o más personas ausentes en un día
-    laborable) se calculan en el servidor (Art. 16.3). El equipo se deriva de la sesión (Art. 10).
-  version: 1.0.0
+    laborable, sea cual sea el tamaño del equipo) se calculan en el servidor (Art. 16.3). El equipo se
+    deriva de la sesión (Art. 10) y no incluye al propio responsable. Solo se devuelven los estados
+    PENDING y APPROVED: las solicitudes rechazadas y las retiradas por el empleado (CANCELLED) nunca
+    aparecen. La respuesta no incluye justificaciones ni motivos (Art. 20.1). El parámetro `month`
+    admite cualquier mes válido, sin límite.
+  version: 1.1.0
 servers:
   - url: /api/v1
 security:

@@ -57,6 +57,7 @@ public class TeamCalendarServiceImpl implements TeamCalendarService {
         LocalDate lastDay = month.atEndOfMonth();
 
         List<TeamMemberResponse> members = employeeRepository.findByManagerIdAndActiveTrue(manager.getId()).stream()
+                .filter(e -> !e.getId().equals(manager.getId()))
                 .sorted(Comparator.comparing(Employee::getLastName).thenComparing(Employee::getFirstName))
                 .map(e -> new TeamMemberResponse(e.getId(), fullName(e)))
                 .toList();
