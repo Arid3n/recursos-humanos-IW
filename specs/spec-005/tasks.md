@@ -248,3 +248,13 @@ Task: "T017 ResolveRequestDialogComponent"
 2. US2 → visibilidad de las notificaciones para el empleado.
 3. Polish → suite completa y validación manual.
 4. Refinamiento 2026-11-16 (Phase 6) → reglas aclaradas; entregable independiente sobre el MVP ya implementado, validable con quickstart 8–11.
+
+---
+
+## Phase 8: Convergence
+
+**Purpose**: Huecos detectados por `/speckit-converge` (2026-11-18) entre el código de HU-05 y `spec.md`/`plan.md`. Tests primero: deben FALLAR con el código actual.
+
+- [X] T054 [US1] Make the server-side length validation of the reject reason and approve comment operate on the trimmed text and report field errors, in `backend/src/main/java/com/iw/rrhh/leave/dto/RejectLeaveRequest.java` and `ApproveLeaveRequest.java` (e.g. trim-aware constraint or compact constructor) and drop the `IllegalArgumentException` fallback in `LeaveResolutionServiceImpl.reject`: today `@Size` runs on the untrimmed value, so `"  abc  "` passes the DTO and returns `400` without `invalidFields.reason`, and a 500-char reason with surrounding spaces is rejected. Add to `LeaveResolutionIntegrationTest.java` (`HU-05.CA-2`): `"  abc  "` → `400` with `invalidFields.reason`; 500 chars + surrounding spaces → `200`; same for approve comment (`invalidFields.comment` only when the trimmed text exceeds 500) per FR-003 (partial)
+- [X] T055 [P] [US1] Add integration test in `backend/src/test/java/com/iw/rrhh/leave/LeaveResolutionIntegrationTest.java`: after `POST .../reject` with a reason, the employee calls the HU-04 endpoint (my requests) and sees status `REJECTED` and the same `rejectionReason`; an approve comment is not exposed as a rejection (`HU-05.CA-2`, US1/AC3, FR-005) (partial: only an HU-04 test with a hand-built fixture exists, not the HU-05 → HU-04 flow)
+- [X] T056 [P] [US1] Add audit-log tests (log appender capture) in `backend/src/test/java/com/iw/rrhh/leave/LeaveResolutionServiceTest.java`: approve and reject emit one `INFO` line with request id, status and resolver UUID; out-of-scope and self-resolution attempts emit `WARN` "Acceso denegado"; no log line contains employee name, reason or comment (`HU-05.CA-1`, FR-013, Art. 20.4-20.5) per FR-013 (partial: behavior implemented, no test)

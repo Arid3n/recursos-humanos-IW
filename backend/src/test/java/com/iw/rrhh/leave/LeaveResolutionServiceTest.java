@@ -18,6 +18,10 @@ import com.iw.rrhh.notification.service.NotificationService;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +39,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -173,6 +179,45 @@ class LeaveResolutionServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verifyNoInteractions(leaveRequestRepository, notificationService);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-1: la resolución y los accesos denegados se auditan con UUID y sin datos personales (FR-013, Art. 20)")
+    void audit_logsResolutionAndDeniedAccess_withoutPersonalData() {
+        Logger logger = (Logger) LoggerFactory.getLogger(LeaveResolutionServiceImpl.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            LeaveRequest request = pendingRequest(LeaveType.PERMIT, 5);
+            service.reject(requestId, "Motivo reservado del rechazo");
+
+            Employee stranger = new Employee();
+            stranger.setId(UUID.randomUUID());
+            member.setManager(stranger);
+            request.setStatus(LeaveStatus.PENDING);
+            assertThatThrownBy(() -> service.approve(requestId, "Comentario reservado"))
+                    .isInstanceOf(AccessDeniedException.class);
+
+            member.setManager(manager);
+            LeaveRequest own = new LeaveRequest(manager, LeaveType.PERMIT, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 2), 2);
+            own.setId(requestId);
+            when(leaveRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(own));
+            assertThatThrownBy(() -> service.approve(requestId, null)).isInstanceOf(AccessDeniedException.class);
+
+            List<ILoggingEvent> events = appender.list;
+            assertThat(events).filteredOn(e -> e.getLevel() == Level.INFO)
+                    .singleElement()
+                    .satisfies(e -> assertThat(e.getFormattedMessage())
+                            .contains(requestId.toString(), "REJECTED", manager.getId().toString()));
+            assertThat(events).filteredOn(e -> e.getLevel() == Level.WARN)
+                    .hasSize(2)
+                    .allSatisfy(e -> assertThat(e.getFormattedMessage()).contains("Acceso denegado"));
+            assertThat(events).allSatisfy(e -> assertThat(e.getFormattedMessage())
+                    .doesNotContain("Laura", "Martínez", "Carlos", "Ruiz", "reservado"));
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test

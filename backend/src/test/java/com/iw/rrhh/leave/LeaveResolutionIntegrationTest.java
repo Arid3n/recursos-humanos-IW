@@ -555,6 +555,50 @@ class LeaveResolutionIntegrationTest {
     }
 
     @Test
+    @DisplayName("HU-05.CA-2: los límites de motivo y comentario se aplican tras recortar espacios extremos (FR-003)")
+    void textLimits_appliedAfterTrim() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"  abc  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.reason", notNullValue()));
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"  " + "a".repeat(501) + "  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.comment", notNullValue()));
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"  " + "a".repeat(500) + "  \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reason", is("a".repeat(500))));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-2: el empleado ve en su seguimiento (HU-04) el motivo del rechazo registrado por el responsable")
+    void rejectedReason_visibleToEmployeeInTracking() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Coincide con la entrega del proyecto\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/leave/my-requests").with(as(MEMBER_A, UserRole.EMPLEADO)).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].status", is("REJECTED")))
+                .andExpect(jsonPath("$.content[0].rejectionReason", is("Coincide con la entrega del proyecto")));
+    }
+
+    @Test
     @DisplayName("HU-05.CA-2: la BD rechaza un motivo de más de 500 caracteres (chk_leave_rejection_reason_max, Art. 8.2)")
     void databaseCheck_blocksReasonOver500() {
         LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
