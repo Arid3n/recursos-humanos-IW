@@ -89,8 +89,8 @@
 
 - [X] T019 [P] Run backend tests `cd backend && sh ./mvnw test -DargLine="-Dapi.version=1.44"` (full suite; HU-06 tests and `HolidayCalendarServiceTest` must pass; the 4 pre-existing failures reported in spec-005 are out of scope)
 - [X] T020 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
-- [ ] T021 Validate manual scenarios 1-5 of `specs/spec-006/quickstart.md`
-- [ ] T022 Update `specs/spec-006/spec.md` if any divergence with the final behaviour was found (Art. 1.2)
+- [X] T021 (sustituida por T031) Validate manual scenarios 1-5 of `specs/spec-006/quickstart.md`
+- [X] T022 (sustituida por T032) Update `specs/spec-006/spec.md` if any divergence with the final behaviour was found (Art. 1.2)
 
 ---
 
@@ -125,8 +125,8 @@
 
 - [X] T029 [P] Run backend tests `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` (full suite; HU-01…HU-05 and HU-08 must stay green with the repository change of T026)
 - [X] T030 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
-- [ ] T031 Validate manual scenarios 1–9 of `specs/spec-006/quickstart.md` (scenarios 2 and 4 revised, 6–9 new); supersedes T021
-- [ ] T032 Check Art. 24.3 Definition of Done for HU-06: every CA covered by a `HU-06.CA-X` test, `contracts/team-calendar-api.yaml` v1.1.0 matches the responses (`200`/`400`/`401`/`403`), no personal data in logs; update `specs/spec-006/spec.md` status and, if any divergence is found, spec first (Art. 1.3); supersedes T022
+- [X] T031 Validate manual scenarios 1–9 of `specs/spec-006/quickstart.md` (scenarios 2 and 4 revised, 6–9 new); supersedes T021 **Nota 2026-11-18**: validado en navegador real (Chrome, backend + frontend en local): 1 (mes, navegación, detalle sin justificación), 2 (aprobada/pendiente con icono + texto + leyenda; rechazada ausente), 3 (2 dic con «2 ausencias coincidentes»), 5 (filtro sin la persona ajena, coincidencia se mantiene), 6 (retirada ausente), 7 (a 500 px lista de días laborables con ausencias, sin festivos, con marca de coincidencia), 9 (60 clics hasta dic 2031 sin botones deshabilitados, mensaje de mes vacío). Por API real: 4 (403 con `EMPLEADO`, 400 con `2026-13`, persona ajena ausente) y 8 (sin `rejectionReason`/`justification` ni texto de motivo en la respuesta). No emulada la escala de grises (escenario 2, paso 3): el estado se identifica por icono y texto en las capturas.
+- [X] T032 Check Art. 24.3 Definition of Done for HU-06: every CA covered by a `HU-06.CA-X` test, `contracts/team-calendar-api.yaml` v1.1.0 matches the responses (`200`/`400`/`401`/`403`), no personal data in logs; update `specs/spec-006/spec.md` status and, if any divergence is found, spec first (Art. 1.3); supersedes T022 **Nota 2026-11-18**: DoD verificado. CA-1 a CA-4 cubiertos por tests etiquetados `HU-06.CA-X` (backend y frontend; CA-4 es de servidor). Contrato v1.1.0 coincide con las respuestas `200`/`400`/`401`/`403`. Sin datos personales en logs (el calendario no registra nada; el `403` registra solo método y ruta). Sin divergencias entre spec y comportamiento final; solo se actualiza el estado.
 
 ---
 

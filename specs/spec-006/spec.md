@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-27 · **Actualizada**: 2026-11-18
 
-**Status**: Draft (clarificada 2026-11-18)
+**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-18)
 
 **Historia de Usuario**: HU-06 · **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 
