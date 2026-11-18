@@ -123,8 +123,8 @@
 
 ## Phase 7: Polish de la revisión 2026-11-18
 
-- [ ] T029 [P] Run backend tests `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` (full suite; HU-01…HU-05 and HU-08 must stay green with the repository change of T026)
-- [ ] T030 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
+- [X] T029 [P] Run backend tests `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` (full suite; HU-01…HU-05 and HU-08 must stay green with the repository change of T026)
+- [X] T030 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
 - [ ] T031 Validate manual scenarios 1–9 of `specs/spec-006/quickstart.md` (scenarios 2 and 4 revised, 6–9 new); supersedes T021
 - [ ] T032 Check Art. 24.3 Definition of Done for HU-06: every CA covered by a `HU-06.CA-X` test, `contracts/team-calendar-api.yaml` v1.1.0 matches the responses (`200`/`400`/`401`/`403`), no personal data in logs; update `specs/spec-006/spec.md` status and, if any divergence is found, spec first (Art. 1.3); supersedes T022
 
