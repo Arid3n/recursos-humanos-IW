@@ -22,8 +22,11 @@ export class AuthService {
   readonly isResponsable = computed(() => this.userRole() === 'RESPONSABLE_EQUIPO');
   readonly isEmpleado = computed(() => this.userRole() === 'EMPLEADO');
   readonly isDireccionGeneral = computed(() => this.userRole() === 'DIRECCION_GENERAL');
-  /** Esqueleto (T089-T094, tests en rojo): la implementación llega con T098 (HU-05 FR-018). */
-  readonly canResolveRequests = computed(() => false);
+  /** Quien puede ver la bandeja y el calendario de sus subordinados directos (HU-05 FR-017, FR-018). */
+  readonly canResolveRequests = computed(() => {
+    const role = this.userRole();
+    return role === 'RESPONSABLE_EQUIPO' || role === 'RRHH' || role === 'DIRECCION_GENERAL';
+  });
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.authUrl}/login`, credentials).pipe(

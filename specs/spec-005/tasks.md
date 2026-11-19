@@ -350,15 +350,17 @@ Task: "T017 ResolveRequestDialogComponent"
 
 ### Backend Implementation
 
-- [ ] T095 [US1] Accept role `RRHH` in `LeaveResolverPolicy.hasValidResolver` (update its Javadoc) (T089, T091, T093).
-- [ ] T096 [P] [US1] Change `@PreAuthorize` to `hasAnyRole('RESPONSABLE_EQUIPO','RRHH','DIRECCION_GENERAL')` in `LeaveResolutionController` and `TeamCalendarController`; check that no service filters by role and that the scope still compares `employee.manager.id` with the session employee (T090).
-- [ ] T097 [US1] In `LeaveBalanceServiceImpl` throw `AccessDeniedException` for `DIRECCION_GENERAL` in `getMyLeaveBalance` and in the «is himself» branch of `getEmployeeLeaveBalance`; confirm `GlobalExceptionHandler` maps it to `403` and logs the denial; check that `LeaveRequestServiceImpl.createLeaveRequest` still returns `422` for that role before calling the balance service (T092).
+- [X] T095 [US1] Accept role `RRHH` in `LeaveResolverPolicy.hasValidResolver` (update its Javadoc) (T089, T091, T093).
+- [X] T096 [P] [US1] Change `@PreAuthorize` to `hasAnyRole('RESPONSABLE_EQUIPO','RRHH','DIRECCION_GENERAL')` in `LeaveResolutionController` and `TeamCalendarController`; check that no service filters by role and that the scope still compares `employee.manager.id` with the session employee (T090).
+- [X] T097 [US1] In `LeaveBalanceServiceImpl` throw `AccessDeniedException` for `DIRECCION_GENERAL` in `getMyLeaveBalance` and in the «is himself» branch of `getEmployeeLeaveBalance`; confirm `GlobalExceptionHandler` maps it to `403` and logs the denial; check that `LeaveRequestServiceImpl.createLeaveRequest` still returns `422` for that role before calling the balance service (T092).
 
 ### Frontend Implementation
 
-- [ ] T098 [US1] Add `canResolveRequests` to `AuthService`; use it in `app.html` and `landing.component.ts` for the team links, and show the label «Mi Ficha» for `DIRECCION_GENERAL` (T094).
-- [ ] T099 [P] [US1] In `my-profile.component.ts` do not render `<app-leave-balance-widget>` when `isDireccionGeneral()`; keep the personal data (T094).
-- [ ] T100 [P] [US1] Search for remaining `isResponsable()`-only conditions that should include `RRHH` (team screens, texts, guards); leave `performanceReviewGuard` and HU-08 unchanged (out of scope).
+- [X] T098 [US1] Add `canResolveRequests` to `AuthService`; use it in `app.html` and `landing.component.ts` for the team links, and show the label «Mi Ficha» for `DIRECCION_GENERAL` (T094).
+- [X] T099 [P] [US1] In `my-profile.component.ts` do not render `<app-leave-balance-widget>` when `isDireccionGeneral()`; keep the personal data (T094).
+- [X] T100 [P] [US1] Search for remaining `isResponsable()`-only conditions that should include `RRHH` (team screens, texts, guards); leave `performanceReviewGuard` and HU-08 unchanged (out of scope).
+
+> *Resultado 2026-11-19*: T095–T100 implementados; backend 224 tests en verde, frontend 86 en verde y `ng build` correcto. T100: las únicas condiciones `isResponsable()` que quedan son de Evaluaciones (HU-08: menú, guard y `performance-reviews`), fuera de alcance. Texto de la landing cambiado a «Requiere tener personas a cargo».
 
 ### Polish
 

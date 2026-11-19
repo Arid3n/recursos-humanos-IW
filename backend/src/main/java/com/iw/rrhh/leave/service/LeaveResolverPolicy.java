@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Regla única de «resolutor válido» (HU-05 FR-015, Art. 14.3): responsable asignado, activo, con
- * cuenta de usuario activa, distinto del empleado y con rol RESPONSABLE_EQUIPO o DIRECCION_GENERAL.
+ * cuenta de usuario activa, distinto del empleado y con rol RESPONSABLE_EQUIPO, RRHH (FR-018) o DIRECCION_GENERAL.
  */
 @Component
 public class LeaveResolverPolicy {
@@ -25,6 +25,8 @@ public class LeaveResolverPolicy {
             return false;
         }
         UserRole role = managerUser.getRole();
-        return role == UserRole.RESPONSABLE_EQUIPO || role == UserRole.DIRECCION_GENERAL;
+        return role == UserRole.RESPONSABLE_EQUIPO
+                || role == UserRole.RRHH
+                || role == UserRole.DIRECCION_GENERAL;
     }
 }

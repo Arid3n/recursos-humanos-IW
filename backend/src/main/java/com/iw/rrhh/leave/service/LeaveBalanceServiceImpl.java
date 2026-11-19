@@ -57,7 +57,19 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
     @Override
     public LeaveBalanceResponse getMyLeaveBalance(Integer year) {
         Employee employee = getAuthenticatedEmployee();
+        denyIfDireccionGeneral(employee);
         return calculateBalance(employee, year);
+    }
+
+    /**
+     * Dirección General no solicita ausencias y no tiene saldo propio (HU-05 FR-017, HU-02 FR-008): 403,
+     * que el manejador global registra como acceso denegado (Art. 10.6).
+     */
+    private void denyIfDireccionGeneral(Employee employee) {
+        User user = employee.getUser();
+        if (user != null && user.getRole() == UserRole.DIRECCION_GENERAL) {
+            throw new AccessDeniedException("Dirección General no tiene saldo de vacaciones propio");
+        }
     }
 
     @Override
@@ -78,6 +90,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         }
 
         if (caller.getId().equals(target.getId())) {
+            denyIfDireccionGeneral(caller);
             return calculateBalance(target, year);
         }
 
