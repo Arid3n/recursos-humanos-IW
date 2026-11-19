@@ -44,3 +44,20 @@ export const performanceReviewGuard: CanActivateFn = () => {
   }
   return router.createUrlTree(['/']);
 };
+
+/**
+ * Rutas de solicitud de ausencia (HU-05 FR-017): Dirección General no solicita ausencias y se le
+ * redirige a /leave/not-available.
+ */
+export const absenceRequestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return router.createUrlTree(['/login']);
+  }
+  if (authService.isDireccionGeneral()) {
+    return router.createUrlTree(['/leave/not-available']);
+  }
+  return true;
+};

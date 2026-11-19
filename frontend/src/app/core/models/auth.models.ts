@@ -1,4 +1,4 @@
-export type UserRole = 'RRHH' | 'EMPLEADO' | 'RESPONSABLE_EQUIPO';
+export type UserRole = 'RRHH' | 'EMPLEADO' | 'RESPONSABLE_EQUIPO' | 'DIRECCION_GENERAL';
 
 export interface CurrentUser {
   id: string;
@@ -22,5 +22,6 @@ export interface LoginResponse {
 export const ROLE_LABELS: Record<UserRole, string> = {
   RRHH: 'RRHH',
   RESPONSABLE_EQUIPO: 'Responsable de equipo',
-  EMPLEADO: 'Empleado'
+  EMPLEADO: 'Empleado',
+  DIRECCION_GENERAL: 'Dirección General'
 };

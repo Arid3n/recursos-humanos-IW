@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthService } from '../../../../core/services/auth.service';
 import { EmployeeService } from '../../../../employees/services/employee.service';
 import { EmployeeProfile } from '../../../leave/models/leave.models';
 import { LeaveBalanceWidgetComponent } from '../../../leave/components/leave-balance-widget/leave-balance-widget.component';
@@ -104,12 +105,14 @@ import { LeaveBalanceWidgetComponent } from '../../../leave/components/leave-bal
           </mat-card>
         </div>
 
-        <!-- Bloque de Saldo de Vacaciones Embebido -->
-        <mat-card class="section-card balance-card">
-          <mat-card-content>
-            <app-leave-balance-widget></app-leave-balance-widget>
-          </mat-card-content>
-        </mat-card>
+        <!-- Bloque de Saldo de Vacaciones Embebido (Dirección General no tiene saldo propio, HU-05 FR-017) -->
+        @if (!authService.isDireccionGeneral()) {
+          <mat-card class="section-card balance-card">
+            <mat-card-content>
+              <app-leave-balance-widget></app-leave-balance-widget>
+            </mat-card-content>
+          </mat-card>
+        }
       </ng-container>
     </div>
   `,
@@ -117,6 +120,7 @@ import { LeaveBalanceWidgetComponent } from '../../../leave/components/leave-bal
 })
 export class MyProfileComponent implements OnInit {
   private readonly employeeService = inject(EmployeeService);
+  readonly authService = inject(AuthService);
 
   readonly profile = signal<EmployeeProfile | null>(null);
   readonly loading = signal<boolean>(true);

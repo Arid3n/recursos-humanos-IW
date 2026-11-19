@@ -246,4 +246,41 @@ class TeamCalendarServiceTest {
         );
         verify(employeeRepository).findByManagerIdAndActiveTrue(manager.getId());
     }
+
+    @Test
+    @DisplayName("HU-06.CA-4: el propio responsable no aparece en los miembros aunque su manager_id apunte a sí mismo")
+    void sessionManagerIsExcludedFromMembers() {
+        manager.setManager(manager);
+        when(employeeRepository.findByManagerIdAndActiveTrue(manager.getId())).thenReturn(List.of(manager, laura, pedro));
+        givenRequests();
+
+        TeamCalendarResponse calendar = service.getTeamCalendar(DECEMBER);
+
+        assertThat(calendar.members()).extracting(TeamMemberResponse::id)
+                .containsExactlyInAnyOrder(laura.getId(), pedro.getId())
+                .doesNotContain(manager.getId());
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-1: el evento solo expone identificador, empleado, tipo, estado y fechas, sin motivo ni justificación (FR-002)")
+    void eventExposesNoReasonFields() {
+        assertThat(TeamCalendarEventResponse.class.getRecordComponents())
+                .extracting(java.lang.reflect.RecordComponent::getName)
+                .containsExactly("requestId", "employeeId", "employeeName", "leaveType", "status", "startDate", "endDate");
+    }
+
+    @Test
+    @DisplayName("HU-06.CA-3: en un equipo de exactamente dos personas, ambas ausentes el mismo día es coincidencia (FR-006)")
+    void twoPersonTeamBothAbsentIsConflict() {
+        assertThat(service.getTeamCalendar(DECEMBER).members()).hasSize(2);
+        givenRequests(
+                request(laura, LeaveStatus.APPROVED, LocalDate.of(2026, 12, 16), LocalDate.of(2026, 12, 16)),
+                request(pedro, LeaveStatus.APPROVED, LocalDate.of(2026, 12, 16), LocalDate.of(2026, 12, 16))
+        );
+
+        TeamCalendarDayResponse day = day(service.getTeamCalendar(DECEMBER), 16);
+
+        assertThat(day.absentCount()).isEqualTo(2);
+        assertThat(day.hasConflict()).isTrue();
+    }
 }

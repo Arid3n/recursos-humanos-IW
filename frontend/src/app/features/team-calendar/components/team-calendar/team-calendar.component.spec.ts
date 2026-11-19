@@ -4,7 +4,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSelectHarness } from '@angular/material/select/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { TeamCalendarComponent } from './team-calendar.component';
@@ -15,6 +16,7 @@ import { AbsenceDetailDialogComponent } from '../absence-detail-dialog/absence-d
 describe('TeamCalendarComponent', () => {
   let mockService: Partial<TeamCalendarService>;
   let mockDialog: Partial<MatDialog>;
+  let viewport$: BehaviorSubject<BreakpointState>;
 
   const members: TeamMember[] = [
     { id: 'emp-1', name: 'Laura Martínez' },
@@ -80,6 +82,7 @@ describe('TeamCalendarComponent', () => {
 
     mockService = { getTeamCalendar: vi.fn().mockReturnValue(of(december())) };
     mockDialog = { open: vi.fn() };
+    viewport$ = new BehaviorSubject<BreakpointState>({ matches: false, breakpoints: {} });
 
     await TestBed.configureTestingModule({
       imports: [TeamCalendarComponent],
@@ -87,7 +90,8 @@ describe('TeamCalendarComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: TeamCalendarService, useValue: mockService },
-        { provide: MatDialog, useValue: mockDialog }
+        { provide: MatDialog, useValue: mockDialog },
+        { provide: BreakpointObserver, useValue: { observe: () => viewport$.asObservable() } }
       ]
     }).compileComponents();
   });
@@ -231,5 +235,112 @@ describe('TeamCalendarComponent', () => {
       expect(vi.mocked(mockService.getTeamCalendar!).mock.calls.every(call => call.length === 1)).toBe(true);
       expect(await select.getValueText()).toBe('Laura Martínez');
     });
+  });
+
+  describe('initial month in Europe/Madrid (FR-003, Art. 14.2)', () => {
+    it('should start in January 2027 at 23:30 UTC on 31 December 2026', () => {
+      vi.setSystemTime(new Date('2026-12-31T23:30:00Z'));
+
+      create();
+
+      expect(mockService.getTeamCalendar).toHaveBeenCalledWith('2027-01');
+    });
+
+    it('should stay in December at 22:30 UTC on 31 December 2026', () => {
+      vi.setSystemTime(new Date('2026-12-31T22:30:00Z'));
+
+      create();
+
+      expect(mockService.getTeamCalendar).toHaveBeenCalledWith('2026-12');
+    });
+  });
+
+  describe('narrow viewport list view (FR-003b)', () => {
+    const narrow = () => {
+      viewport$.next({ matches: true, breakpoints: {} });
+      const created = create();
+      created.fixture.detectChanges();
+      return created;
+    };
+
+    it('should render a list of working days with absences instead of the table (HU-06.CA-1)', () => {
+      const { el } = narrow();
+
+      expect(el.querySelector('table')).toBeNull();
+      const items = el.querySelectorAll('.day-list > li');
+      expect(items.length).toBe(2);
+      expect(el.textContent).not.toContain('Inmaculada Concepción');
+      expect(el.querySelector('.month-title')?.textContent).toContain('diciembre de 2026');
+      expect(el.querySelector('.legend')).not.toBeNull();
+    });
+
+    it('should show name, type and status text and the conflict marker with icon and text (HU-06.CA-2, HU-06.CA-3)', () => {
+      const { el } = narrow();
+
+      const items = el.querySelectorAll('.day-list > li');
+      expect(items[0].querySelector('.conflict-indicator')).toBeNull();
+      expect(items[1].querySelector('.conflict-indicator mat-icon')).not.toBeNull();
+      expect(items[1].querySelector('.conflict-indicator')?.textContent).toContain('2 ausencias coincidentes');
+      expect(items[1].textContent).toContain('Pedro Gómez');
+      expect(items[1].textContent).toContain('Pendiente');
+      expect(items[0].textContent).toContain('Aprobada');
+    });
+
+    it('should open the same detail dialog from the list (HU-06.CA-1)', () => {
+      const { el } = narrow();
+
+      (el.querySelector('.day-list .event') as HTMLButtonElement).click();
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        AbsenceDetailDialogComponent,
+        expect.objectContaining({ data: approved })
+      );
+    });
+
+    it('should keep month navigation and the employee filter working with the conflict text', async () => {
+      const { fixture, el } = narrow();
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(MatSelectHarness.with({ selector: '.employee-filter mat-select' }));
+
+      await select.open();
+      await select.clickOptions({ text: 'Pedro Gómez' });
+      fixture.detectChanges();
+
+      const items = el.querySelectorAll('.day-list > li');
+      expect(items.length).toBe(1);
+      expect(items[0].querySelector('.conflict-indicator')?.textContent).toContain('2 ausencias coincidentes');
+
+      button(el, 'Mes siguiente').click();
+      fixture.detectChanges();
+      expect(mockService.getTeamCalendar).toHaveBeenLastCalledWith('2027-01');
+    });
+
+    it('should show the empty-month message and no list items when there are no absences', () => {
+      mockService.getTeamCalendar = vi.fn().mockReturnValue(of(december(false)));
+      const { el } = narrow();
+
+      expect(el.querySelector('.empty-state')?.textContent).toContain('No hay ausencias en este mes');
+      expect(el.querySelectorAll('.day-list > li').length).toBe(0);
+    });
+
+    it('should render the table and no list in a wide viewport', () => {
+      const { el } = create();
+
+      expect(el.querySelector('table')).not.toBeNull();
+      expect(el.querySelector('.day-list')).toBeNull();
+    });
+  });
+
+  it('should never disable the month buttons after navigating several years (FR-003)', () => {
+    const { fixture, el } = create();
+
+    for (let i = 0; i < 40; i++) {
+      button(el, 'Mes siguiente').click();
+      fixture.detectChanges();
+    }
+
+    expect(button(el, 'Mes siguiente').disabled).toBe(false);
+    expect(button(el, 'Mes anterior').disabled).toBe(false);
+    expect(mockService.getTeamCalendar).toHaveBeenLastCalledWith('2030-04');
   });
 });

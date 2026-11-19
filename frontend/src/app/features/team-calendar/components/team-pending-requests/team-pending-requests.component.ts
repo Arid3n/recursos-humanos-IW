@@ -102,10 +102,30 @@ export class TeamPendingRequestsComponent implements OnInit {
       },
       error: (err) => {
         this.resolvingId.set(null);
-        this.showMessage(err.error?.detail || 'No se pudo resolver la solicitud. Es posible que haya cambiado de estado.', 'snackbar-error');
-        this.loadRequests();
+        this.handleResolveError(err);
       }
     });
+  }
+
+  /**
+   * 404 (retirada por el empleado) y 409 (ya resuelta o resuelta a la vez): se muestra el aviso y se recarga la bandeja.
+   * 422 (saldo insuficiente o año cerrado): se muestra el detalle y la fila se mantiene.
+   * Cualquier otro error: mensaje genérico, sin detalles internos (Art. 19.4).
+   */
+  private handleResolveError(err: { status?: number; error?: { detail?: string } }): void {
+    const detail = err.error?.detail;
+    switch (err.status) {
+      case 404:
+      case 409:
+        this.showMessage(detail || 'La solicitud ya no está pendiente.', 'snackbar-error');
+        this.loadRequests();
+        break;
+      case 422:
+        this.showMessage(detail || 'No se puede aprobar la solicitud: no cumple las reglas de saldo.', 'snackbar-error');
+        break;
+      default:
+        this.showMessage('No se pudo resolver la solicitud. Inténtalo de nuevo más tarde.', 'snackbar-error');
+    }
   }
 
   private showMessage(message: string, panelClass: string): void {

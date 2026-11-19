@@ -89,4 +89,8 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-
+/** Si el usuario en sesión puede crear solicitudes de ausencia (HU-05 FR-015, FR-017). */
+export interface LeaveEligibility {
+  canRequest: boolean;
+  reason: string | null;
+}

@@ -100,10 +100,10 @@ import { ROLE_LABELS } from '../../models/auth.models';
             <h3>Calendario del Equipo</h3>
             <p>Vista mensual de las ausencias del equipo para anticipar coincidencias y garantizar la cobertura.</p>
             <div class="card-footer-info">
-              @if (authService.isAuthenticated() && authService.isResponsable()) {
+              @if (authService.isAuthenticated() && authService.canResolveRequests()) {
                 <a routerLink="/team/calendar" class="card-link">Calendario del Equipo<mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
               } @else {
-                <span class="card-tag">Requiere rol Responsable de equipo</span>
+                <span class="card-tag">Requiere tener personas a cargo</span>
               }
             </div>
           </div>

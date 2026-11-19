@@ -1,6 +1,7 @@
 package com.iw.rrhh.leave.service;
 
 import com.iw.rrhh.common.exception.InsufficientLeaveBalanceException;
+import com.iw.rrhh.common.exception.LeaveCreationNotAllowedException;
 import com.iw.rrhh.common.exception.LeaveRequestOverlapException;
 import com.iw.rrhh.common.service.HolidayCalendarService;
 import com.iw.rrhh.employee.domain.Employee;
@@ -14,7 +15,9 @@ import com.iw.rrhh.leave.dto.LeaveRequestResponse;
 import com.iw.rrhh.leave.dto.WorkingDaysCalculationResponse;
 import com.iw.rrhh.leave.repository.LeaveRequestRepository;
 import com.iw.rrhh.security.domain.User;
+import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,14 +39,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final LeaveBalanceService leaveBalanceService;
     private final HolidayCalendarService holidayCalendarService;
     private final java.time.Clock clock;
+    private final LeaveResolverPolicy leaveResolverPolicy;
 
+    @Autowired
     public LeaveRequestServiceImpl(
             LeaveRequestRepository leaveRequestRepository,
             EmployeeRepository employeeRepository,
             UserRepository userRepository,
             LeaveBalanceService leaveBalanceService,
             HolidayCalendarService holidayCalendarService,
-            java.time.Clock clock
+            java.time.Clock clock,
+            LeaveResolverPolicy leaveResolverPolicy
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
@@ -51,16 +57,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         this.leaveBalanceService = leaveBalanceService;
         this.holidayCalendarService = holidayCalendarService;
         this.clock = clock;
-    }
-
-    public LeaveRequestServiceImpl(
-            LeaveRequestRepository leaveRequestRepository,
-            EmployeeRepository employeeRepository,
-            UserRepository userRepository,
-            LeaveBalanceService leaveBalanceService,
-            HolidayCalendarService holidayCalendarService
-    ) {
-        this(leaveRequestRepository, employeeRepository, userRepository, leaveBalanceService, holidayCalendarService, java.time.Clock.systemUTC());
+        this.leaveResolverPolicy = leaveResolverPolicy;
     }
 
     @Override
@@ -84,6 +81,28 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         );
     }
 
+    private static final String NO_RESOLVER_MESSAGE = "Solicitud no permitida: no tienes un responsable asignado";
+    private static final String DIRECCION_GENERAL_MESSAGE = "Dirección General no solicita ausencias";
+
+    /** Motivo por el que el empleado no puede crear solicitudes, o null si puede (FR-015, FR-017). */
+    private String creationBlockReason(Employee employee) {
+        User user = employee.getUser();
+        if (user != null && user.getRole() == UserRole.DIRECCION_GENERAL) {
+            return DIRECCION_GENERAL_MESSAGE;
+        }
+        if (!leaveResolverPolicy.hasValidResolver(employee)) {
+            return NO_RESOLVER_MESSAGE;
+        }
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.iw.rrhh.leave.dto.LeaveEligibilityResponse getMyEligibility() {
+        String reason = creationBlockReason(getAuthenticatedEmployee());
+        return new com.iw.rrhh.leave.dto.LeaveEligibilityResponse(reason == null, reason);
+    }
+
     @Override
     public LeaveRequestResponse createLeaveRequest(CreateLeaveRequest request) {
         if (request.startDate() == null || request.endDate() == null) {
@@ -100,6 +119,12 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         }
 
         Employee employee = getAuthenticatedEmployee();
+
+        // 0. Resolutor válido y rol (HU-05 FR-015, FR-017)
+        String blockReason = creationBlockReason(employee);
+        if (blockReason != null) {
+            throw new LeaveCreationNotAllowedException(blockReason);
+        }
 
         // 1. Cómputo de días laborables en servidor (Art. 14)
         int workingDays = holidayCalendarService.countWorkingDays(request.startDate(), request.endDate());

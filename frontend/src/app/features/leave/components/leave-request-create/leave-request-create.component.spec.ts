@@ -50,7 +50,8 @@ describe('LeaveRequestCreateComponent', () => {
     mockLeaveService = {
       getMyLeaveBalance: vi.fn().mockReturnValue(of(mockBalance)),
       calculateWorkingDays: vi.fn().mockReturnValue(of(mockCalculation)),
-      createLeaveRequest: vi.fn().mockReturnValue(of(mockCreatedResponse))
+      createLeaveRequest: vi.fn().mockReturnValue(of(mockCreatedResponse)),
+      getEligibility: vi.fn().mockReturnValue(of({ canRequest: true, reason: null }))
     };
 
     await TestBed.configureTestingModule({
@@ -130,5 +131,47 @@ describe('LeaveRequestCreateComponent', () => {
 
     component.form.get('justification')?.setValue('Asunto médico justificado');
     expect(component.form.get('justification')?.valid).toBe(true);
+  });
+
+  // ---- HU-05 fase 9 (FR-015, FR-017): elegibilidad ----
+
+  it('should show the reason instead of the form when the user cannot request (no responsible)', async () => {
+    (mockLeaveService.getEligibility as ReturnType<typeof vi.fn>).mockReturnValue(
+      of({ canRequest: false, reason: 'No tienes un responsable asignado' })
+    );
+    const fixture = TestBed.createComponent(LeaveRequestCreateComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('No tienes un responsable asignado');
+    expect(compiled.querySelector('form')).toBeNull();
+    expect(compiled.querySelector('button[type="submit"]')).toBeNull();
+  });
+
+  it('should show the Dirección General reason instead of the form', async () => {
+    (mockLeaveService.getEligibility as ReturnType<typeof vi.fn>).mockReturnValue(
+      of({ canRequest: false, reason: 'Dirección General no solicita ausencias' })
+    );
+    const fixture = TestBed.createComponent(LeaveRequestCreateComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Dirección General no solicita ausencias');
+    expect(compiled.querySelector('form')).toBeNull();
+  });
+
+  it('should show the form when the user can request', async () => {
+    const fixture = TestBed.createComponent(LeaveRequestCreateComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(mockLeaveService.getEligibility).toHaveBeenCalled();
+    expect(compiled.querySelector('form')).not.toBeNull();
   });
 });

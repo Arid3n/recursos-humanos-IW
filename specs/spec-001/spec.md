@@ -3,6 +3,7 @@
 **Feature Branch**: `spec-001`  
 **Created**: 2026-10-27  
 **Status**: Ready for Planning  
+**Revisada**: 2026-11-19 por HU-05 fase 9 (FR-011 revisado, FR-012, FR-013); implementado en `spec-005`.  
 **Historia de Usuario**: HU-01  
 **Asignación**: Integrante 1 (Grupo RRHH / Personal)
 
@@ -13,7 +14,7 @@
 - Q: ¿Cómo se gestiona el acceso inicial y las credenciales de usuario del empleado al tramitar su alta? → A: Contraseña provisional autogenerada por el sistema en el momento del alta y visible para RRHH en la confirmación, requiriendo cambio en el primer acceso y sin depender de correo SMTP.
 - Q: ¿Cómo deben gestionarse las modificaciones de datos personales o de contacto que no forman parte de las condiciones laborales? → A: Actualización directa sobre la entidad Employee reflejando el estado corriente, reservando el histórico inmutable append-only con fecha de efectos para las condiciones contractuales.
 - Q: ¿Cómo debe tramitarse la baja o cese laboral de un empleado en el sistema? → A: Inactivación lógica (active = false) del empleado y de su cuenta de usuario, revocando de inmediato el acceso pero manteniendo intacto el histórico contractual para auditorías y cumplimiento legal.
-- Q: ¿Puede un empleado quedar registrado sin responsable de equipo asignado o es estrictamente obligatorio? → A: El responsable de equipo es obligatorio en alta y modificaciones para toda la plantilla, excepto para el puesto de Dirección General / CEO que puede quedar sin superior jerárquico.
+- Q: ¿Puede un empleado quedar registrado sin responsable de equipo asignado o es estrictamente obligatorio? → A: El responsable de equipo es obligatorio en alta y modificaciones para toda la plantilla, excepto para el puesto de Dirección General / CEO que puede quedar sin superior jerárquico. **Revisada 2026-11-19:** la excepción deja de depender del puesto; todo empleado salvo Dirección General tiene responsable y quien no lo tiene es Dirección General (rol `DIRECCION_GENERAL`), indicándolo de forma explícita en el alta.
 
 ---
 
@@ -63,7 +64,7 @@ Como miembro del departamento de Recursos Humanos (RRHH), quiero dar de alta a n
 - **Fecha de entrada en vigor futura:** El cambio queda registrado en el historial, pero la condición vigente actual sigue siendo la anterior hasta alcanzar dicha fecha.
 - **Valores monetarios con decimales:** El salario debe registrarse con precisión decimal exacta (`NUMERIC`), impidiendo números negativos o valores vacíos.
 - **Empleado inactivo (baja lógica):** Un empleado con `active = false` tiene revocado el acceso de login y no puede seleccionarse como responsable de equipo en nuevas contrataciones.
-- **Puesto de Dirección General / CEO:** Es la única excepción permitida donde `manager_id` puede ser nulo tanto en la ficha como en el contrato.
+- **Dirección General:** Es la única excepción permitida donde `manager_id` puede ser nulo. Ya no se comprueba el puesto (revisado 2026-11-19): el alta sin responsable exige la elección explícita `withoutManager=true` y crea al usuario con rol `DIRECCION_GENERAL`.
 
 ---
 
@@ -80,7 +81,9 @@ Como miembro del departamento de Recursos Humanos (RRHH), quiero dar de alta a n
 - **FR-008**: Al guardar un alta de empleado con éxito, el sistema DEBE crear de forma automática su cuenta de acceso (`users`) con una clave provisional generada de forma segura y presentarla a RRHH en el mensaje de éxito.
 - **FR-009**: La modificación de datos personales o de contacto no contractuales DEBE actualizar directamente el registro del empleado (`Employee`), mientras que cualquier cambio en puesto, departamento, salario, convenio o responsable DEBE exigir fecha de efectos y generar un nuevo registro histórico inmutable (`contract_records`).
 - **FR-010**: El sistema DEBE permitir a usuarios con rol `RRHH` tramitar la baja de un empleado mediante inactivación lógica (`active = false`), deshabilitando su cuenta de usuario y manteniendo intacta su trayectoria histórica para auditoría.
-- **FR-011**: El campo de responsable de equipo (`manager_id`) DEBE ser obligatorio tanto en el alta como en cada variación contractual, admitiéndose valor nulo exclusivamente si el puesto indicado es Dirección General / CEO.
+- **FR-011**: El campo de responsable de equipo (`manager_id`) DEBE ser obligatorio en el alta, admitiéndose valor nulo exclusivamente cuando RRHH elige de forma explícita la opción «Sin responsable (solo Dirección General)» (`withoutManager=true`); esa elección crea el usuario con rol `DIRECCION_GENERAL` y no depende del puesto. Un `managerId` ausente sin ese indicador, o ambos a la vez, se rechaza con `400`. Las variaciones contractuales no están soportadas de momento y conservan su comprobación por puesto como residuo, fuera del alcance de este cambio (revisado 2026-11-19, ver HU-05 FR-015 a FR-017).
+- **FR-012**: Al dar de baja a un empleado (FR-010), el sistema DEBE cancelar en la misma transacción las solicitudes de ausencia `PENDING` de sus subordinados directos y notificarles una sola vez por empleado (HU-05 FR-016); no se borra ninguna fila.
+- **FR-013**: La validación del rol del responsable al asignarlo (que sea activo y tenga rol `RESPONSABLE_EQUIPO` o `DIRECCION_GENERAL`) queda como mejora pendiente y separada; hoy solo la hace visible el bloqueo de HU-05 FR-015.
 
 ### Key Entities
 - **Employee**: Identificador único, datos personales (nombre, apellidos, email, documento de identidad), estado activo/inactivo.

@@ -1,6 +1,8 @@
 # Tasks: spec-006 — Calendario de Ausencias del Equipo
 
-**Feature**: `spec-006` (HU-06)
+**Feature**: `spec-006` (HU-06) · **Revisado**: 2026-11-18 (tras `/speckit-clarify` y `/speckit-plan` de esa fecha)
+
+> **Estado**: T001–T020 corresponden a la implementación previa a las aclaraciones de 2026-11-18 y se conservan marcadas. Las tareas T023–T028 (Phase 6) añaden lo que cambian las aclaraciones: solicitudes retiradas, ausencias propias del responsable, mes inicial en Europe/Madrid, vista de lista en pantallas estrechas (FR-003b), ausencia de datos de motivo y navegación sin límite. T021 y T022 quedan **sustituidas** por T031 y T032 (que cubren los escenarios 1–9 y la spec revisada); T019 y T020 se repiten en T029 y T030 tras los cambios. La bandeja de HU-05 ya excluye las solicitudes propias del responsable (spec-005, T039); T026 aplica la misma exclusión al calendario.
 
 **Input**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/team-calendar-api.yaml](contracts/team-calendar-api.yaml), [quickstart.md](quickstart.md)
 
@@ -87,8 +89,44 @@
 
 - [X] T019 [P] Run backend tests `cd backend && sh ./mvnw test -DargLine="-Dapi.version=1.44"` (full suite; HU-06 tests and `HolidayCalendarServiceTest` must pass; the 4 pre-existing failures reported in spec-005 are out of scope)
 - [X] T020 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
-- [ ] T021 Validate manual scenarios 1-5 of `specs/spec-006/quickstart.md`
-- [ ] T022 Update `specs/spec-006/spec.md` if any divergence with the final behaviour was found (Art. 1.2)
+- [X] T021 (sustituida por T031) Validate manual scenarios 1-5 of `specs/spec-006/quickstart.md`
+- [X] T022 (sustituida por T032) Update `specs/spec-006/spec.md` if any divergence with the final behaviour was found (Art. 1.2)
+
+---
+
+## Phase 6: Refinamiento tras las aclaraciones de 2026-11-18 (US1)
+
+**Purpose**: Adaptar la implementación existente a las aclaraciones (`spec.md` sesión 2026-11-18; `plan.md` «Decisiones de la sesión de aclaraciones 2026-11-18»). Orden: tests primero (deben FALLAR con el código actual cuando aplique), después implementación.
+
+**Goal**: (1) `CANCELLED` y `REJECTED` nunca aparecen ni cuentan; (2) ninguna justificación en la API ni en la UI; (3) el propio responsable no aparece en eventos ni en el filtro; (4) mes inicial en Europe/Madrid; (5) lista de días con ausencias en pantallas estrechas; (6) navegación de meses sin límite; (7) coincidencia ≥ 2 sea cual sea el tamaño del equipo.
+
+**Independent Test**: quickstart escenarios 6–9 y los escenarios 2 y 4 revisados.
+
+### Tests (escribir primero)
+
+- [X] T023 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/leave/TeamCalendarServiceTest.java` (Mockito): the repository is queried with exactly `[PENDING, APPROVED]` so `REJECTED` and `CANCELLED` can never reach the response (`HU-06.CA-2`, FR-005); the session manager is excluded from `members` even when their `manager_id` points to themselves (`HU-06.CA-4`); `TeamCalendarEventResponse` exposes only the components `requestId`, `employeeId`, `employeeName`, `leaveType`, `status`, `startDate`, `endDate` (inspect `getRecordComponents()`, no reason or justification) (`HU-06.CA-1`, FR-002); a team of exactly two members both absent the same working day → `hasConflict = true` (FR-006)
+- [X] T024 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/leave/TeamCalendarIntegrationTest.java` (Testcontainers + MockMvc, fixed `Clock` where dates matter): a `CANCELLED` request of a team member (created through HU-04 `POST /leave/requests/{id}/cancel`) does not appear in `events` nor in `absentCount`/`hasConflict` (`HU-06.CA-2`); a `REJECTED` request with `rejectionReason` and a request with justification exist in the month and the JSON contains no `rejectionReason`, `justification` or the reason text anywhere (`HU-06.CA-1`, FR-002); the manager's own pending request, with `manager_id` pointing to themselves, does not appear in `events` nor in `members` (`HU-06.CA-4`); `month=2031-01` and `month=2020-01` → `200` with every day of the month (FR-003); national IDs for new fixtures continue from the last one used in this class
+- [X] T025 [P] [US1] Extend `frontend/src/app/features/team-calendar/components/team-calendar/team-calendar.component.spec.ts` (Vitest; provide a mock `BreakpointObserver` and a fake clock): at `2026-12-31T23:30:00Z` the initial request is for `2027-01` (Europe/Madrid), independent of the test machine zone (FR-003, Art. 14.2); with a narrow viewport the `<table>` is not rendered and a list (viewport width < 600 px) shows only working days that have events and omits weekends and holidays (FR-003b, FR-008), each with name, type, status text, legend and, on conflict days, the icon plus text "N ausencias coincidentes" (`HU-06.CA-1`, `HU-06.CA-3`, FR-003b); the month title, previous/next buttons and the employee filter still work in the narrow view and the filter keeps the conflict text (`US2`); with a wide viewport the table is rendered and the list is not; previous/next buttons are never disabled after navigating several years (FR-003)
+
+### Backend Implementation
+
+- [X] T026 [US1] In `backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java` add `AND e.id <> :managerId` to `findTeamCalendarRequests`, and in `backend/src/main/java/com/iw/rrhh/leave/service/TeamCalendarServiceImpl.java` filter the session manager out of `members`, so the manager's own absences and name never appear (Assumptions; consistent with the HU-05 inbox). Keep `VISIBLE_STATUSES = [PENDING, APPROVED]` and `CONFLICT_THRESHOLD = 2` unchanged. No DTO, contract or migration change (`contracts/team-calendar-api.yaml` is already v1.1.0)
+
+### Frontend Implementation
+
+- [X] T027 [US1] In `frontend/src/app/features/team-calendar/components/team-calendar/team-calendar.component.ts` compute the initial visible month from the current date in `Europe/Madrid` (e.g. `Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit' })`) instead of `new Date()` local fields; one named zone constant (Art. 14.2); month navigation itself stays unbounded
+- [X] T028 [US1] Add the narrow-screen view to `frontend/src/app/features/team-calendar/components/team-calendar/team-calendar.component.{ts,html,scss}`: inject `BreakpointObserver` from `@angular/cdk/layout` (already a dependency, no new package), signal `isNarrow` from `Breakpoints.XSmall`; when narrow render a `<ul>` of the working days of the visible month that have events (weekends and holidays omitted; no label for them in the list) (derived from the same `days`, honouring the employee filter), each item with the date, event buttons (name, type icon, status icon + text, opens the same `AbsenceDetailDialogComponent`) and the conflict marker with `warning` icon + "N ausencias coincidentes"; keep title, navigation, legend, filter and the empty-month message; when wide keep the `<table>`; texts externalised (Art. 21.3); no business rule in the client (Art. 14.4)
+
+**Checkpoint**: T023–T025 pasan; quickstart escenarios 6–9 validados; US1 y US2 siguen en verde.
+
+---
+
+## Phase 7: Polish de la revisión 2026-11-18
+
+- [X] T029 [P] Run backend tests `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` (full suite; HU-01…HU-05 and HU-08 must stay green with the repository change of T026)
+- [X] T030 [P] Run frontend tests `cd frontend && npx ng test --watch=false` and build `npx ng build` (no warnings, initial budget respected)
+- [X] T031 Validate manual scenarios 1–9 of `specs/spec-006/quickstart.md` (scenarios 2 and 4 revised, 6–9 new); supersedes T021 **Nota 2026-11-18**: validado en navegador real (Chrome, backend + frontend en local): 1 (mes, navegación, detalle sin justificación), 2 (aprobada/pendiente con icono + texto + leyenda; rechazada ausente), 3 (2 dic con «2 ausencias coincidentes»), 5 (filtro sin la persona ajena, coincidencia se mantiene), 6 (retirada ausente), 7 (a 500 px lista de días laborables con ausencias, sin festivos, con marca de coincidencia), 9 (60 clics hasta dic 2031 sin botones deshabilitados, mensaje de mes vacío). Por API real: 4 (403 con `EMPLEADO`, 400 con `2026-13`, persona ajena ausente) y 8 (sin `rejectionReason`/`justification` ni texto de motivo en la respuesta). No emulada la escala de grises (escenario 2, paso 3): el estado se identifica por icono y texto en las capturas.
+- [X] T032 Check Art. 24.3 Definition of Done for HU-06: every CA covered by a `HU-06.CA-X` test, `contracts/team-calendar-api.yaml` v1.1.0 matches the responses (`200`/`400`/`401`/`403`), no personal data in logs; update `specs/spec-006/spec.md` status and, if any divergence is found, spec first (Art. 1.3); supersedes T022 **Nota 2026-11-18**: DoD verificado. CA-1 a CA-4 cubiertos por tests etiquetados `HU-06.CA-X` (backend y frontend; CA-4 es de servidor). Contrato v1.1.0 coincide con las respuestas `200`/`400`/`401`/`403`. Sin datos personales en logs (el calendario no registra nada; el `403` registra solo método y ruta). Sin divergencias entre spec y comportamiento final; solo se actualiza el estado.
 
 ---
 
@@ -100,6 +138,8 @@
 - **US1 (Phase 3)**: depende de Phase 2.
 - **US2 (Phase 4)**: depende de T015 (mismo componente); no necesita cambios de backend.
 - **Polish (Phase 5)**: depende de US1 y US2.
+- **Refinamiento (Phase 6)**: depende de Phases 2–4 (código previo). Dentro: T023–T025 antes de T026–T028; T026 antes de poner en verde T023 y T024; T027 y T028 antes de poner en verde T025 (T028 después de T027 por tocar el mismo fichero).
+- **Polish 2 (Phase 7)**: depende de Phase 6. T021 y T022 quedan sustituidas por T031 y T032.
 
 ```mermaid
 graph TD
@@ -113,12 +153,18 @@ graph TD
     T013 --> T015
     T014 --> T015 --> T016
     T015 --> T017 --> T018
+    T023 --> T026
+    T024 --> T026
+    T025 --> T027 --> T028
+    T026 --> T029
+    T028 --> T030
 ```
 
 ### Parallel Opportunities
 
 - US1: T003 ‖ T004 ‖ T006 ‖ T007 ‖ T008 ‖ T011 ‖ T012 ‖ T013 ‖ T014.
 - Backend y frontend de US1 avanzan en paralelo una vez fijado el contrato.
+- Phase 6: T023 ‖ T024 ‖ T025 (tests); T026 (backend) ‖ T027 → T028 (frontend).
 
 ### Parallel Example: User Story 1
 
@@ -143,3 +189,10 @@ Task: "T014 TeamCalendarComponent spec"
 1. US1 → calendario con estados y coincidencias (MVP).
 2. US2 → filtro por empleado.
 3. Polish → suites completas y validación manual.
+4. Refinamiento 2026-11-18 (Phase 6) → reglas aclaradas; entregable independiente sobre la implementación ya hecha, validable con quickstart 6–9.
+
+---
+
+## Revisión por HU-05 (2026-11-19)
+
+La ampliación del calendario a `RRHH` y `DIRECCION_GENERAL` (FR-011) se implementa y prueba en `specs/spec-005` (fases 9 y 10: T066, T090, T096). No hay tareas nuevas en esta spec.

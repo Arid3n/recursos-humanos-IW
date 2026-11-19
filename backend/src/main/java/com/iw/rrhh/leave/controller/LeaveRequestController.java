@@ -42,6 +42,13 @@ public class LeaveRequestController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/requests/eligibility")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Indica si el usuario en sesión puede crear solicitudes de ausencia (HU-05 FR-015, FR-017)")
+    public ResponseEntity<com.iw.rrhh.leave.dto.LeaveEligibilityResponse> getEligibility() {
+        return ResponseEntity.ok(leaveRequestService.getMyEligibility());
+    }
+
     @PostMapping("/requests")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Crear nueva solicitud de vacaciones o permiso en estado PENDING")

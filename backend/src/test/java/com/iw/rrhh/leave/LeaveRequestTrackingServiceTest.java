@@ -12,6 +12,7 @@ import com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse;
 import com.iw.rrhh.leave.repository.LeaveRequestRepository;
 import com.iw.rrhh.leave.service.LeaveBalanceService;
 import com.iw.rrhh.leave.service.LeaveRequestServiceImpl;
+import com.iw.rrhh.leave.service.LeaveResolverPolicy;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
@@ -77,7 +78,8 @@ class LeaveRequestTrackingServiceTest {
                 userRepository,
                 leaveBalanceService,
                 holidayCalendarService,
-                clock
+                clock,
+                new LeaveResolverPolicy()
         );
 
         user = new User("empleado@empresa.com", "encodedPass", UserRole.EMPLEADO);

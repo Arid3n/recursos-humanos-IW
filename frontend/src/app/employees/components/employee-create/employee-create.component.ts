@@ -120,8 +120,8 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
 
               <mat-form-field appearance="outline" class="col">
                 <mat-label>Responsable de equipo</mat-label>
-                <mat-select formControlName="managerId">
-                  <mat-option [value]="null">Sin responsable (solo Dirección General)</mat-option>
+                <mat-select formControlName="managerId" required>
+                  <mat-option [value]="withoutManagerValue">Sin responsable (solo Dirección General)</mat-option>
                   @for (m of managers(); track m.id) {
                     <mat-option [value]="m.id">{{ m.firstName }} {{ m.lastName }} ({{ m.email }})</mat-option>
                   }
@@ -183,6 +183,9 @@ export class EmployeeCreateComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
+  /** Valor de la opción «Sin responsable»: elección explícita, distinta de no haber elegido (HU-05 FR-017). */
+  readonly withoutManagerValue = 'NONE';
+
   form!: FormGroup;
   isSubmitting = signal(false);
   managers = signal<EmployeeDetailResponse[]>([]);
@@ -198,7 +201,7 @@ export class EmployeeCreateComponent implements OnInit {
       department: ['', [Validators.required, Validators.maxLength(100)]],
       salary: [null, [Validators.required, Validators.min(0)]],
       collectiveAgreementId: [1, [Validators.required]],
-      managerId: [null]
+      managerId: [null, [Validators.required]]
     });
 
     this.employeeService.listEmployees(true, 0, 100).subscribe({
@@ -226,7 +229,8 @@ export class EmployeeCreateComponent implements OnInit {
       department: val.department.trim(),
       salary: Number(val.salary),
       collectiveAgreementId: Number(val.collectiveAgreementId),
-      managerId: val.managerId ? val.managerId : null
+      managerId: val.managerId === this.withoutManagerValue ? null : val.managerId,
+      withoutManager: val.managerId === this.withoutManagerValue
     }).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);

@@ -5,7 +5,9 @@ import com.iw.rrhh.employee.domain.ContractRecord;
 import com.iw.rrhh.employee.domain.Employee;
 import com.iw.rrhh.employee.repository.ContractRecordRepository;
 import com.iw.rrhh.employee.repository.EmployeeRepository;
-import com.iw.rrhh.leave.domain.LeaveBalance;
+import com.iw.rrhh.common.service.HolidayCalendarService;
+import com.iw.rrhh.leave.domain.LeaveRequest;
+import com.iw.rrhh.leave.service.LeaveDayAllocator;
 import com.iw.rrhh.leave.domain.LeaveStatus;
 import com.iw.rrhh.leave.domain.LeaveType;
 import com.iw.rrhh.leave.dto.LeaveBalanceResponse;
@@ -25,7 +27,12 @@ import org.springframework.security.core.context.SecurityContextImpl;
 
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,8 +52,10 @@ public class LeaveBalanceServiceTest {
     private CollectiveAgreement agreement;
     private ContractRecord currentContract;
 
-    private int spentDaysToReturn = 0;
-    private int pendingDaysToReturn = 0;
+    private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-06-01T10:00:00Z"), ZoneOffset.UTC);
+
+    private final List<LeaveRequest> approvedRequests = new ArrayList<>();
+    private final List<LeaveRequest> pendingRequests = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -116,15 +125,15 @@ public class LeaveBalanceServiceTest {
                 LeaveRequestRepository.class.getClassLoader(),
                 new Class<?>[]{LeaveRequestRepository.class},
                 (proxy, method, args) -> {
-                    if (method.getName().equals("sumCalculatedDays")) {
+                    if (method.getName().equals("findOverlappingByYear")) {
                         LeaveStatus status = (LeaveStatus) args[2];
-                        if (status == LeaveStatus.APPROVED) {
-                            return spentDaysToReturn;
-                        }
-                        if (status == LeaveStatus.PENDING) {
-                            return pendingDaysToReturn;
-                        }
-                        return 0;
+                        LocalDate startOfYear = (LocalDate) args[3];
+                        LocalDate endOfYear = (LocalDate) args[4];
+                        List<LeaveRequest> source = status == LeaveStatus.APPROVED ? approvedRequests
+                                : status == LeaveStatus.PENDING ? pendingRequests : List.of();
+                        return source.stream()
+                                .filter(r -> !r.getStartDate().isAfter(endOfYear) && !r.getEndDate().isBefore(startOfYear))
+                                .toList();
                     }
                     return null;
                 }
@@ -134,7 +143,9 @@ public class LeaveBalanceServiceTest {
                 employeeRepository,
                 userRepository,
                 contractRecordRepository,
-                leaveRequestRepository
+                leaveRequestRepository,
+                new LeaveDayAllocator(new HolidayCalendarService()),
+                FIXED_CLOCK.withZone(ZoneId.of("Europe/Madrid"))
         );
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
@@ -145,6 +156,20 @@ public class LeaveBalanceServiceTest {
         SecurityContextHolder.setContext(new SecurityContextImpl(auth));
     }
 
+    private static LeaveRequest containedRequest(int days) {
+        return containedRequest(days, LocalDate.now(FIXED_CLOCK).getYear());
+    }
+
+    /** Solicitud íntegramente contenida en {@code year}, con {@code days} días computados. */
+    private static LeaveRequest containedRequest(int days, int year) {
+        return new LeaveRequest(null, LeaveType.VACATION, LocalDate.of(year, 3, 2), LocalDate.of(year, 3, 20), days);
+    }
+
+    private static LeaveRequest crossYearRequest() {
+        // 28/12/2026–08/01/2027: 4 laborables en 2026 y 4 en 2027 (01/01 y 06/01 festivos)
+        return new LeaveRequest(null, LeaveType.VACATION, LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), 8);
+    }
+
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
@@ -153,9 +178,9 @@ public class LeaveBalanceServiceTest {
     @Test
     @DisplayName("HU-02.CA-1: Consulta de saldo propio de año en curso con desglose exacto")
     void testGetMyLeaveBalance_FullYear() {
-        int currentYear = LocalDate.now().getYear();
-        spentDaysToReturn = 7;
-        pendingDaysToReturn = 3;
+        int currentYear = LocalDate.now(FIXED_CLOCK).getYear();
+        approvedRequests.add(containedRequest(7));
+        pendingRequests.add(containedRequest(3));
 
         LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(null);
 
@@ -175,7 +200,7 @@ public class LeaveBalanceServiceTest {
         CollectiveAgreement updatedAgreement = new CollectiveAgreement("CONV-TIC-NEW", "Nuevo Convenio TIC", 24);
         currentContract = new ContractRecord(
                 testEmployee,
-                LocalDate.now(),
+                LocalDate.now(FIXED_CLOCK),
                 "Senior Dev",
                 "IT",
                 new BigDecimal("35000"),
@@ -183,8 +208,7 @@ public class LeaveBalanceServiceTest {
                 null,
                 "RRHH"
         );
-        spentDaysToReturn = 4;
-        pendingDaysToReturn = 0;
+        approvedRequests.add(containedRequest(4));
 
         LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(null);
 
@@ -196,10 +220,8 @@ public class LeaveBalanceServiceTest {
     @Test
     @DisplayName("HU-02: Prorrateo para incorporación a mitad de año (1 de julio)")
     void testGetMyLeaveBalance_MidYearProrate() {
-        int currentYear = LocalDate.now().getYear();
+        int currentYear = LocalDate.now(FIXED_CLOCK).getYear();
         testEmployee.setHireDate(LocalDate.of(currentYear, 7, 1)); // 6 meses restantes
-        spentDaysToReturn = 0;
-        pendingDaysToReturn = 0;
 
         LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(null);
 
@@ -211,7 +233,7 @@ public class LeaveBalanceServiceTest {
     @Test
     @DisplayName("HU-02: Saldo agotado nunca es negativo")
     void testGetMyLeaveBalance_ZeroFloorWhenExhausted() {
-        spentDaysToReturn = 25; // más que los correspondientes por convenio
+        approvedRequests.add(containedRequest(25)); // más que los correspondientes por convenio
 
         LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(null);
 
@@ -223,8 +245,8 @@ public class LeaveBalanceServiceTest {
     @Test
     @DisplayName("HU-02.CA-4: Consulta histórica de ejercicio fiscal anterior (solo lectura)")
     void testGetHistoricalLeaveBalance_ClosedYear() {
-        int pastYear = LocalDate.now().getYear() - 1;
-        spentDaysToReturn = 20;
+        int pastYear = LocalDate.now(FIXED_CLOCK).getYear() - 1;
+        approvedRequests.add(containedRequest(20, pastYear));
 
         LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(pastYear);
 
@@ -233,5 +255,96 @@ public class LeaveBalanceServiceTest {
         assertEquals(22, balance.entitledDays());
         assertEquals(20, balance.spentDays());
         assertEquals(2, balance.availableDays());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: una vacación APPROVED que cruza años cuenta su parte como disfrutada en AMBOS años")
+    void testCrossYearApprovedCountsInBothYears() {
+        approvedRequests.add(crossYearRequest());
+
+        assertEquals(4, leaveBalanceService.getMyLeaveBalance(2026).spentDays());
+        assertEquals(4, leaveBalanceService.getMyLeaveBalance(2027).spentDays());
+        assertEquals(18, leaveBalanceService.getMyLeaveBalance(2026).availableDays());
+        assertEquals(18, leaveBalanceService.getMyLeaveBalance(2027).availableDays());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: una vacación PENDING que cruza años cuenta su parte como pendiente en ambos años")
+    void testCrossYearPendingCountsInBothYears() {
+        pendingRequests.add(crossYearRequest());
+
+        assertEquals(4, leaveBalanceService.getMyLeaveBalance(2026).pendingDays());
+        assertEquals(4, leaveBalanceService.getMyLeaveBalance(2027).pendingDays());
+        assertEquals(0, leaveBalanceService.getMyLeaveBalance(2026).spentDays());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: una solicitud contenida en un año da el mismo resultado que antes (días computados íntegros)")
+    void testContainedRequestUnchanged() {
+        approvedRequests.add(containedRequest(9, 2026));
+
+        assertEquals(9, leaveBalanceService.getMyLeaveBalance(2026).spentDays());
+        assertEquals(0, leaveBalanceService.getMyLeaveBalance(2027).spentDays());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: un año futuro usa el saldo normal del convenio vigente")
+    void testFutureYearUsesNormalBalance() {
+        LeaveBalanceResponse balance = leaveBalanceService.getMyLeaveBalance(2027);
+
+        assertEquals(22, balance.entitledDays());
+        assertEquals(22, balance.availableDays());
+        assertFalse(balance.isClosedYear());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: un año futuro posterior a la incorporación del empleado no tiene días correspondientes")
+    void testFutureYearBeforeHireHasNoEntitledDays() {
+        testEmployee.setHireDate(LocalDate.of(2028, 3, 1));
+
+        assertEquals(0, leaveBalanceService.getMyLeaveBalance(2027).entitledDays());
+    }
+
+    @Test
+    @DisplayName("Art. 22.5 / 14.2: el año en curso sale del Clock inyectado en Europe/Madrid, no de la fecha real")
+    void testCurrentYearComesFromInjectedClockInBusinessZone() {
+        // 31/12/2026 23:30 UTC ya es 01/01/2027 en Madrid
+        Clock newYearEveUtc = Clock.fixed(Instant.parse("2026-12-31T23:30:00Z"), ZoneOffset.UTC);
+        LeaveBalanceServiceImpl service = new LeaveBalanceServiceImpl(
+                employeeRepository, userRepository, contractRecordRepository, leaveRequestRepository,
+                new LeaveDayAllocator(new HolidayCalendarService()),
+                newYearEveUtc.withZone(ZoneId.of("Europe/Madrid")));
+
+        assertEquals(2027, service.getMyLeaveBalance(null).year());
+        assertTrue(service.getMyLeaveBalance(2026).isClosedYear());
+    }
+
+    // ---- HU-05 fase 10 (FR-017 / spec-002 FR-008): Dirección General no tiene saldo propio ----
+
+    @Test
+    @DisplayName("FR-017 / HU-02 FR-008: Dirección General recibe AccessDeniedException al consultar su saldo propio")
+    void direccionGeneral_ownBalance_isDenied() {
+        testUser.setRole(UserRole.DIRECCION_GENERAL);
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> leaveBalanceService.getMyLeaveBalance(null));
+    }
+
+    @Test
+    @DisplayName("FR-017 / HU-02 FR-008: Dirección General recibe AccessDeniedException al consultar su saldo por su propio id")
+    void direccionGeneral_ownBalanceById_isDenied() {
+        testUser.setRole(UserRole.DIRECCION_GENERAL);
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> leaveBalanceService.getEmployeeLeaveBalance(testEmployee.getId(), null));
+    }
+
+    @Test
+    @DisplayName("FR-017: el resto de roles sigue consultando su saldo propio sin cambios")
+    void otherRoles_ownBalance_unchanged() {
+        for (UserRole role : List.of(UserRole.EMPLEADO, UserRole.RESPONSABLE_EQUIPO, UserRole.RRHH)) {
+            testUser.setRole(role);
+            assertNotNull(leaveBalanceService.getMyLeaveBalance(null), "rol " + role);
+        }
     }
 }

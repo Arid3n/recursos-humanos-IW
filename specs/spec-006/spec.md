@@ -2,9 +2,9 @@
 
 **Feature Branch**: `spec-006`
 
-**Created**: 2026-10-27 · **Actualizada**: 2026-11-03
+**Created**: 2026-10-27 · **Actualizada**: 2026-11-19 (FR-011: `DIRECCION_GENERAL`, HU-05 fase 9)
 
-**Status**: Draft
+**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-19); FR-011 ampliado a `RRHH` y `DIRECCION_GENERAL` (HU-05 FR-017/FR-018), implementado y probado en `spec-005`
 
 **Historia de Usuario**: HU-06 · **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 
@@ -18,6 +18,19 @@
 - Q: ¿Cómo se indica visualmente un solapamiento de dos o más ausencias? → A: Indicador visual dual: borde destacado en la casilla e icono de advertencia con texto accesible indicando el número exacto de personas ausentes (sin depender solo del color).
 - Q: ¿Permite el calendario filtrar por empleado específico dentro del equipo? → A: Sí; además de la visión global del equipo, incluye un filtro por empleado para consultar individualmente la planificación de una persona a su cargo.
 - Q: ¿Qué información se muestra al interactuar con una ausencia en el calendario? → A: Al pulsar sobre una ausencia se despliega un panel o diálogo con el nombre del empleado, tipo de ausencia, rango completo de fechas y estado (Aprobada o Pendiente).
+
+### Session 2026-11-19 (revisión por HU-05, FR-017 y FR-018)
+
+- Q: ¿Puede consultar el calendario el rol `DIRECCION_GENERAL`? → A: Sí, con el mismo alcance que un responsable: solo las personas que lo tienen como responsable directo.
+- Q: ¿Puede consultar el calendario el rol `RRHH`? → A: Sí, con el mismo alcance que un responsable: solo las personas que lo tienen como responsable directo, no toda la empresa (HU-05, FR-018).
+
+### Session 2026-11-18
+
+- Q: ¿Debe ocultarse del calendario y excluirse del recuento de coincidencias una solicitud retirada por el empleado (estado `CANCELLED`, HU-04), igual que las rechazadas? → A: Sí; una solicitud retirada no es una ausencia, no se muestra y no cuenta para las coincidencias.
+- Q: ¿Qué datos de una ausencia ve el responsable en el calendario y en su detalle: solo nombre, tipo, fechas y estado, o también el motivo o justificación del empleado? → A: Solo nombre, tipo, rango completo de fechas y estado; nunca la justificación ni ningún texto de motivo (minimización, Art. 20).
+- Q: ¿Cómo se muestra el calendario mensual en una pantalla de móvil: cuadrícula completa o lista de días con ausencias? → A: Cuadrícula mensual en pantallas anchas; en pantallas estrechas, lista vertical de los días laborables con ausencias, con la coincidencia marcada en cada día (Art. 21.2).
+- Q: ¿Hay un límite de meses hacia atrás o hacia delante en la navegación del calendario? → A: No; cualquier mes puede consultarse y los meses sin ausencias muestran el mensaje de «sin ausencias».
+- Q: ¿Se marca como coincidencia todo día con dos o más personas ausentes, sea cual sea el tamaño del equipo, o la regla depende de dicho tamaño? → A: Siempre dos o más personas ausentes, independientemente del tamaño del equipo.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -35,7 +48,7 @@ Como responsable de equipo, abro el calendario del equipo y veo, en una cuadríc
 2. **(CA-1) Given** el calendario abierto, **When** pulsa "Mes anterior" o "Mes siguiente", **Then** se muestra el mes correspondiente con sus ausencias, sin recargar la página, y el título indica el mes y año visibles.
 3. **(CA-1) Given** una ausencia en el calendario, **When** el responsable la pulsa, **Then** ve el nombre del empleado, el tipo, el rango completo de fechas (aunque abarque varios meses) y el estado.
 4. **(CA-2) Given** un mes con ausencias aprobadas y pendientes, **When** se muestra el calendario, **Then** cada ausencia indica su estado con texto o icono además del color, y existe una leyenda que explica la diferencia.
-5. **(CA-2) Given** una solicitud rechazada en el mes, **When** se muestra el calendario, **Then** esa ausencia no aparece.
+5. **(CA-2) Given** una solicitud rechazada o retirada por el empleado (`CANCELLED`, HU-04) en el mes, **When** se muestra el calendario, **Then** esa ausencia no aparece ni cuenta para las coincidencias.
 6. **(CA-3) Given** dos o más personas del equipo ausentes el mismo día laborable (aprobadas o pendientes), **When** se muestra el calendario, **Then** ese día aparece resaltado con un borde destacado, un icono de advertencia y el texto con el número de personas ausentes (p. ej. "2 ausencias coincidentes").
 7. **(CA-3) Given** un día laborable con una sola persona ausente, **When** se muestra el calendario, **Then** ese día no se marca como coincidencia.
 8. **(CA-4) Given** personas de otros equipos con ausencias en el mes, **When** el responsable consulta su calendario, **Then** no aparece ninguna de esas ausencias ni cuentan para las coincidencias.
@@ -73,16 +86,17 @@ Como responsable de equipo, selecciono a una persona concreta de mi equipo en un
 ### Functional Requirements
 
 - **FR-001**: El sistema DEBE mostrar al responsable un calendario mensual con las ausencias aprobadas y pendientes de las personas cuyo responsable asignado es él (Art. 10 y 16.1).
-- **FR-002**: Cada ausencia DEBE mostrar el nombre del empleado y el tipo de ausencia; su detalle DEBE mostrar además el rango completo de fechas y el estado.
-- **FR-003**: El calendario DEBE permitir navegar al mes anterior y al siguiente; cada consulta se limita al mes visible y nunca carga el histórico completo (Art. 16.4).
+- **FR-002**: Cada ausencia DEBE mostrar el nombre del empleado y el tipo de ausencia; su detalle DEBE mostrar además el rango completo de fechas y el estado. El calendario y su respuesta de API NO DEBEN incluir la justificación ni ningún texto de motivo del empleado (Art. 20.1).
+- **FR-003**: El calendario DEBE permitir navegar al mes anterior y al siguiente sin límite de meses; cada consulta se limita al mes visible y nunca carga el histórico completo (Art. 16.4).
+- **FR-003b**: En pantallas estrechas (ancho de ventana inferior a 600 px), el calendario DEBE presentarse como lista vertical de los días laborables que tienen ausencias (el mes visible y la navegación se mantienen), con el mismo contenido de ausencias que la cuadrícula: nombre, tipo, estado, leyenda y marca de coincidencia con icono y texto (Art. 21.2). La lista omite los fines de semana y festivos, que no tienen ausencias (FR-008); su atenuado y la etiqueta del festivo son propios de la cuadrícula.
 - **FR-004**: Las ausencias aprobadas y pendientes DEBEN distinguirse mediante color y, además, mediante icono o texto, con una leyenda visible (Art. 16.2 y 21).
-- **FR-005**: Las solicitudes rechazadas NO DEBEN mostrarse.
-- **FR-006**: El sistema DEBE identificar los días laborables en los que dos o más personas del equipo están ausentes; este cálculo lo realiza el sistema central, no la interfaz (Art. 16.3).
+- **FR-005**: Las solicitudes rechazadas y las retiradas por el empleado (`CANCELLED`, HU-04) NO DEBEN mostrarse ni contar para las coincidencias; solo se muestran los estados Pendiente y Aprobada.
+- **FR-006**: El sistema DEBE identificar los días laborables en los que dos o más personas del equipo están ausentes, sea cual sea el tamaño del equipo; este cálculo lo realiza el sistema central, no la interfaz (Art. 16.3).
 - **FR-007**: Los días con coincidencia DEBEN resaltarse con borde destacado, icono de advertencia y texto con el número de personas ausentes, sin depender solo del color.
-- **FR-008**: Fines de semana y festivos DEBEN mostrarse atenuados y los festivos con una etiqueta descriptiva; no cuentan como días de ausencia ni para las coincidencias.
+- **FR-008**: En la cuadrícula, los fines de semana y festivos DEBEN mostrarse atenuados y los festivos con una etiqueta descriptiva; no cuentan como días de ausencia ni para las coincidencias. En la vista de lista de pantallas estrechas (FR-003b) no aparecen.
 - **FR-009**: El calendario DEBE incluir un filtro opcional por empleado que solo ofrezca personas del equipo del responsable.
 - **FR-010**: NO DEBE mostrarse ninguna ausencia de personas ajenas al equipo del responsable en sesión, ni siquiera manipulando la petición; la identidad del responsable se obtiene de la sesión (Art. 10.5).
-- **FR-011**: Solo los usuarios con rol de responsable de equipo PUEDEN consultar el calendario del equipo; los intentos fuera de alcance quedan registrados (Art. 10.6).
+- **FR-011**: Solo los usuarios con rol de responsable de equipo (`RESPONSABLE_EQUIPO`) de Dirección General (`DIRECCION_GENERAL`) o de Recursos Humanos (`RRHH`) PUEDEN consultar el calendario, y solo el de las personas que los tienen como responsable directo; los intentos fuera de alcance quedan registrados (Art. 10.6).
 
 ### Key Entities *(include if feature involves data)*
 

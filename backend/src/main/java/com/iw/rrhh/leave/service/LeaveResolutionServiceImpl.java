@@ -1,7 +1,8 @@
 package com.iw.rrhh.leave.service;
 
 import com.iw.rrhh.common.dto.PageResponse;
-import com.iw.rrhh.common.exception.InsufficientLeaveBalanceException;
+import com.iw.rrhh.common.config.ClockConfig;
+import com.iw.rrhh.common.exception.LeaveApprovalNotAllowedException;
 import com.iw.rrhh.common.exception.LeaveRequestAlreadyResolvedException;
 import com.iw.rrhh.employee.domain.Employee;
 import com.iw.rrhh.employee.repository.EmployeeRepository;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -43,6 +45,7 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
     private final UserRepository userRepository;
     private final LeaveBalanceService leaveBalanceService;
     private final NotificationService notificationService;
+    private final LeaveDayAllocator leaveDayAllocator;
     private final Clock clock;
 
     public LeaveResolutionServiceImpl(
@@ -51,6 +54,7 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
             UserRepository userRepository,
             LeaveBalanceService leaveBalanceService,
             NotificationService notificationService,
+            LeaveDayAllocator leaveDayAllocator,
             Clock clock
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
@@ -58,6 +62,7 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
         this.userRepository = userRepository;
         this.leaveBalanceService = leaveBalanceService;
         this.notificationService = notificationService;
+        this.leaveDayAllocator = leaveDayAllocator;
         this.clock = clock;
     }
 
@@ -67,7 +72,8 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
         Employee manager = getAuthenticatedEmployee();
         return PageResponse.from(
                 leaveRequestRepository
-                        .findByEmployeeManagerIdAndStatusOrderByCreatedAtAsc(manager.getId(), LeaveStatus.PENDING, pageable)
+                        .findByEmployeeManagerIdAndEmployeeIdNotAndStatusOrderByCreatedAtAsc(
+                                manager.getId(), manager.getId(), LeaveStatus.PENDING, pageable)
                         .map(this::toTeamResponse)
         );
     }
@@ -77,10 +83,12 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
         Employee manager = getAuthenticatedEmployee();
         LeaveRequest request = loadInScope(requestId, manager);
 
+        // Orden: 404 → 403 (loadInScope) → 409 → año cerrado (422) → saldo por año (422).
         // Se comprueba el estado antes del saldo: una solicitud resuelta siempre devuelve 409 (Art. 13.2)
         if (request.getStatus() != LeaveStatus.PENDING) {
             throw new LeaveRequestAlreadyResolvedException();
         }
+        ensureNotInClosedYear(request);
         if (request.getLeaveType() == LeaveType.VACATION) {
             ensureSufficientBalance(request);
         }
@@ -120,31 +128,56 @@ public class LeaveResolutionServiceImpl implements LeaveResolutionService {
 
     /**
      * Carga la solicitud bloqueada y verifica que pertenece a un miembro directo del responsable (Art. 10).
+     * Nadie resuelve sus propias solicitudes, aunque su {@code manager_id} apunte a sí mismo. Una solicitud que el
+     * empleado retiró (HU-04, estado CANCELLED) se trata como inexistente; se comprueba después del alcance para
+     * no revelar su existencia a quien no pertenece al equipo.
      */
     private LeaveRequest loadInScope(UUID requestId, Employee manager) {
         LeaveRequest request = leaveRequestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new NoSuchElementException("Solicitud de ausencia no encontrada"));
 
+        if (request.getEmployee().getId().equals(manager.getId())) {
+            log.warn("Acceso denegado: el empleado {} intentó resolver su propia solicitud {}", manager.getId(), requestId);
+            throw new AccessDeniedException("No puede resolver sus propias solicitudes");
+        }
         Employee currentManager = request.getEmployee().getManager();
         if (currentManager == null || !currentManager.getId().equals(manager.getId())) {
             log.warn("Acceso denegado: el empleado {} intentó resolver la solicitud {} fuera de su equipo", manager.getId(), requestId);
             throw new AccessDeniedException("Solo puede resolver solicitudes de personas de su equipo");
         }
+        if (request.getStatus() == LeaveStatus.CANCELLED) {
+            throw new NoSuchElementException("La solicitud ya no existe: el empleado la retiró");
+        }
         return request;
     }
 
+    /** Las fechas pasadas sólo se aprueban dentro del año natural en curso (zona Europe/Madrid, Art. 14.2). */
+    private void ensureNotInClosedYear(LeaveRequest request) {
+        int currentYear = LocalDate.now(clock.withZone(ClockConfig.BUSINESS_ZONE)).getYear();
+        if (request.getStartDate().getYear() < currentYear) {
+            throw LeaveApprovalNotAllowedException.closedYear(request.getStartDate().getYear());
+        }
+    }
+
     /**
-     * Bloquea la ficha del empleado y revalida el saldo derivado (Art. 12.6). Las aprobaciones
+     * Bloquea la ficha del empleado y revalida el saldo derivado año a año (Art. 12.6). Las aprobaciones
      * concurrentes del mismo empleado se serializan aquí y la segunda ve la primera ya confirmada.
+     * La solicitud sigue PENDING, así que su parte de cada año se compara con los días disponibles de ese año.
      */
     private void ensureSufficientBalance(LeaveRequest request) {
         UUID employeeId = request.getEmployee().getId();
         employeeRepository.findByIdForUpdate(employeeId)
                 .orElseThrow(() -> new NoSuchElementException("Empleado no encontrado"));
 
-        LeaveBalanceResponse balance = leaveBalanceService.getEmployeeLeaveBalance(employeeId, request.getStartDate().getYear());
-        if (request.getCalculatedDays() > balance.availableDays()) {
-            throw new InsufficientLeaveBalanceException(request.getCalculatedDays(), balance.availableDays());
+        for (int year = request.getStartDate().getYear(); year <= request.getEndDate().getYear(); year++) {
+            int requestedDays = leaveDayAllocator.daysInYear(request, year);
+            if (requestedDays == 0) {
+                continue;
+            }
+            LeaveBalanceResponse balance = leaveBalanceService.getEmployeeLeaveBalance(employeeId, year);
+            if (requestedDays > balance.availableDays()) {
+                throw LeaveApprovalNotAllowedException.insufficientBalance(year, requestedDays, balance.availableDays());
+            }
         }
     }
 

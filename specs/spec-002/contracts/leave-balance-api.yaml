@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de Consulta de Ficha y Saldo de Vacaciones (HU-02)
-  version: 1.0.0
+  version: 1.1.0
   description: Endpoints para la consulta de perfil personal y saldo desglosado de vacaciones (correspondientes, disfrutados, disponibles y en trámite).
 paths:
   /api/v1/employees/me:
@@ -59,13 +59,19 @@ paths:
                 $ref: '#/components/schemas/LeaveBalanceResponse'
         '401':
           description: No autenticado
+        '403':
+          description: El rol DIRECCION_GENERAL no tiene saldo de vacaciones propio porque no solicita ausencias (HU-05, FR-017); se registra como acceso denegado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
         '404':
           description: Empleado no encontrado
 
   /api/v1/leave/balances/employee/{employeeId}:
     get:
       summary: Saldo de vacaciones de un empleado por ID
-      description: Permite consultar el saldo a RRHH o al responsable de equipo del empleado. Si un rol EMPLEADO consulta un ID ajeno, se rechaza con 403 Forbidden (Art. 10, FR-005).
+      description: Permite consultar el saldo a RRHH o al responsable de equipo del empleado. Si un rol EMPLEADO consulta un ID ajeno, se rechaza con 403 Forbidden (Art. 10, FR-005). Un usuario DIRECCION_GENERAL recibe 403 también sobre su propio ID (FR-008, 2026-11-19).
       operationId: getEmployeeLeaveBalance
       tags:
         - LeaveBalance

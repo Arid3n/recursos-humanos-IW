@@ -70,66 +70,91 @@
       </div>
     }
 
-    <div class="calendar-card surface-card">
-      <table class="calendar-table">
-        <caption class="sr-only">Ausencias del equipo en {{ monthTitle() }}</caption>
-        <thead>
-          <tr>
-            @for (weekDay of weekDays; track weekDay.short) {
-              <th scope="col" [attr.abbr]="weekDay.full">{{ weekDay.short }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (week of weeks(); track $index) {
+    @if (isNarrow()) {
+      @if (daysWithAbsences().length > 0) {
+        <ul class="day-list" [attr.aria-label]="'Días con ausencias de ' + monthTitle()">
+          @for (day of daysWithAbsences(); track day.date) {
+            <li class="day-item" [class.conflict]="day.hasConflict">
+              <h3 class="day-item-title">{{ dayLabel(day) }}</h3>
+              @if (day.hasConflict) {
+                <div class="conflict-indicator">
+                  <mat-icon aria-hidden="true">warning</mat-icon>
+                  <span>{{ day.absentCount }} ausencias coincidentes</span>
+                </div>
+              }
+              @for (event of day.events; track event.requestId) {
+                <ng-container *ngTemplateOutlet="eventButton; context: { $implicit: event }"></ng-container>
+              }
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <div class="calendar-card surface-card">
+        <table class="calendar-table">
+          <caption class="sr-only">Ausencias del equipo en {{ monthTitle() }}</caption>
+          <thead>
             <tr>
-              @for (day of week; track $index) {
-                @if (day) {
-                  <td
-                    class="day-cell"
-                    [class.weekend]="day.dayType === 'WEEKEND'"
-                    [class.holiday]="day.dayType === 'HOLIDAY'"
-                    [class.conflict]="day.hasConflict">
-                    <div class="day-header">
-                      <span class="day-number">{{ dayNumber(day) }}</span>
-                      @if (day.holidayName) {
-                        <span class="holiday-name">{{ day.holidayName }}</span>
-                      }
-                    </div>
-
-                    @if (day.hasConflict) {
-                      <div class="conflict-indicator">
-                        <mat-icon aria-hidden="true">warning</mat-icon>
-                        <span>{{ day.absentCount }} ausencias coincidentes</span>
-                      </div>
-                    }
-
-                    @for (event of day.events; track event.requestId) {
-                      <button
-                        type="button"
-                        class="event"
-                        [class.approved]="event.status === 'APPROVED'"
-                        [class.pending]="event.status === 'PENDING'"
-                        (click)="openDetail(event)">
-                        <span class="event-name">{{ event.employeeName }}</span>
-                        <span class="event-type">
-                          <mat-icon aria-hidden="true">{{ leaveTypeIcon(event) }}</mat-icon>{{ leaveTypeLabel(event) }}
-                        </span>
-                        <span class="event-status">
-                          <mat-icon aria-hidden="true">{{ event.status === 'APPROVED' ? 'check_circle' : 'schedule' }}</mat-icon>
-                          {{ event.status === 'APPROVED' ? 'Aprobada' : 'Pendiente' }}
-                        </span>
-                      </button>
-                    }
-                  </td>
-                } @else {
-                  <td class="empty-cell" aria-hidden="true"></td>
-                }
+              @for (weekDay of weekDays; track weekDay.short) {
+                <th scope="col" [attr.abbr]="weekDay.full">{{ weekDay.short }}</th>
               }
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (week of weeks(); track $index) {
+              <tr>
+                @for (day of week; track $index) {
+                  @if (day) {
+                    <td
+                      class="day-cell"
+                      [class.weekend]="day.dayType === 'WEEKEND'"
+                      [class.holiday]="day.dayType === 'HOLIDAY'"
+                      [class.conflict]="day.hasConflict">
+                      <div class="day-header">
+                        <span class="day-number">{{ dayNumber(day) }}</span>
+                        @if (day.holidayName) {
+                          <span class="holiday-name">{{ day.holidayName }}</span>
+                        }
+                      </div>
+
+                      @if (day.hasConflict) {
+                        <div class="conflict-indicator">
+                          <mat-icon aria-hidden="true">warning</mat-icon>
+                          <span>{{ day.absentCount }} ausencias coincidentes</span>
+                        </div>
+                      }
+
+                      @for (event of day.events; track event.requestId) {
+                        <ng-container *ngTemplateOutlet="eventButton; context: { $implicit: event }"></ng-container>
+                      }
+                    </td>
+                  } @else {
+                    <td class="empty-cell" aria-hidden="true"></td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   }
 </div>
+
+<ng-template #eventButton let-event>
+  <button
+    type="button"
+    class="event"
+    [class.approved]="event.status === 'APPROVED'"
+    [class.pending]="event.status === 'PENDING'"
+    (click)="openDetail(event)">
+    <span class="event-name">{{ event.employeeName }}</span>
+    <span class="event-type">
+      <mat-icon aria-hidden="true">{{ leaveTypeIcon(event) }}</mat-icon>{{ leaveTypeLabel(event) }}
+    </span>
+    <span class="event-status">
+      <mat-icon aria-hidden="true">{{ event.status === 'APPROVED' ? 'check_circle' : 'schedule' }}</mat-icon>
+      {{ event.status === 'APPROVED' ? 'Aprobada' : 'Pendiente' }}
+    </span>
+  </button>
+</ng-template>

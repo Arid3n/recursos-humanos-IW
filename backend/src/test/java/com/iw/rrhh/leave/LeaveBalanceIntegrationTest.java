@@ -2,6 +2,7 @@ package com.iw.rrhh.leave;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iw.rrhh.TestcontainersConfiguration;
+import com.iw.rrhh.common.service.HolidayCalendarService;
 import com.iw.rrhh.employee.domain.CollectiveAgreement;
 import com.iw.rrhh.employee.domain.ContractRecord;
 import com.iw.rrhh.employee.domain.Employee;
@@ -26,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -56,6 +58,12 @@ public class LeaveBalanceIntegrationTest {
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
 
+    @Autowired
+    private Clock clock;
+
+    @Autowired
+    private HolidayCalendarService holidayCalendarService;
+
     private User userEmployeeA;
     private User userEmployeeB;
     private User userManager;
@@ -71,10 +79,8 @@ public class LeaveBalanceIntegrationTest {
         employeeRepository.deleteAll();
         userRepository.deleteAll();
 
-        agreement22 = collectiveAgreementRepository.findByCode("AGR-22")
-                .orElseGet(() -> collectiveAgreementRepository.save(
-                        new CollectiveAgreement("AGR-22", "Convenio 22 Dias", 22)
-                ));
+        // Convenio sembrado por V2 (22 días): crear uno nuevo choca con los ids 1 y 2 del seed (IDENTITY)
+        agreement22 = collectiveAgreementRepository.findByCode("GENERAL").orElseThrow();
 
         // Usuario y Empleado Manager
         userManager = userRepository.save(new User("manager1", "$2a$10$xyz", UserRole.RESPONSABLE_EQUIPO));
@@ -205,6 +211,17 @@ public class LeaveBalanceIntegrationTest {
     @WithMockUser(username = "admin", roles = {"RRHH"})
     @DisplayName("US3: Rol RRHH puede consultar el saldo de cualquier empleado")
     void testHRCanConsultAnyEmployeeBalance() throws Exception {
+        // setUp borra todos los usuarios (incluido el seed de RRHH): el servicio necesita la ficha del usuario en sesión
+        User hrUser = userRepository.save(new User("admin", "$2a$10$xyz", UserRole.RRHH));
+        Employee hrEmployee = new Employee();
+        hrEmployee.setUser(hrUser);
+        hrEmployee.setFirstName("Rosa");
+        hrEmployee.setLastName("RRHH");
+        hrEmployee.setEmail("rrhh.balance@empresa.com");
+        hrEmployee.setNationalId("44444444R");
+        hrEmployee.setHireDate(LocalDate.of(2020, 1, 1));
+        employeeRepository.save(hrEmployee);
+
         mockMvc.perform(get("/leave/balances/employee/" + empB.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.employeeId", is(empB.getId().toString())));
@@ -214,11 +231,93 @@ public class LeaveBalanceIntegrationTest {
     @WithMockUser(username = "empleadoA", roles = {"EMPLEADO"})
     @DisplayName("US4: Consulta histórica de año cerrado devuelve isClosedYear = true")
     void testHistoricalBalance_ClosedYear() throws Exception {
-        int pastYear = LocalDate.now().getYear() - 1;
+        int pastYear = LocalDate.now(clock).getYear() - 1;
         mockMvc.perform(get("/leave/balances/me?year=" + pastYear))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.year", is(pastYear)))
                 .andExpect(jsonPath("$.isClosedYear", is(true)));
     }
-}
 
+    @Test
+    @WithMockUser(username = "manager1", roles = {"RESPONSABLE_EQUIPO"})
+    @DisplayName("HU-05.CA-5: una vacación APPROVED que cruza años cuenta su parte en el saldo de AMBOS años (Art. 12.1)")
+    void crossYearApprovedRequest_countsInBothYears() throws Exception {
+        int year = LocalDate.now(clock).getYear();
+        LocalDate start = LocalDate.of(year, 12, 28);
+        LocalDate end = LocalDate.of(year + 1, 1, 8);
+        int firstYearDays = holidayCalendarService.countWorkingDays(start, LocalDate.of(year, 12, 31));
+        int secondYearDays = holidayCalendarService.countWorkingDays(LocalDate.of(year + 1, 1, 1), end);
+
+        LeaveRequest approved = new LeaveRequest(empA, LeaveType.VACATION, start, end, firstYearDays + secondYearDays);
+        approved.setStatus(LeaveStatus.APPROVED);
+        leaveRequestRepository.save(approved);
+
+        mockMvc.perform(get("/leave/balances/employee/{id}", empA.getId()).param("year", String.valueOf(year)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.spentDays", is(firstYearDays)))
+                .andExpect(jsonPath("$.availableDays", is(22 - firstYearDays)));
+        mockMvc.perform(get("/leave/balances/employee/{id}", empA.getId()).param("year", String.valueOf(year + 1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.spentDays", is(secondYearDays)))
+                .andExpect(jsonPath("$.availableDays", is(22 - secondYearDays)));
+    }
+
+    // ---- HU-05 fase 10 (FR-017 / spec-002 FR-008): Dirección General no tiene saldo propio ----
+
+    private Employee direccionGeneral(String username, String email, String nationalId) {
+        User dgUser = userRepository.save(new User(username, "$2a$10$xyz", UserRole.DIRECCION_GENERAL));
+        Employee dg = new Employee();
+        dg.setUser(dgUser);
+        dg.setFirstName("Elena");
+        dg.setLastName("Dirección");
+        dg.setEmail(email);
+        dg.setNationalId(nationalId);
+        dg.setHireDate(LocalDate.of(2019, 1, 1));
+        dg = employeeRepository.save(dg);
+        contractRecordRepository.save(new ContractRecord(
+                dg, LocalDate.of(2019, 1, 1), "Directora General", "Dirección",
+                new BigDecimal("90000"), agreement22, null, "RRHH"));
+        return dg;
+    }
+
+    @Test
+    @WithMockUser(username = "dg.saldo", roles = {"DIRECCION_GENERAL"})
+    @DisplayName("FR-017 / SC-008: Dirección General recibe 403 en /leave/balances/me")
+    void direccionGeneral_forbiddenOnOwnBalance() throws Exception {
+        direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/me"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.title", notNullValue()));
+    }
+
+    @Test
+    @WithMockUser(username = "dg.saldo", roles = {"DIRECCION_GENERAL"})
+    @DisplayName("FR-017 / SC-008: Dirección General recibe 403 al consultar su saldo por su propio id")
+    void direccionGeneral_forbiddenOnOwnBalanceById() throws Exception {
+        Employee dg = direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/employee/" + dg.getId()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"RRHH"})
+    @DisplayName("FR-017: RRHH conserva el acceso total a /leave/balances/employee/{id}, también sobre Dirección General")
+    void hr_stillReadsAnyBalance_includingDireccionGeneral() throws Exception {
+        User hrUser = userRepository.save(new User("admin", "$2a$10$xyz", UserRole.RRHH));
+        Employee hrEmployee = new Employee();
+        hrEmployee.setUser(hrUser);
+        hrEmployee.setFirstName("Rosa");
+        hrEmployee.setLastName("RRHH");
+        hrEmployee.setEmail("rrhh.balance2@empresa.com");
+        hrEmployee.setNationalId("44444444R");
+        hrEmployee.setHireDate(LocalDate.of(2020, 1, 1));
+        employeeRepository.save(hrEmployee);
+        Employee dg = direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/employee/" + dg.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.employeeId", is(dg.getId().toString())));
+    }
+}

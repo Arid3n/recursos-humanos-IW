@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/leave")
-@PreAuthorize("hasRole('RESPONSABLE_EQUIPO')")
+@PreAuthorize("hasAnyRole('RESPONSABLE_EQUIPO','RRHH','DIRECCION_GENERAL')")
 @Tag(name = "LeaveResolution", description = "Bandeja y resolución de solicitudes del equipo por su responsable (HU-05)")
 public class LeaveResolutionController {
 

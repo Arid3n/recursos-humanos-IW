@@ -110,7 +110,7 @@ public class LeaveRequestTrackingIntegrationTest {
     void test_HU04_CA1_getMyRequests_success() throws Exception {
         LeaveRequest r1 = new LeaveRequest(employee, LeaveType.VACATION, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5), 5);
         r1.setStatus(LeaveStatus.PENDING);
-        leaveRequestRepository.save(r1);
+        r1 = leaveRequestRepository.save(r1);
 
         mockMvc.perform(get("/leave/my-requests")
                         .param("page", "0")
@@ -130,11 +130,11 @@ public class LeaveRequestTrackingIntegrationTest {
     void test_HU04_CA4_getMyRequests_filterByStatus() throws Exception {
         LeaveRequest pending = new LeaveRequest(employee, LeaveType.VACATION, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5), 5);
         pending.setStatus(LeaveStatus.PENDING);
-        leaveRequestRepository.save(pending);
+        pending = leaveRequestRepository.save(pending);
 
         LeaveRequest approved = new LeaveRequest(employee, LeaveType.VACATION, LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 15), 4);
         approved.setStatus(LeaveStatus.APPROVED);
-        leaveRequestRepository.save(approved);
+        approved = leaveRequestRepository.save(approved);
 
         mockMvc.perform(get("/leave/my-requests")
                         .param("status", "APPROVED")
@@ -153,7 +153,7 @@ public class LeaveRequestTrackingIntegrationTest {
         LeaveRequest rejected = new LeaveRequest(employee, LeaveType.PERMIT, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 2), 2);
         rejected.setStatus(LeaveStatus.REJECTED);
         rejected.setRejectionReason("Coincidencia de personal crítico");
-        leaveRequestRepository.save(rejected);
+        rejected = leaveRequestRepository.save(rejected);
 
         mockMvc.perform(get("/leave/my-requests")
                         .accept(MediaType.APPLICATION_JSON))

@@ -5,7 +5,7 @@ info:
     Bandeja de solicitudes pendientes del equipo, aprobación/rechazo atómico por el responsable
     y consulta de notificaciones internas por el empleado en sesión.
     La identidad se obtiene siempre de la sesión (Art. 10); nunca de parámetros del cliente.
-  version: 1.0.0
+  version: 1.3.0
 servers:
   - url: /api/v1
 security:
@@ -15,7 +15,7 @@ paths:
   /leave/team-requests:
     get:
       summary: Solicitudes pendientes del equipo del responsable en sesión
-      description: Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
+      description: Roles RESPONSABLE_EQUIPO, RRHH y DIRECCION_GENERAL (RRHH desde 2026-11-19, FR-018). Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
       operationId: getTeamPendingRequests
       tags: [Leave Resolution]
       parameters:
@@ -37,8 +37,10 @@ paths:
     post:
       summary: Aprobar una solicitud pendiente del equipo
       description: |
-        En una única transacción: revalida el saldo (solo VACATION), pasa la solicitud a APPROVED,
-        registra quién y cuándo resolvió, y crea la notificación al empleado.
+        En una única transacción: revalida el saldo por cada año natural del periodo (solo VACATION),
+        pasa la solicitud a APPROVED, registra quién y cuándo resolvió, y crea la notificación al empleado.
+        Orden de comprobaciones: 404 (no existe), 403 (alcance o solicitud propia), 404 (retirada por el empleado, CANCELLED), 409, 422 (año cerrado), 422 (saldo).
+        No se aprueban solicitudes con fechas en un año natural cerrado.
       operationId: approveLeaveRequest
       tags: [Leave Resolution]
       parameters:
@@ -65,13 +67,19 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: Solicitud ya resuelta o saldo insuficiente.
+          description: Solicitud ya resuelta o resuelta simultáneamente por otra operación.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: Regla de negocio violada al aprobar (saldo insuficiente en algún año o fechas en un año cerrado). La solicitud permanece PENDING.
           content:
             application/problem+json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/ProblemDetail'
                   - $ref: '#/components/schemas/InsufficientBalanceProblem'
+                  - $ref: '#/components/schemas/ProblemDetail'
 
   /leave/requests/{id}/reject:
     post:
@@ -102,11 +110,29 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: La solicitud ya está resuelta.
+          description: La solicitud ya está resuelta o se resolvió simultáneamente.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+
+  /leave/requests/eligibility:
+    get:
+      summary: Indica si el usuario en sesión puede crear solicitudes de ausencia
+      description: |
+        Falso si no tiene resolutor válido (sin superior, superior inactivo o sin rol de responsable/dirección; FR-015)
+        o si es de Dirección General (FR-017). La creación real aplica la misma regla y responde 422.
+      operationId: getLeaveEligibility
+      tags: [Leave Resolution]
+      responses:
+        '200':
+          description: Elegibilidad del usuario en sesión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveEligibilityResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /notifications:
     get:
@@ -193,12 +219,12 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
     Forbidden:
-      description: Sin rol suficiente o recurso fuera de alcance (Art. 10).
+      description: Sin rol suficiente, recurso fuera de alcance o solicitud propia del responsable (Art. 10).
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
     NotFound:
-      description: El recurso no existe (p. ej. solicitud cancelada por el empleado).
+      description: "El recurso no existe (p. ej. solicitud retirada por el empleado: HU-04 la pasa a `CANCELLED` y HU-05 la trata como inexistente)."
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
@@ -270,6 +296,16 @@ components:
         read: { type: boolean }
         createdAt: { type: string, format: date-time }
 
+    LeaveEligibilityResponse:
+      type: object
+      required: [canRequest]
+      properties:
+        canRequest: { type: boolean }
+        reason:
+          type: string
+          nullable: true
+          description: "Motivo cuando canRequest es false (p. ej. 'No tienes un responsable asignado' o 'Dirección General no solicita ausencias')."
+
     UnreadCountResponse:
       type: object
       required: [count]
@@ -331,5 +367,6 @@ components:
         - $ref: '#/components/schemas/ProblemDetail'
         - type: object
           properties:
-            requestedDays: { type: integer }
+            year: { type: integer, description: 'Año natural cuyo saldo no alcanza' }
+            requestedDays: { type: integer, description: 'Días de la solicitud que caen en ese año' }
             availableDays: { type: integer }

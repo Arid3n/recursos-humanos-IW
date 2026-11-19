@@ -36,7 +36,7 @@ public class Employee {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
-    private Employee manager; // Nulo únicamente si es CEO / Dirección General
+    private Employee manager; // Nulo únicamente si es Dirección General (rol DIRECCION_GENERAL, alta con withoutManager=true)
 
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
@@ -124,7 +124,7 @@ public class CollectiveAgreement {
 | :--- | :--- | :--- | :--- |
 | `Employee` | `national_id` | `UNIQUE` | DNI/NIE único en la organización. |
 | `Employee` | `email` | `UNIQUE` | Correo corporativo único. |
-| `Employee` | `manager_id` | `FK` | Obligatorio salvo que el puesto sea "CEO" o "Dirección General". |
+| `Employee` | `manager_id` | `FK` | Obligatorio salvo Dirección General: el alta sin responsable exige `withoutManager=true` y crea el rol `DIRECCION_GENERAL` (no se comprueba el puesto). |
 | `ContractRecord` | `effective_from` | `NOT NULL` | Toda modificación contractual DEBE tener fecha de efectos. |
 | `ContractRecord` | `salary` | `CHECK (salary >= 0)` | Salario positivo con escala 2 decimales (`NUMERIC(12,2)`). |
 | `ContractRecord` | Mutabilidad | *Append-Only* | Prohibido UPDATE y DELETE en la capa de persistencia. |

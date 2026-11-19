@@ -162,6 +162,56 @@ public class SecurityDataInitializer implements CommandLineRunner {
                         employeeRepository.save(emp);
                         log.info("Asignado responsable de equipo a {}", empUsername);
                     }));
+
+            // 5. Dirección General (HU-05 FR-017): cúspide de la jerarquía; todo el resto tiene responsable
+            String direccionUsername = "direccion@empresa.com";
+            User direccionUser = userRepository.findByUsername(direccionUsername).orElseGet(() -> {
+                User u = new User(direccionUsername, passwordEncoder.encode(defaultPassword), UserRole.DIRECCION_GENERAL);
+                return userRepository.save(u);
+            });
+
+            String direccionNationalId = "22222222J";
+            if (employeeRepository.findByUserId(direccionUser.getId()).isEmpty()
+                    && !employeeRepository.existsByEmail(direccionUsername)
+                    && !employeeRepository.existsByNationalId(direccionNationalId)) {
+                Employee direccion = new Employee();
+                direccion.setUser(direccionUser);
+                direccion.setFirstName("Elena");
+                direccion.setLastName("Vidal Ortega");
+                direccion.setNationalId(direccionNationalId);
+                direccion.setEmail(direccionUsername);
+                direccion.setHireDate(LocalDate.of(2019, 1, 1));
+                direccion = employeeRepository.save(direccion);
+
+                contractRecordRepository.save(new ContractRecord(
+                        direccion,
+                        LocalDate.of(2019, 1, 1),
+                        "Dirección General",
+                        "Dirección",
+                        new BigDecimal("70000.00"),
+                        agreement,
+                        null,
+                        "SYSTEM"));
+                log.info("Inicializada ficha de Dirección General para {}", direccionUsername);
+            }
+
+            // 6. Jerarquía de pruebas: Dirección General → RRHH → responsable de equipo → empleado (solo si faltan)
+            Employee direccionEmployee = employeeRepository.findByUserId(direccionUser.getId()).orElse(null);
+            Employee rrhhEmployeeEntity = employeeRepository.findByUserId(rrhhUser.getId()).orElse(null);
+            if (direccionEmployee != null && rrhhEmployeeEntity != null && rrhhEmployeeEntity.getManager() == null) {
+                rrhhEmployeeEntity.setManager(direccionEmployee);
+                employeeRepository.save(rrhhEmployeeEntity);
+                log.info("Asignada Dirección General como responsable de {}", rrhhUsername);
+            }
+            if (rrhhEmployeeEntity != null) {
+                employeeRepository.findByUserId(managerUser.getId())
+                        .filter(emp -> emp.getManager() == null)
+                        .ifPresent(emp -> {
+                            emp.setManager(rrhhEmployeeEntity);
+                            employeeRepository.save(emp);
+                            log.info("Asignado RRHH como responsable de {}", managerUsername);
+                        });
+            }
         } catch (Exception ex) {
             log.warn("Advertencia durante la inicialización de datos de seguridad: {}", ex.getMessage());
         }

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, ReactiveFormsModule, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +23,34 @@ export interface ResolveRequestDialogResult {
 export const REASON_MIN_LENGTH = 5;
 export const REASON_MAX_LENGTH = 500;
 
+/** Textos del diálogo agrupados en un único sitio (Art. 21.3); el proyecto aún no usa i18n de Angular. */
+export const RESOLVE_DIALOG_TEXTS = {
+  approveTitle: 'Aprobar solicitud',
+  rejectTitle: 'Rechazar solicitud',
+  approveLabel: 'Comentario (opcional)',
+  rejectLabel: 'Motivo del rechazo',
+  back: 'Volver',
+  confirmApprove: 'Confirmar aprobación',
+  confirmReject: 'Confirmar rechazo',
+  reasonRequired: 'El motivo del rechazo es obligatorio.',
+  reasonTooShort: (min: number) => `El motivo debe tener al menos ${min} caracteres.`,
+  textTooLong: (max: number) => `El texto no puede superar ${max} caracteres.`
+} as const;
+
+/** Valida sobre el texto sin espacios extremos, igual que el servidor (FR-003). */
+const trimmedRequired: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  String(control.value ?? '').trim().length === 0 ? { required: true } : null;
+
+const trimmedMinLength = (min: number): ValidatorFn => (control) => {
+  const length = String(control.value ?? '').trim().length;
+  return length > 0 && length < min ? { minlength: { requiredLength: min, actualLength: length } } : null;
+};
+
+const trimmedMaxLength = (max: number): ValidatorFn => (control) => {
+  const length = String(control.value ?? '').trim().length;
+  return length > max ? { maxlength: { requiredLength: max, actualLength: length } } : null;
+};
+
 @Component({
   selector: 'app-resolve-request-dialog',
   standalone: true,
@@ -32,7 +60,7 @@ export const REASON_MAX_LENGTH = 500;
       <mat-icon aria-hidden="true">
         {{ isApprove ? 'check_circle' : 'cancel' }}
       </mat-icon>
-      <span>{{ isApprove ? 'Aprobar solicitud' : 'Rechazar solicitud' }}</span>
+      <span>{{ isApprove ? texts.approveTitle : texts.rejectTitle }}</span>
     </h2>
 
     <mat-dialog-content class="dialog-content">
@@ -45,32 +73,31 @@ export const REASON_MAX_LENGTH = 500;
       </p>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ isApprove ? 'Comentario (opcional)' : 'Motivo del rechazo' }}</mat-label>
+        <mat-label>{{ isApprove ? texts.approveLabel : texts.rejectLabel }}</mat-label>
         <textarea
           matInput
           cdkFocusInitial
           rows="4"
           [formControl]="textControl"
-          [attr.maxlength]="maxLength"
           [required]="!isApprove"></textarea>
-        <mat-hint align="end">{{ textControl.value.length }} / {{ maxLength }}</mat-hint>
+        <mat-hint align="end">{{ textControl.value.trim().length }} / {{ maxLength }}</mat-hint>
         @if (textControl.hasError('required')) {
-          <mat-error>El motivo del rechazo es obligatorio.</mat-error>
+          <mat-error>{{ texts.reasonRequired }}</mat-error>
         }
         @if (textControl.hasError('minlength')) {
-          <mat-error>El motivo debe tener al menos {{ minLength }} caracteres.</mat-error>
+          <mat-error>{{ texts.reasonTooShort(minLength) }}</mat-error>
         }
         @if (textControl.hasError('maxlength')) {
-          <mat-error>El texto no puede superar {{ maxLength }} caracteres.</mat-error>
+          <mat-error>{{ texts.textTooLong(maxLength) }}</mat-error>
         }
       </mat-form-field>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end" class="dialog-actions">
-      <button mat-button type="button" mat-dialog-close>Volver</button>
+      <button mat-button type="button" mat-dialog-close>{{ texts.back }}</button>
       <button mat-flat-button type="button" [color]="isApprove ? 'primary' : 'warn'" (click)="confirm()">
         <mat-icon>{{ isApprove ? 'check' : 'close' }}</mat-icon>
-        {{ isApprove ? 'Confirmar aprobación' : 'Confirmar rechazo' }}
+        {{ isApprove ? texts.confirmApprove : texts.confirmReject }}
       </button>
     </mat-dialog-actions>
   `,
@@ -82,6 +109,7 @@ export class ResolveRequestDialogComponent {
   readonly data: ResolveRequestDialogData = inject(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<ResolveRequestDialogComponent, ResolveRequestDialogResult>);
 
+  readonly texts = RESOLVE_DIALOG_TEXTS;
   readonly isApprove = this.data.mode === 'approve';
   readonly minLength = REASON_MIN_LENGTH;
   readonly maxLength = REASON_MAX_LENGTH;
@@ -89,17 +117,15 @@ export class ResolveRequestDialogComponent {
   readonly textControl = new FormControl<string>('', {
     nonNullable: true,
     validators: this.isApprove
-      ? [Validators.maxLength(REASON_MAX_LENGTH)]
-      : [Validators.required, Validators.minLength(REASON_MIN_LENGTH), Validators.maxLength(REASON_MAX_LENGTH)]
+      ? [trimmedMaxLength(REASON_MAX_LENGTH)]
+      : [trimmedRequired, trimmedMinLength(REASON_MIN_LENGTH), trimmedMaxLength(REASON_MAX_LENGTH)]
   });
 
   confirm(): void {
-    // Se valida sobre el texto sin espacios extremos, igual que el servidor
-    this.textControl.setValue(this.textControl.value.trim());
+    this.textControl.markAsTouched();
     if (this.textControl.invalid) {
-      this.textControl.markAsTouched();
       return;
     }
-    this.dialogRef.close({ text: this.textControl.value || null });
+    this.dialogRef.close({ text: this.textControl.value.trim() || null });
   }
 }

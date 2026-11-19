@@ -1,7 +1,7 @@
 # Research: spec-006 — Calendario de Ausencias del Equipo
 
 **Feature**: `spec-006` (HU-06)
-**Date**: 2026-11-03
+**Date**: 2026-11-03 · **Revisado**: 2026-11-18
 **Author**: Integrante 3
 
 ---
@@ -34,7 +34,7 @@
     AND lr.startDate <= :rangeEnd AND lr.endDate >= :rangeStart
   ORDER BY e.lastName, e.firstName, lr.startDate
   ```
-  con `statuses = [PENDING, APPROVED]` y el rango = primer/último día del mes.
+  con `statuses = [PENDING, APPROVED]` y el rango = primer/último día del mes. **Revisado 2026-11-18**: se añade `AND e.id <> :managerId` para que las ausencias propias del responsable no aparezcan nunca (supuesto de la spec, coherente con la bandeja de HU-05), aunque su `manager_id` apunte a sí mismo.
 - **Justificación**: Condición estándar de solape de intervalos; recoge ausencias que cruzan el cambio de mes. Usa `idx_leave_calendar`. `JOIN FETCH` evita N+1 al leer el nombre.
 
 ### 1.4 Cálculo por día y coincidencias (Art. 16.3)
@@ -44,6 +44,7 @@
   - Solo en días `WORKING`: `events` = ausencias cuyo rango contiene la fecha.
   - `absentCount` = número de **empleados distintos** con evento ese día; `hasConflict = absentCount >= 2`.
   - Días no laborables: `events` vacío, `absentCount = 0`, `hasConflict = false`.
+- **Nota 2026-11-18**: el umbral es la constante `CONFLICT_THRESHOLD = 2` del servidor y no depende del tamaño del equipo (FR-006).
 - **Justificación**: Una ausencia solo consume días laborables (mismo criterio que el cómputo de HU-03); contar empleados distintos evita doble conteo si alguien tuviera dos solicitudes el mismo día. Las pendientes cuentan (spec, Assumptions). Coste O(días × ausencias), despreciable para un mes y un equipo.
 
 ### 1.5 Nombre de los festivos
@@ -61,7 +62,7 @@
 ### 1.7 Frontend
 
 - **Componente** `TeamCalendarComponent` (ruta `/team/calendar`, enlace "Calendario del Equipo" visible con `isResponsable()`):
-  - Mes inicial: mes actual del navegador; botones "Mes anterior"/"Mes siguiente" con `aria-label`; título con mes y año en español.
+  - Mes inicial: mes actual en `Europe/Madrid` (`Intl.DateTimeFormat` con `timeZone: 'Europe/Madrid'`, Art. 14.2; revisado 2026-11-18, antes se usaba la zona del navegador); botones "Mes anterior"/"Mes siguiente" con `aria-label`; título con mes y año en español.
   - Cuadrícula como `<table>` semántica (cabecera Lun…Dom, una fila por semana); las celdas vacías previas al día 1 se calculan solo para maquetar.
   - Ausencia = `button` con nombre, icono de tipo y distintivo de estado: aprobada → icono `check_circle` + texto "Aprobada" con fondo sólido; pendiente → icono `schedule` + texto "Pendiente" con borde discontinuo. Leyenda visible con ambos.
   - Coincidencia: clase con borde destacado + icono `warning` + texto "N ausencias coincidentes".
@@ -72,6 +73,32 @@
 - **Locale**: La aplicación no registra `LOCALE_ID` (el `DatePipe` usa `en-US`; las pantallas existentes solo usan formatos numéricos). El título del mes se formatea con `Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })`, sin cambiar la configuración global de la aplicación (que afectaría a HU-01…HU-05).
 - **Alternativas consideradas**: Librerías de calendario (FullCalendar, angular-calendar): descartadas por el Art. 23.4 (dependencia nueva sin necesidad).
 
+### 1.8 Solicitudes retiradas (aclaración 2026-11-18 · FR-005)
+
+- **Decisión**: Solo `PENDING` y `APPROVED` se consultan. `REJECTED` y `CANCELLED` (HU-04) quedan fuera de eventos y de recuento.
+- **Justificación**: La lista blanca `VISIBLE_STATUSES` ya excluye cualquier estado futuro sin tocar la consulta; una retirada no es una ausencia. Sin código nuevo, sólo test y contrato.
+
+### 1.9 Minimización de datos (aclaración 2026-11-18 · FR-002)
+
+- **Decisión**: `TeamCalendarEventResponse` conserva únicamente `requestId`, `employeeId`, `employeeName`, `leaveType`, `status`, `startDate`, `endDate`. Ningún campo de justificación o motivo entra nunca en los DTO del calendario.
+- **Justificación**: Art. 20.1. HU-04 añadió una justificación a la solicitud; el responsable la ve al resolver en la bandeja de HU-05, no en el calendario. Un test inspecciona el JSON y falla si aparece `rejectionReason` o `justification`.
+
+### 1.10 Vista en pantallas estrechas (aclaración 2026-11-18 · FR-003b)
+
+- **Decisión**: En `TeamCalendarComponent` un `BreakpointObserver` (`@angular/cdk/layout`, `Breakpoints.XSmall`, < 600 px) conmuta entre la `<table>` mensual y una lista vertical (`<ul>`) de los días laborables con ausencias; la lista se deriva de los mismos `days` de la API filtrando los de `events` no vacío. Mantiene título de mes, botones de navegación, leyenda, filtro y la marca de coincidencia con icono y texto. La lista omite fines de semana y festivos (no tienen ausencias; FR-003b y FR-008).
+- **Justificación**: Art. 21.2. Una cuadrícula de 7 columnas no cabe con nombre, tipo y estado en un móvil. `@angular/cdk` ya es dependencia (Material), así que no se añade ninguna (Art. 23.4). No hay lógica de negocio nueva en cliente: solo se oculta la parte sin ausencias.
+- **Alternativas consideradas**: Solo CSS con `@media` y dos plantillas ocultas: duplica el DOM leído por tecnologías de apoyo. Cuadrícula con scroll horizontal: descartada en la aclaración.
+
+### 1.11 Navegación sin límite (aclaración 2026-11-18 · FR-003)
+
+- **Decisión**: Cualquier `YearMonth` válido es consultable; los meses vacíos muestran «No hay ausencias en este mes». No se deshabilitan los botones de navegación.
+- **Justificación**: La consulta sigue acotada al mes (Art. 16.4), por lo que el coste de cada petición es constante; `HolidayCalendarService` calcula festivos para cualquier año.
+
+### 1.12 Relación con HU-05
+
+- Una solicitud aprobada o rechazada en HU-05 se refleja en el calendario en la siguiente consulta (cambio de mes o recarga de la pantalla); no hay actualización en tiempo real (fuera de alcance).
+- El calendario trabaja con fechas de la solicitud, no con el reparto por año natural de `LeaveDayAllocator`: una vacación que cruza años se pinta en los días que cada mes ocupa.
+
 ---
 
 ## 2. Cobertura de la Constitución
@@ -79,7 +106,7 @@
 | Artículo | Requisito | Enfoque spec-006 |
 |---|---|---|
 | Art. 2 | Trazabilidad | Tests `HU-06.CA-1…4`. |
-| Art. 10 | Rol + alcance, tests negativos | `hasRole('RESPONSABLE_EQUIPO')`; equipo derivado de la sesión; tests con otro equipo y rol `EMPLEADO`. |
+| Art. 10 | Rol + alcance, tests negativos | `hasRole('RESPONSABLE_EQUIPO')` (ampliado a `RRHH` y `DIRECCION_GENERAL` por HU-05, FR-017/FR-018); equipo derivado de la sesión; tests con otro equipo y rol `EMPLEADO`. |
 | Art. 14 | Regla de días única | `HolidayCalendarService` ampliado, no duplicado. |
 | Art. 16 | Calendario | Solo equipo, estados distinguibles, solapes en servidor, consulta mensual. |
 | Art. 21 | Accesibilidad | Icono + texto + leyenda; botones con teclado. |

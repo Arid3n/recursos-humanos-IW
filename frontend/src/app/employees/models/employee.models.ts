@@ -4,6 +4,8 @@ export interface CreateEmployeeRequest {
   nationalId: string;
   email: string;
   managerId?: string | null;
+  /** true solo cuando RRHH elige «Sin responsable (solo Dirección General)» (HU-05 FR-017). */
+  withoutManager?: boolean;
   hireDate: string; // YYYY-MM-DD
   position: string;
   department: string;

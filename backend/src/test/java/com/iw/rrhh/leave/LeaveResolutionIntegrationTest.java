@@ -307,7 +307,7 @@ class LeaveResolutionIntegrationTest {
     }
 
     @Test
-    @DisplayName("Solicitud inexistente (p. ej. cancelada por el empleado) devuelve 404")
+    @DisplayName("HU-05.CA-3: una solicitud inexistente devuelve 404")
     void unknownRequest_notFound() throws Exception {
         mockMvc.perform(post("/leave/requests/{id}/approve", UUID.randomUUID()).with(asManagerA()))
                 .andExpect(status().isNotFound());
@@ -328,13 +328,15 @@ class LeaveResolutionIntegrationTest {
     }
 
     @Test
-    @DisplayName("HU-05.CA-5: aprobar vacaciones que superan el saldo devuelve 409 y la solicitud sigue PENDING")
+    @DisplayName("HU-05.CA-5: aprobar vacaciones que superan el saldo devuelve 422 con año y días, y la solicitud sigue PENDING")
     void approve_insufficientBalance() throws Exception {
         request(memberA, LeaveType.VACATION, LocalDate.of(2026, 3, 2), LocalDate.of(2026, 3, 31), 20, LeaveStatus.APPROVED);
         LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 5);
 
         mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
-                .andExpect(status().isConflict())
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.year", is(2026)))
+                .andExpect(jsonPath("$.requestedDays", is(5)))
                 .andExpect(jsonPath("$.availableDays", is(2)));
 
         assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
@@ -364,7 +366,7 @@ class LeaveResolutionIntegrationTest {
             Future<Integer> f2 = executor.submit(approveSecond);
             start.countDown();
 
-            assertThat(List.of(f1.get(), f2.get())).containsExactlyInAnyOrder(200, 409);
+            assertThat(List.of(f1.get(), f2.get())).containsExactlyInAnyOrder(200, 422);
         } finally {
             executor.shutdownNow();
         }
@@ -373,5 +375,424 @@ class LeaveResolutionIntegrationTest {
                 .filter(r -> r.getStatus() == LeaveStatus.APPROVED)
                 .count();
         assertThat(approved).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-3: una solicitud retirada por el empleado (HU-04, CANCELLED) devuelve 404; fuera de alcance sigue siendo 403")
+    void cancelledByEmployee_notFound() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/cancel", pending.getId()).with(as(MEMBER_A, UserRole.EMPLEADO)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Motivo suficiente\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(as(MANAGER_B, UserRole.RESPONSABLE_EQUIPO)))
+                .andExpect(status().isForbidden());
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.CANCELLED);
+        assertThat(notificationsOf(memberA)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: aprobar con fechas en un año cerrado devuelve 422 y la solicitud sigue PENDING; rechazar sí se permite")
+    void closedYear_approveBlocked_rejectAllowed() throws Exception {
+        LeaveRequest pending = request(memberA, LeaveType.VACATION,
+                LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 5), 5, LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.year", is(2025)));
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Fuera de plazo\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("REJECTED")));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: vacaciones que cruzan años con saldo en ambos años se aprueban y cuentan en los dos saldos")
+    void crossYear_bothYearsSufficient_approvedAndCountedInBothBalances() throws Exception {
+        // 28/12/2026–08/01/2027: 4 laborables en cada año (01/01 y 06/01 son festivos)
+        LeaveRequest pending = request(memberA, LeaveType.VACATION,
+                LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), 8, LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("APPROVED")));
+
+        mockMvc.perform(get("/leave/balances/employee/{id}", memberA.getId()).param("year", "2026").with(asManagerA()))
+                .andExpect(jsonPath("$.spentDays", is(4)));
+        mockMvc.perform(get("/leave/balances/employee/{id}", memberA.getId()).param("year", "2027").with(asManagerA()))
+                .andExpect(jsonPath("$.spentDays", is(4)));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: vacaciones que cruzan años sin saldo en el año siguiente devuelven 422 con ese año")
+    void crossYear_secondYearInsufficient_namesTheYear() throws Exception {
+        request(memberA, LeaveType.VACATION, LocalDate.of(2027, 3, 1), LocalDate.of(2027, 3, 31), 20, LeaveStatus.APPROVED);
+        LeaveRequest pending = request(memberA, LeaveType.VACATION,
+                LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), 8, LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.year", is(2027)))
+                .andExpect(jsonPath("$.requestedDays", is(4)))
+                .andExpect(jsonPath("$.availableDays", is(2)));
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+        assertThat(notificationsOf(memberA)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-1: un responsable no resuelve sus propias solicitudes (403); las resuelve su superior, que las ve en su bandeja")
+    void managerOwnRequest_resolvedBySuperiorOnly() throws Exception {
+        managerA.setManager(managerB);
+        employeeRepository.save(managerA);
+        LeaveRequest own = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(asManagerA()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/leave/requests/{id}/reject", own.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Auto rechazo\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/leave/team-requests").with(asManagerA()))
+                .andExpect(jsonPath("$.totalElements", is(0)));
+
+        mockMvc.perform(get("/leave/team-requests").with(as(MANAGER_B, UserRole.RESPONSABLE_EQUIPO)))
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(own.getId().toString())));
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(as(MANAGER_B, UserRole.RESPONSABLE_EQUIPO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-1: un responsable sin superior, o con superior sin rol RESPONSABLE_EQUIPO, queda sin resolutor (límite conocido)")
+    void managerWithoutValidSuperior_nobodyResolves() throws Exception {
+        LeaveRequest ownWithoutSuperior = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", ownWithoutSuperior.getId()).with(asManagerA()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/leave/requests/{id}/approve", ownWithoutSuperior.getId()).with(as(MANAGER_B, UserRole.RESPONSABLE_EQUIPO)))
+                .andExpect(status().isForbidden());
+
+        managerA.setManager(memberB);
+        employeeRepository.save(managerA);
+        mockMvc.perform(post("/leave/requests/{id}/approve", ownWithoutSuperior.getId()).with(as(MEMBER_B, UserRole.EMPLEADO)))
+                .andExpect(status().isForbidden());
+
+        assertThat(leaveRequestRepository.findById(ownWithoutSuperior.getId()).orElseThrow().getStatus())
+                .isEqualTo(LeaveStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-3: dos resoluciones simultáneas de la MISMA solicitud dejan un 200 y un 409 (Art. 22.4)")
+    void concurrentResolutionsOfSameRequest_oneWins() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Callable<Integer> approve = () -> {
+                start.await();
+                return mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asManagerA()))
+                        .andReturn().getResponse().getStatus();
+            };
+            Callable<Integer> reject = () -> {
+                start.await();
+                return mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                                .with(asManagerA())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"reason\":\"Resolución simultánea\"}"))
+                        .andReturn().getResponse().getStatus();
+            };
+            Future<Integer> f1 = executor.submit(approve);
+            Future<Integer> f2 = executor.submit(reject);
+            start.countDown();
+
+            assertThat(List.of(f1.get(), f2.get())).containsExactlyInAnyOrder(200, 409);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(notificationsOf(memberA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-2: motivo o comentario de 501 caracteres devuelve 400 con error en el campo; 500 se acepta")
+    void textLimits_501Rejected_500Accepted() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"" + "a".repeat(501) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.reason", notNullValue()));
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"" + "a".repeat(501) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.comment", notNullValue()));
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"" + "a".repeat(500) + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-2: los límites de motivo y comentario se aplican tras recortar espacios extremos (FR-003)")
+    void textLimits_appliedAfterTrim() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"  abc  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.reason", notNullValue()));
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"  " + "a".repeat(501) + "  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.invalidFields.comment", notNullValue()));
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"  " + "a".repeat(500) + "  \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reason", is("a".repeat(500))));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-2: el empleado ve en su seguimiento (HU-04) el motivo del rechazo registrado por el responsable")
+    void rejectedReason_visibleToEmployeeInTracking() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Coincide con la entrega del proyecto\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/leave/my-requests").with(as(MEMBER_A, UserRole.EMPLEADO)).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].status", is("REJECTED")))
+                .andExpect(jsonPath("$.content[0].rejectionReason", is("Coincide con la entrega del proyecto")));
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-2: la BD rechaza un motivo de más de 500 caracteres (chk_leave_rejection_reason_max, Art. 8.2)")
+    void databaseCheck_blocksReasonOver500() {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE leave_requests SET rejection_reason = ? WHERE id = ?", "x".repeat(501), pending.getId()))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    @DisplayName("HU-05.CA-5: la ausencia aprobada aparece en el calendario del equipo y la rechazada no (FR-012)")
+    void approvedRequest_appearsInTeamCalendar() throws Exception {
+        LeaveRequest toApprove = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 1);
+        LeaveRequest toReject = pendingVacation(memberA, LocalDate.of(2026, 12, 10), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", toApprove.getId()).with(asManagerA()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/leave/requests/{id}/reject", toReject.getId())
+                        .with(asManagerA())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"No es posible esa semana\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/leave/team-calendar").param("month", "2026-12").with(asManagerA()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-01')].events[0].status", contains("APPROVED")))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-01')].events[0].employeeName", contains("Marta Miembro A")))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-10')].absentCount", contains(0)));
+    }
+
+    // ---- HU-05 fase 9 (FR-017): Dirección General resuelve como un responsable ----
+
+    private static final String DIRECCION = "direccion.resolucion@empresa.com";
+
+    /** Dirección General como superior directo de managerA (jerarquía: DG → managerA → memberA). */
+    private Employee direccionGeneralAboveManagerA() {
+        Employee dg = employee(DIRECCION, UserRole.DIRECCION_GENERAL, "Diana", "Dirección General", "30000090Q", null);
+        managerA.setManager(dg);
+        employeeRepository.save(managerA);
+        return dg;
+    }
+
+    private static RequestPostProcessor asDireccionGeneral() {
+        return as(DIRECCION, UserRole.DIRECCION_GENERAL);
+    }
+
+    @Test
+    @DisplayName("FR-017: la migración V7 admite el rol DIRECCION_GENERAL en users")
+    void v7_acceptsDireccionGeneralRole() {
+        Employee dg = direccionGeneralAboveManagerA();
+
+        assertThat(userRepository.findByUsername(DIRECCION).orElseThrow().getRole()).isEqualTo(UserRole.DIRECCION_GENERAL);
+        assertThat(dg.getId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General ve en su bandeja solo las solicitudes de sus subordinados directos")
+    void direccionGeneral_listsDirectReportsOnly() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest ofManager = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+        pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(get("/leave/team-requests").with(asDireccionGeneral()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(ofManager.getId().toString())));
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General aprueba unas vacaciones de un subordinado directo con revalidación de saldo (sin 403 del saldo)")
+    void direccionGeneral_approvesVacationOfDirectReport() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 3);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("APPROVED")));
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        assertThat(notificationsOf(managerA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General rechaza con motivo la solicitud de un subordinado directo")
+    void direccionGeneral_rejectsRequestOfDirectReport() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asDireccionGeneral())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"No es posible esa semana\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("REJECTED")));
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General recibe 403 al resolver la solicitud de alguien fuera de su equipo directo")
+    void direccionGeneral_forbiddenOutsideDirectTeam() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest ofMember = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", ofMember.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isForbidden());
+
+        assertThat(leaveRequestRepository.findById(ofMember.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General recibe 403 al intentar resolver una solicitud propia")
+    void direccionGeneral_forbiddenOnOwnRequest() throws Exception {
+        Employee dg = direccionGeneralAboveManagerA();
+        LeaveRequest own = pendingVacation(dg, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isForbidden());
+    }
+
+    // ---- HU-05 fase 10 (FR-018): RRHH resuelve como un responsable, solo para sus subordinados directos ----
+
+    private static final String RRHH = "rrhh.resolucion@empresa.com";
+
+    /** RRHH como superior directo de managerA (jerarquía: RRHH → managerA → memberA). */
+    private Employee hrAboveManagerA() {
+        Employee hr = employee(RRHH, UserRole.RRHH, "Rita", "Recursos Humanos", "30000093T", null);
+        managerA.setManager(hr);
+        employeeRepository.save(managerA);
+        return hr;
+    }
+
+    private static RequestPostProcessor asHr() {
+        return as(RRHH, UserRole.RRHH);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH ve en su bandeja solo las solicitudes de sus subordinados directos")
+    void hr_listsDirectReportsOnly() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest ofManager = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+        pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(get("/leave/team-requests").with(asHr()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(ofManager.getId().toString())));
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-2: RRHH aprueba unas vacaciones de un subordinado directo con revalidación de saldo")
+    void hr_approvesVacationOfDirectReport() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 3);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asHr()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("APPROVED")));
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        assertThat(notificationsOf(managerA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-2: RRHH rechaza con motivo la solicitud de un subordinado directo")
+    void hr_rejectsRequestOfDirectReport() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asHr())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"No es posible esa semana\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("REJECTED")));
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH recibe 403 al resolver la solicitud de alguien fuera de su equipo directo")
+    void hr_forbiddenOutsideDirectTeam() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest ofMember = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", ofMember.getId()).with(asHr()))
+                .andExpect(status().isForbidden());
+
+        assertThat(leaveRequestRepository.findById(ofMember.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH recibe 403 al intentar resolver una solicitud propia")
+    void hr_forbiddenOnOwnRequest() throws Exception {
+        Employee hr = hrAboveManagerA();
+        LeaveRequest own = pendingVacation(hr, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(asHr()))
+                .andExpect(status().isForbidden());
     }
 }

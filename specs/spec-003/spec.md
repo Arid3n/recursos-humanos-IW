@@ -3,10 +3,14 @@
 **Feature Branch**: `spec-003`  
 **Created**: 2026-10-27  
 **Status**: Ready for Planning  
+**Revisada**: 2026-11-19 por HU-05 fases 9 y 10 (FR-009 a FR-011); implementado en `spec-005`.  
 **Historia de Usuario**: HU-03  
 **Asignación**: Integrante 2 (Flujo de Ausencias del Empleado)
 
 ## Clarifications
+
+### Session 2026-11-19 (revisión por HU-05, FR-015 y FR-017)
+- Q: ¿Se puede crear una solicitud sin resolutor válido o desde Dirección General? → A: No. Sin responsable asignado activo, con rol `RESPONSABLE_EQUIPO` o `DIRECCION_GENERAL` y distinto del empleado, la creación se bloquea con `422` y el mensaje «no tienes un responsable asignado». Un usuario `DIRECCION_GENERAL` tampoco puede crear solicitudes (`422`, «Dirección General no solicita ausencias»). La interfaz consulta `GET /api/v1/leave/requests/eligibility` y muestra el mensaje en lugar del formulario.
 
 ### Session 2026-11-17
 - Q: ¿Cómo afecta la cancelación de una solicitud al ciclo de vida y solapamiento de ausencias? → A: Las solicitudes canceladas por el empleado pasan al estado `CANCELLED`, liberando inmediatamente las fechas de forma que no computan como solapamiento para nuevas solicitudes.
@@ -88,6 +92,9 @@ Como empleado, quiero cumplimentar un formulario para solicitar un periodo de va
 - **FR-006**: La solicitud creada DEBE quedar asignada automáticamente al responsable del equipo actual del empleado.
 - **FR-007**: El sistema DEBE impedir la creación de solicitudes cuyas fechas se solapen total o parcialmente con otra solicitud del empleado en estado `PENDING` o `APPROVED`.
 - **FR-008**: Las solicitudes de tipo `PERMIT` NO DEBEN deducir días del saldo de vacaciones del trabajador.
+- **FR-009**: El sistema NO DEBE permitir crear una solicitud a un empleado sin resolutor válido (responsable asignado activo, con rol `RESPONSABLE_EQUIPO`, `RRHH` o `DIRECCION_GENERAL`, distinto de él mismo): `422` con el mensaje «no tienes un responsable asignado». La regla vive en un único componente del servicio (`LeaveResolverPolicy`, HU-05 FR-015 y FR-018: desde 2026-11-19 un superior con rol `RRHH` es resolutor válido).
+- **FR-010**: Un usuario con rol `DIRECCION_GENERAL` NO DEBE poder crear solicitudes (`422`), aunque tenga superior (HU-05 FR-017).
+- **FR-011**: El sistema DEBE exponer `GET /api/v1/leave/requests/eligibility` → `{canRequest, reason}` para que la interfaz sustituya el formulario por el motivo cuando `canRequest` sea falso.
 
 ### Key Entities
 - **LeaveRequest (Solicitud de Ausencia)**:

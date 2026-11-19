@@ -7,6 +7,7 @@ import com.iw.rrhh.employee.dto.*;
 import com.iw.rrhh.employee.repository.CollectiveAgreementRepository;
 import com.iw.rrhh.employee.repository.ContractRecordRepository;
 import com.iw.rrhh.employee.repository.EmployeeRepository;
+import com.iw.rrhh.leave.service.LeaveRequestAutoCancelService;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
@@ -24,12 +25,15 @@ import java.util.UUID;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
+    private static final String SUPERIOR_NO_LONGER_VALID = "tu responsable ya no puede resolver tus solicitudes";
+
     private final EmployeeRepository employeeRepository;
     private final ContractRecordRepository contractRecordRepository;
     private final CollectiveAgreementRepository collectiveAgreementRepository;
     private final UserRepository userRepository;
     private final PasswordGeneratorService passwordGeneratorService;
     private final PasswordEncoder passwordEncoder;
+    private final LeaveRequestAutoCancelService leaveRequestAutoCancelService;
 
     public EmployeeServiceImpl(
             EmployeeRepository employeeRepository,
@@ -37,13 +41,15 @@ public class EmployeeServiceImpl implements EmployeeService {
             CollectiveAgreementRepository collectiveAgreementRepository,
             UserRepository userRepository,
             PasswordGeneratorService passwordGeneratorService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            LeaveRequestAutoCancelService leaveRequestAutoCancelService) {
         this.employeeRepository = employeeRepository;
         this.contractRecordRepository = contractRecordRepository;
         this.collectiveAgreementRepository = collectiveAgreementRepository;
         this.userRepository = userRepository;
         this.passwordGeneratorService = passwordGeneratorService;
         this.passwordEncoder = passwordEncoder;
+        this.leaveRequestAutoCancelService = leaveRequestAutoCancelService;
     }
 
     @Override
@@ -59,12 +65,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         CollectiveAgreement collectiveAgreement = collectiveAgreementRepository.findById(request.collectiveAgreementId())
                 .orElseThrow(() -> new NoSuchElementException("Convenio colectivo no encontrado con ID: " + request.collectiveAgreementId()));
 
+        // Todo empleado salvo Dirección General tiene responsable; «sin responsable» es una elección
+        // explícita (withoutManager) y crea el rol DIRECCION_GENERAL, sin mirar el puesto (HU-05 FR-017)
+        boolean withoutManager = Boolean.TRUE.equals(request.withoutManager());
+        if (request.managerId() != null && withoutManager) {
+            throw new IllegalArgumentException("Indique un responsable o elija «Sin responsable (solo Dirección General)», pero no ambos");
+        }
+        if (request.managerId() == null && !withoutManager) {
+            throw new IllegalArgumentException("El responsable de equipo es obligatorio; para Dirección General elija «Sin responsable (solo Dirección General)»");
+        }
         Employee manager = null;
         if (request.managerId() != null) {
             manager = employeeRepository.findById(request.managerId())
                     .orElseThrow(() -> new NoSuchElementException("Responsable de equipo no encontrado con ID: " + request.managerId()));
-        } else if (!isTopManagement(request.position())) {
-            throw new IllegalArgumentException("El responsable de equipo es obligatorio excepto para puestos de Dirección General / CEO");
         }
 
         // Generar credencial temporal segura
@@ -74,7 +87,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         User user = new User(
                 request.email(),
                 passwordEncoder.encode(temporaryPassword),
-                UserRole.EMPLEADO
+                withoutManager ? UserRole.DIRECCION_GENERAL : UserRole.EMPLEADO
         );
         user = userRepository.save(user);
 
@@ -212,6 +225,11 @@ public class EmployeeServiceImpl implements EmployeeService {
             userRepository.save(employee.getUser());
         }
         employeeRepository.save(employee);
+
+        // FR-016: sus subordinados directos pierden su resolutor; se cancelan sus pendientes en la misma transacción
+        for (Employee report : employeeRepository.findByManagerIdAndActiveTrue(employeeId)) {
+            leaveRequestAutoCancelService.cancelPendingOf(report, SUPERIOR_NO_LONGER_VALID);
+        }
     }
 
     @Override

@@ -42,5 +42,8 @@ public record CreateEmployeeRequest(
     BigDecimal salary,
 
     @NotNull(message = "El convenio colectivo es obligatorio")
-    Long collectiveAgreementId
+    Long collectiveAgreementId,
+
+    /** true solo cuando RRHH elige «Sin responsable (solo Dirección General)» (HU-05 FR-017). */
+    Boolean withoutManager
 ) {}
