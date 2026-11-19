@@ -3,6 +3,7 @@
 **Feature Branch**: `spec-003`  
 **Created**: 2026-10-27  
 **Status**: Ready for Planning  
+**Revisada**: 2026-11-19 por HU-05 fase 9 (FR-009 a FR-011); implementado en `spec-005`.  
 **Historia de Usuario**: HU-03  
 **Asignación**: Integrante 2 (Flujo de Ausencias del Empleado)
 

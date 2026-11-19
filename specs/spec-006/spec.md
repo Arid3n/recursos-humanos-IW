@@ -2,9 +2,9 @@
 
 **Feature Branch**: `spec-006`
 
-**Created**: 2026-10-27 · **Actualizada**: 2026-11-18
+**Created**: 2026-10-27 · **Actualizada**: 2026-11-19 (FR-011: `DIRECCION_GENERAL`, HU-05 fase 9)
 
-**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-18)
+**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-19)
 
 **Historia de Usuario**: HU-06 · **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 

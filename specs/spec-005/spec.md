@@ -2,9 +2,9 @@
 
 **Feature Branch**: `spec-005`
 
-**Created**: 2026-10-27 · **Actualizada**: 2026-11-18
+**Created**: 2026-10-27 · **Actualizada**: 2026-11-19
 
-**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-18); FR-015 (bloqueo sin resolutor válido), FR-016 (cancelación automática al invalidarse el superior) y FR-017 (rol Dirección General) aclarados el 2026-11-18, pendiente de plan, tareas e implementación
+**Status**: Implementada y verificada (tests automatizados + validación manual, 2026-11-19), incluidos FR-015 (bloqueo sin resolutor válido), FR-016 (cancelación automática al darse de baja el superior) y FR-017 (rol `DIRECCION_GENERAL`).
 
 **Historia de Usuario**: HU-05 · **Asignación**: Integrante 3 (Gestión de Equipo y Ausencias)
 
