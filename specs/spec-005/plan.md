@@ -195,7 +195,7 @@ frontend/src/app/
 - `EmployeeServiceImpl.createEmployee` crea siempre `UserRole.EMPLEADO`; `deactivateEmployee` no toca solicitudes (las variaciones de contrato no están soportadas).
 - `chk_user_role` (V1) no admite el nuevo rol.
 - Frontend: `UserRole` (`auth.models.ts`), `AuthService`, `app.html`, `landing.component.ts` y la pantalla de solicitud no conocen el rol; la bandeja y el calendario sólo se enseñan con `isResponsable()`.
-- `SecurityDataInitializer`: añadir un usuario `direccion@empresa.com` (`DIRECCION_GENERAL`, sin superior) y asignarlo como superior de `responsable@empresa.com` y de `rrhh@empresa.com` (datos de prueba; todo empleado salvo Dirección General tiene responsable).
+- `SecurityDataInitializer`: añadir un usuario `direccion@empresa.com` (`DIRECCION_GENERAL`, sin superior) y asignarlo como superior de `rrhh@empresa.com`, que a su vez es el superior de `responsable@empresa.com` (datos de prueba, cambiado el 2026-11-19: Dirección General → RRHH → responsable → empleado; todo empleado salvo Dirección General tiene responsable).
 
 **Specs y Constitución a actualizar antes de implementar** (Art. 1.3 y 27):
 

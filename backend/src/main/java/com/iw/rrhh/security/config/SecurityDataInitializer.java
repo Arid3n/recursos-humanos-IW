@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Component
 public class SecurityDataInitializer implements CommandLineRunner {
@@ -196,19 +195,23 @@ public class SecurityDataInitializer implements CommandLineRunner {
                 log.info("Inicializada ficha de Dirección General para {}", direccionUsername);
             }
 
-            // 6. Dirección General es el responsable de RRHH y del responsable de equipo de pruebas (solo si faltan)
-            final List<User> directReportsOfDireccion = List.of(userRepository.findByUsername(rrhhUsername).orElseThrow(), managerUser);
-            employeeRepository.findByUserId(direccionUser.getId()).ifPresent(dg -> {
-                for (User subordinate : directReportsOfDireccion) {
-                    employeeRepository.findByUserId(subordinate.getId())
-                            .filter(emp -> emp.getManager() == null)
-                            .ifPresent(emp -> {
-                                emp.setManager(dg);
-                                employeeRepository.save(emp);
-                                log.info("Asignada Dirección General como responsable de {}", subordinate.getUsername());
-                            });
-                }
-            });
+            // 6. Jerarquía de pruebas: Dirección General → RRHH → responsable de equipo → empleado (solo si faltan)
+            Employee direccionEmployee = employeeRepository.findByUserId(direccionUser.getId()).orElse(null);
+            Employee rrhhEmployeeEntity = employeeRepository.findByUserId(rrhhUser.getId()).orElse(null);
+            if (direccionEmployee != null && rrhhEmployeeEntity != null && rrhhEmployeeEntity.getManager() == null) {
+                rrhhEmployeeEntity.setManager(direccionEmployee);
+                employeeRepository.save(rrhhEmployeeEntity);
+                log.info("Asignada Dirección General como responsable de {}", rrhhUsername);
+            }
+            if (rrhhEmployeeEntity != null) {
+                employeeRepository.findByUserId(managerUser.getId())
+                        .filter(emp -> emp.getManager() == null)
+                        .ifPresent(emp -> {
+                            emp.setManager(rrhhEmployeeEntity);
+                            employeeRepository.save(emp);
+                            log.info("Asignado RRHH como responsable de {}", managerUsername);
+                        });
+            }
         } catch (Exception ex) {
             log.warn("Advertencia durante la inicialización de datos de seguridad: {}", ex.getMessage());
         }

@@ -15,7 +15,7 @@
   - `responsable@empresa.com` — `RESPONSABLE_EQUIPO`, responsable de `empleado@empresa.com`
   - `empleado@empresa.com` — `EMPLEADO`
   - `rrhh@empresa.com` — `RRHH` (no pertenece al equipo; sin superior: no puede solicitar ausencias, FR-015)
-  - `direccion@empresa.com` — `DIRECCION_GENERAL` (nuevo en el *seed*, 2026-11-18), superior de `responsable@empresa.com`; no solicita ausencias (FR-017)
+  - `direccion@empresa.com` — `DIRECCION_GENERAL` (nuevo en el *seed*, 2026-11-18), superior de `rrhh@empresa.com`; no solicita ausencias (FR-017). Jerarquía de pruebas: `direccion@` → `rrhh@` → `responsable@` → `empleado@`
 - Contrato de referencia: [contracts/leave-resolution-api.yaml](contracts/leave-resolution-api.yaml) · Modelo: [data-model.md](data-model.md)
 
 **Preparación**: como `empleado@empresa.com`, crear desde "Solicitar Ausencia" (HU-03) dos solicitudes de vacaciones en fechas distintas y un permiso.
@@ -79,7 +79,7 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 ### Escenario 10 — Solicitud propia del responsable (HU-05.CA-1, Art. 10)
 1. Como `responsable@empresa.com`, crear una solicitud propia (HU-03).
 2. **Esperado**: no aparece en su bandeja; `POST .../approve` o `.../reject` sobre ella devuelve `403` y queda un `WARN` de auditoría.
-3. Con el superior del responsable (`direccion@empresa.com`, `DIRECCION_GENERAL`) sí aparece en su bandeja y puede resolverla.
+3. El superior del responsable en el *seed* es `rrhh@empresa.com`, con rol `RRHH`, que no es resolutor válido (FR-015): el responsable no puede crear solicitudes (`422`) y RRHH no puede resolverlas (`403`). Para este escenario hay que dar al responsable un superior con rol `DIRECCION_GENERAL` (*fixture*).
 4. Un responsable sin superior válido no puede crear solicitudes (FR-015, escenario 12).
 
 ### Escenario 11 — Solicitud retirada (HU-05.CA-3)
@@ -96,8 +96,8 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 3. Las variaciones de contrato no están soportadas hoy: no hay otro disparador.
 
 ### Escenario 14 — Dirección General (FR-017)
-1. Como `direccion@empresa.com`: el menú oculta «Solicitar Ausencia» y «Mis Solicitudes»; por URL, «Dirección General no solicita ausencias»; `POST /leave/requests` → `422`.
-2. Ve en la bandeja y el calendario sólo las solicitudes de `responsable@empresa.com` (su subordinado directo); puede aprobarlas o rechazarlas. Una solicitud ajena → `403`.
+1. Como `direccion@empresa.com` (su único subordinado directo es `rrhh@empresa.com`): el menú oculta «Solicitar Ausencia» y «Mis Solicitudes»; por URL, «Dirección General no solicita ausencias»; `POST /leave/requests` → `422`.
+2. Ve en la bandeja y el calendario sólo las solicitudes de `rrhh@empresa.com` (su subordinado directo; para tener solicitudes que ver, `rrhh@` debe crear una); puede aprobarlas o rechazarlas. Una solicitud ajena → `403`.
 3. Aprobar una solicitud de `VACATION` funciona (la revalidación de saldo no da `403`).
 
 ---
