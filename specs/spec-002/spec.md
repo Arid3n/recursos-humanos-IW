@@ -3,7 +3,7 @@
 **Feature Branch**: `spec-002`  
 **Created**: 2026-10-27  
 **Status**: Ready for Planning  
-**Revisada**: 2026-11-19 por HU-05 fase 10 (FR-008 y FR-009); implementado en `spec-005`.  
+**Revisada**: 2026-11-19 por HU-05 fase 10 (FR-008 y FR-009); implementado y verificado en `spec-005`.  
 **Historia de Usuario**: HU-02  
 **Asignación**: Integrante 1 (Grupo RRHH / Personal)
 
