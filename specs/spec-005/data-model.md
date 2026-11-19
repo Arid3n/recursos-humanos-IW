@@ -166,9 +166,10 @@ Listados paginados con el `PageResponse<T>` común existente.
 
 | Regla | Origen | Error |
 |---|---|---|
-| Solo roles `RESPONSABLE_EQUIPO` y `DIRECCION_GENERAL` acceden a bandeja y resolución | Art. 10, FR-017 | `403` |
-| Crear solicitud exige resolutor válido (superior activo, distinto, rol `RESPONSABLE_EQUIPO`/`DIRECCION_GENERAL`) | FR-015 (2026-11-18) | `422` |
+| Solo roles `RESPONSABLE_EQUIPO`, `RRHH` y `DIRECCION_GENERAL` acceden a bandeja y resolución, y solo para sus subordinados directos | Art. 10, FR-017, FR-018 | `403` |
+| Crear solicitud exige resolutor válido (superior activo, distinto, rol `RESPONSABLE_EQUIPO`/`RRHH`/`DIRECCION_GENERAL`) | FR-015 (2026-11-18, ampliado 2026-11-19) | `422` |
 | `DIRECCION_GENERAL` no crea solicitudes | FR-017 | `422` |
+| `DIRECCION_GENERAL` no consulta saldo propio (`/balances/me` ni `/balances/employee/{propio id}`) | FR-017 (2026-11-19) | `403` + acceso denegado registrado |
 | Superior que deja de ser válido: `PENDING` → `CANCELLED` + notificación, misma transacción de HU-01 | FR-016 | — |
 | La solicitud debe ser de un miembro directo del responsable en sesión | FR-001, FR-006 | `403` |
 | Nadie resuelve sus propias solicitudes (`request.employee.id == resolver.id`) | FR-006 (2026-11-16) | `403` + `WARN` de auditoría |

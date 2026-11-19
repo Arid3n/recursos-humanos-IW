@@ -5,7 +5,7 @@ info:
     Bandeja de solicitudes pendientes del equipo, aprobación/rechazo atómico por el responsable
     y consulta de notificaciones internas por el empleado en sesión.
     La identidad se obtiene siempre de la sesión (Art. 10); nunca de parámetros del cliente.
-  version: 1.2.0
+  version: 1.3.0
 servers:
   - url: /api/v1
 security:
@@ -15,7 +15,7 @@ paths:
   /leave/team-requests:
     get:
       summary: Solicitudes pendientes del equipo del responsable en sesión
-      description: Roles RESPONSABLE_EQUIPO y DIRECCION_GENERAL. Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
+      description: Roles RESPONSABLE_EQUIPO, RRHH y DIRECCION_GENERAL (RRHH desde 2026-11-19, FR-018). Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
       operationId: getTeamPendingRequests
       tags: [Leave Resolution]
       parameters:

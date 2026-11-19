@@ -34,6 +34,8 @@ La funcionalidad **HU-05 (`spec-005`)** permite al responsable de equipo consult
 
 **Scale/Scope**: Equipos de decenas de personas; 3 endpoints de resolución + 3 de notificaciones; 2 pantallas/componentes nuevos en frontend
 
+**Ampliación 2026-11-19**: `RRHH` también resuelve y ve el calendario de sus subordinados directos (FR-018) y Dirección General no tiene saldo propio (FR-017); ver «Decisiones de la sesión de aclaraciones 2026-11-19».
+
 ---
 
 ## Constitution Check
@@ -163,7 +165,7 @@ frontend/src/app/
 | 5 | No se aprueban fechas de años cerrados | Comprobación con `Clock` (año < año actual en Europe/Madrid) → `422` | `research.md` §1.12 |
 | 6 (C4) | Total = `calculatedDays`; años previos al último con días laborables de hoy (tope `calculatedDays`); el último año recibe el resto | `LeaveDayAllocator.allocate(start, end, calculatedDays)` | `research.md` §1.4 |
 | 7 (C5) | El saldo de HU-02 cuenta la solicitud que cruza años en ambos; año futuro con saldo normal; sin saldo → `422` con el año | Nueva consulta de solapamiento + suma con el reparto en `LeaveBalanceServiceImpl`; `sumCalculatedDays` deja de usarse | `research.md` §1.14 |
-| 8 (C7) | Sólo resuelve el superior directo con rol `RESPONSABLE_EQUIPO`; sin superior o sin rol → sin resolutor | Sin código nuevo en HU-05; mejora pendiente en HU-01 | `research.md` §1.15 (sustituida el 2026-11-18 por FR-015 y FR-017) |
+| 8 (C7) | Sólo resuelve el superior directo con rol `RESPONSABLE_EQUIPO` (ampliado a `RRHH` y `DIRECCION_GENERAL` en FR-017/FR-018); sin superior o sin rol → sin resolutor | Sin código nuevo en HU-05; mejora pendiente en HU-01 | `research.md` §1.15 (sustituida el 2026-11-18 por FR-015 y FR-017) |
 
 **Impacto en código ya implementado** (la rama contiene la implementación previa de HU-05; estas diferencias deben reflejarse en `/speckit-tasks`):
 
@@ -203,6 +205,32 @@ frontend/src/app/
 2. `specs/spec-001` (HU-01): alta sin responsable ⇒ `DIRECCION_GENERAL` (sin comprobar el puesto) y FR-016.
 3. `specs/spec-003` (HU-03): FR-015 y FR-017 (bloqueo de creación).
 4. `specs/spec-006` (HU-06): FR-011 acepta `DIRECCION_GENERAL`.
+
+## Decisiones de la sesión de aclaraciones 2026-11-19
+
+Origen: `rrhh@empresa.com` es el superior de `responsable@empresa.com` en los datos de prueba, pero un superior con rol `RRHH` no era resolutor válido, y Dirección General veía un saldo que no usa.
+
+| # | Decisión | Implementación | Fuente |
+|---|---|---|---|
+| 1 | `RRHH` resuelve y ve el calendario solo de sus subordinados directos (FR-018) | `LeaveResolverPolicy` acepta `RRHH`; `@PreAuthorize` de `LeaveResolutionController` y `TeamCalendarController` añade `RRHH`; sin migración ni cambio en `LeaveBalanceServiceImpl` (RRHH ya tiene acceso total) | `research.md` §1.22 |
+| 2 | Dirección General no tiene saldo propio (FR-017) | `getMyLeaveBalance` y la rama «él mismo» de `getEmployeeLeaveBalance` → `AccessDeniedException` (`403`) para `DIRECCION_GENERAL`; el `422` de creación sigue evaluándose antes | `research.md` §1.23 |
+| 3 | Interfaz | `AuthService.canResolveRequests`; menú y landing con ese computed; `my-profile` sin widget de saldo y menú «Mi Ficha» para Dirección General | `research.md` §1.24 |
+
+**Impacto en código ya implementado** (debe reflejarse en `/speckit-tasks`, fase 10):
+
+- `LeaveResolverPolicy` y su test (`LeaveResolverPolicyTest`: hoy afirma que `RRHH` no es válido; el aviso de «RRHH no es resolutor válido» de las fases anteriores queda superado por FR-018).
+- `LeaveResolutionController`, `TeamCalendarController` y sus tests de integración (hoy esperan `403` para `RRHH`).
+- `LeaveBalanceServiceImpl` y sus tests; `LeaveRequestServiceTest`/`LeaveRequestIntegrationTest` (el `422` de Dirección General no debe pasar a `403`).
+- `app.html`, `landing.component.ts`, `auth.service.ts`, `my-profile.component.ts` y sus specs.
+- `SecurityDataInitializer`: sin cambio; la jerarquía `direccion@` → `rrhh@` → `responsable@` → `empleado@` pasa a ser operativa.
+
+**Specs y Constitución a actualizar antes de implementar** (Art. 1.3 y 27):
+
+1. Constitución: enmienda MINOR 1.2.0 (Art. 10.4 fila `RRHH`, Anexo A, registro del Anexo C).
+2. `specs/spec-006` (HU-06): FR-011 acepta `RRHH` con alcance de subordinados directos.
+3. `specs/spec-002` (HU-02): `GET /balances/me` → `403` para `DIRECCION_GENERAL` (contrato actualizado en esta sesión; falta FR en `spec.md`).
+
+**Constitution Check 2026-11-19**: Art. 10 ✅ (rol + alcance en servidor, `403` registrado); Art. 13.8 ✅ (solo el responsable directo resuelve; sin enmendar); Art. 14.3 ✅ (la regla sigue en `LeaveResolverPolicy`); Art. 8 ✅ (sin migración); Art. 22 ⚠️ (tests en rojo primero, fase 10); Art. 27 ⚠️ (enmienda 1.2.0 pendiente). Re-evaluación post-diseño: sin violaciones propias.
 
 ---
 

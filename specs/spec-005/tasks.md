@@ -175,6 +175,7 @@
 - **Refinamiento (Phase 6)**: depende de Phases 1–4 (código previo). Dentro: T033–T036 y T050 antes de T037–T044 y T051–T052; T053 antes de T050, T052 y T035; T038 y T040 antes de T041; T039 antes de T041; T041 antes de T035 en verde; T043–T044 antes de T036 en verde.
 - **Polish 2 (Phase 7)**: depende de Phase 6.
 - **Phase 9 (2026-11-18)**: T057–T060 (Constitución y specs, Art. 1.3 y 27) bloquean todo el código de la fase; tests T061–T067 y T083 antes de la implementación T068–T079 y T084 (T084 después de T069 y T076) (deben FALLAR); T068 (V7) y T069 (`UserRole`) antes de T070–T075; T070 antes de T071–T073; T073 antes de T065 en verde; T076 antes de T077–T079; Polish T080–T082 al final.
+- **Phase 10 (2026-11-19)**: T085–T088 (Constitución y specs, Art. 1.3 y 27) bloquean todo el código de la fase; tests T089–T094 antes de la implementación T095–T100 (deben FALLAR); T095 antes de T096 y de dejar en verde T089, T091 y T093; T097 antes de dejar en verde T092; T098 antes de T099; Polish T101–T103 al final.
 
 ### Within Each User Story
 
@@ -316,3 +317,49 @@ Task: "T017 ResolveRequestDialogComponent"
   - *Resultado 2026-11-19*: **API real (`curl`)**: escenario 12 (`422` y `eligibility` falso sin responsable), 13 (la baja de `responsable@` cancela las 2 pendientes de `empleado@`, una notificación) y 14 (`direccion@`: `422` al crear, `200` en bandeja y calendario). **Chrome**: Dirección General ve el menú sin «Solicitar Ausencia» ni «Mis Solicitudes» y con los enlaces del equipo; `/leave/request` y `/leave/my-requests` redirigen a `/leave/not-available` con «Dirección General no solicita ausencias»; `responsable@` (superior `rrhh@`, rol no válido como resolutor) ve «Solicitud no permitida: no tienes un responsable asignado» en lugar del formulario; `rrhh@` ve el formulario y crea una solicitud, y `direccion@` la aprueba desde la bandeja («Solicitud aprobada correctamente»). Datos de prueba borrados y BD de desarrollo restaurada. Sin pruebas con lector de pantalla ni en móvil.
 - [X] T082 Definition of Done check (Art. 24.3) and update the status of `spec.md` of spec-005, spec-001, spec-003 and spec-006.
   - *Definition of Done, fase 9, 2026-11-19*: CA con tests automatizados: sí (backend 208, frontend 77, `ng build` correcto). Invariantes y tests negativos (`403` fuera de equipo, de RRHH y de EMPLEADO; `422` sin resolutor): sí. Migración V7 versionada (no se edita tras aplicarse: Flyway valida el checksum); plan de reversión: reasignar antes a los usuarios `DIRECCION_GENERAL` a otro rol y recrear `chk_user_role` con `EMPLEADO`, `RESPONSABLE_EQUIPO`, `RRHH`: sí. Contratos OpenAPI actualizados (spec-005 1.2.0, spec-003 1.1.0, spec-006 1.2.0, spec-001 `withoutManager`): sí. UI: mensaje con icono y enlaces ocultos para Dirección General; sin auditoría con lector de pantalla: parcial. Sin datos personales en logs (solo UUID): sí. Specs reflejan el comportamiento final: sí. **Revisión aprobada: pendiente** (rama sin push ni PR).
+
+---
+
+## Phase 10: RRHH como resolutor y saldo de Dirección General (2026-11-19)
+
+**Purpose**: Implementar FR-018 y el ajuste de FR-017 (`spec.md` sesión 2026-11-19; `plan.md` «Decisiones de la sesión de aclaraciones 2026-11-19»). Primero Constitución y specs (Art. 1.3 y 27), después tests (deben FALLAR), después implementación. Sin migración de BD: `chk_user_role` ya admite `RRHH` (no se edita `V7`, Flyway valida su checksum).
+
+**Goal**: (1) `RRHH` ve la bandeja, aprueba/rechaza y ve el calendario solo de sus subordinados directos, y su rol cuenta como resolutor válido; (2) Dirección General no consulta saldo propio (`403` en servidor) y la interfaz oculta el apartado de saldo.
+
+**Independent Test**: quickstart escenarios 14 (punto 4) y 15.
+
+### Gobierno: Constitución y specs (bloquea el código de esta fase)
+
+> T085–T088 van en su propio commit/PR, antes del código (Art. 27.1).
+
+- [ ] T085 Amend `.specify/memory/constitution.md` (MINOR 1.2.0, Art. 27): Art. 10.4 row `RRHH` gains «y, como responsable directo, solicitudes y calendario de sus subordinados (HU-05, 06)», same in Annex A, new row in the Annex C amendment registry with the reason (spec-005 FR-018) and the version/date line. Art. 13.8 is NOT amended.
+- [ ] T086 [P] Update `specs/spec-006/spec.md` (FR-011 accepts `RRHH` with the scope of direct reports; clarification entry), `contracts/team-calendar-api.yaml` (roles, version), its `quickstart.md` (RRHH case) and its `plan.md`/`tasks.md` if affected.
+- [ ] T087 [P] Update `specs/spec-002/spec.md` (new FR: `DIRECCION_GENERAL` has no own balance; `GET /balances/me` and `GET /balances/employee/{own id}` → `403`, access denied logged; `RRHH` access unchanged), and its `plan.md`/`tasks.md`/`quickstart.md` if affected. Fix the menu labels in the spec: «Mi Ficha y Saldo» for roles with balance, «Mi Ficha» for `DIRECCION_GENERAL`. The contract `contracts/leave-balance-api.yaml` (1.1.0) is already updated.
+- [ ] T088 [P] Update `specs/spec-003/spec.md` (FR-009 to FR-011: valid resolver includes `RRHH`) and `contracts/leave-request-api.yaml` (description of `422` and `eligibility`, version).
+
+### Tests (escribir primero, verificar que FALLAN)
+
+- [ ] T089 [P] [US1] Update `backend/src/test/java/com/iw/rrhh/leave/LeaveResolverPolicyTest.java`: a manager with role `RRHH` is now a valid resolver; `EMPLEADO` still is not; inactive `RRHH`, self-reference and missing user still are not.
+- [ ] T090 [P] [US1] Extend `LeaveResolutionIntegrationTest.java` and `TeamCalendarIntegrationTest.java`: an `RRHH` user with direct reports lists, approves (vacation with balance check, no `403` from the balance service) and rejects their requests, and sees only them in the calendar; `403` for a request of another team and for their own request (with `WARN` audit); fix the existing assertions that expect `403` for `RRHH` on these endpoints. Tag the tests `@DisplayName("FR-018 / HU-05.CA-1: …")` (SC-007).
+- [ ] T091 [P] [US1] Extend `LeaveRequestServiceTest.java` and `LeaveRequestIntegrationTest.java`: an employee whose manager has role `RRHH` creates a request (`201`) and `GET /leave/requests/eligibility` returns `canRequest=true`; `DIRECCION_GENERAL` still gets `422` before any balance lookup (order fixed by the test). Tag `FR-018 / FR-017` in the `@DisplayName`.
+- [ ] T092 [P] [US1] Extend `LeaveBalanceServiceTest.java` and `LeaveBalanceIntegrationTest.java`: `DIRECCION_GENERAL` gets `403` on `GET /leave/balances/me` and on `GET /leave/balances/employee/{own id}` with a `WARN` access-denied log (method and URI, no personal data) (SC-008, tag `FR-017`); `RRHH` keeps full access (including to a `DIRECCION_GENERAL` employee); `EMPLEADO` and `RESPONSABLE_EQUIPO` unchanged.
+- [ ] T093 [P] [US1] Extend `EmployeeIntegrationTest.java`: deactivating an `RRHH` manager cancels the pending requests of their direct reports with one notification per employee (FR-016 inherits the policy; tag `FR-018 / FR-016`); deactivating an employee whose superior is `RRHH` and active does not affect others.
+- [ ] T094 [P] [US1] Frontend specs: `auth.service.spec.ts` (`canResolveRequests` for `RESPONSABLE_EQUIPO`, `RRHH`, `DIRECCION_GENERAL`; false for `EMPLEADO`), `app.spec.ts` (`RRHH` sees «Solicitudes del Equipo», «Calendario del Equipo», «Alta de Empleado», «Informes», «Solicitar Ausencia» and «Mis Solicitudes»; `DIRECCION_GENERAL` sees «Mi Ficha», not «Mi Ficha y Saldo»), `my-profile` spec (no balance widget for `DIRECCION_GENERAL`; widget present for the other roles) and `landing` spec; name the specs with `FR-018` / `FR-017`.
+
+### Backend Implementation
+
+- [ ] T095 [US1] Accept role `RRHH` in `LeaveResolverPolicy.hasValidResolver` (update its Javadoc) (T089, T091, T093).
+- [ ] T096 [P] [US1] Change `@PreAuthorize` to `hasAnyRole('RESPONSABLE_EQUIPO','RRHH','DIRECCION_GENERAL')` in `LeaveResolutionController` and `TeamCalendarController`; check that no service filters by role and that the scope still compares `employee.manager.id` with the session employee (T090).
+- [ ] T097 [US1] In `LeaveBalanceServiceImpl` throw `AccessDeniedException` for `DIRECCION_GENERAL` in `getMyLeaveBalance` and in the «is himself» branch of `getEmployeeLeaveBalance`; confirm `GlobalExceptionHandler` maps it to `403` and logs the denial; check that `LeaveRequestServiceImpl.createLeaveRequest` still returns `422` for that role before calling the balance service (T092).
+
+### Frontend Implementation
+
+- [ ] T098 [US1] Add `canResolveRequests` to `AuthService`; use it in `app.html` and `landing.component.ts` for the team links, and show the label «Mi Ficha» for `DIRECCION_GENERAL` (T094).
+- [ ] T099 [P] [US1] In `my-profile.component.ts` do not render `<app-leave-balance-widget>` when `isDireccionGeneral()`; keep the personal data (T094).
+- [ ] T100 [P] [US1] Search for remaining `isResponsable()`-only conditions that should include `RRHH` (team screens, texts, guards); leave `performanceReviewGuard` and HU-08 unchanged (out of scope).
+
+### Polish
+
+- [ ] T101 Run the full suites: `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` and `cd frontend && npx ng test --watch=false` and `npx ng build`; all green, no regression in HU-01 to HU-08 (Docker must be up).
+- [ ] T102 Validate quickstart scenarios 14 (point 4) and 15 manually (Chrome with `direccion@`, `rrhh@`, `responsable@`, `empleado@`; API with `curl`); restore the dev DB afterwards and record the result in this file.
+- [ ] T103 Definition of Done check (Art. 24.3); update the status of `spec.md` of spec-005, spec-006, spec-002 and spec-003; update the Obsidian notes (`CLAUDE.md`, `RRHH IW HU-05.md`, `RRHH IW HU-06.md`) with the phase 9 and 10 decisions.

@@ -14,7 +14,7 @@
 - Usuarios de desarrollo (contraseña `admin123`, ver `research.md` §1.9):
   - `responsable@empresa.com` — `RESPONSABLE_EQUIPO`, responsable de `empleado@empresa.com`
   - `empleado@empresa.com` — `EMPLEADO`
-  - `rrhh@empresa.com` — `RRHH` (no pertenece al equipo; sin superior: no puede solicitar ausencias, FR-015)
+  - `rrhh@empresa.com` — `RRHH`, subordinado directo de `direccion@empresa.com` y superior de `responsable@empresa.com`; resolutor válido (FR-018) para sus subordinados directos y puede solicitar ausencias
   - `direccion@empresa.com` — `DIRECCION_GENERAL` (nuevo en el *seed*, 2026-11-18), superior de `rrhh@empresa.com`; no solicita ausencias (FR-017). Jerarquía de pruebas: `direccion@` → `rrhh@` → `responsable@` → `empleado@`
 - Contrato de referencia: [contracts/leave-resolution-api.yaml](contracts/leave-resolution-api.yaml) · Modelo: [data-model.md](data-model.md)
 
@@ -79,7 +79,7 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 ### Escenario 10 — Solicitud propia del responsable (HU-05.CA-1, Art. 10)
 1. Como `responsable@empresa.com`, crear una solicitud propia (HU-03).
 2. **Esperado**: no aparece en su bandeja; `POST .../approve` o `.../reject` sobre ella devuelve `403` y queda un `WARN` de auditoría.
-3. El superior del responsable en el *seed* es `rrhh@empresa.com`, con rol `RRHH`, que no es resolutor válido (FR-015): el responsable no puede crear solicitudes (`422`) y RRHH no puede resolverlas (`403`). Para este escenario hay que dar al responsable un superior con rol `DIRECCION_GENERAL` (*fixture*).
+3. El superior del responsable en el *seed* es `rrhh@empresa.com`, con rol `RRHH`, que es resolutor válido (FR-018): el responsable sí puede crear su solicitud (`201`) y RRHH puede resolver las de su equipo, pero esta propia solicitud sigue sin aparecer en la bandeja de `responsable@` y `POST .../approve` sobre ella devuelve `403`.
 4. Un responsable sin superior válido no puede crear solicitudes (FR-015, escenario 12).
 
 ### Escenario 11 — Solicitud retirada (HU-05.CA-3)
@@ -99,6 +99,14 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 1. Como `direccion@empresa.com` (su único subordinado directo es `rrhh@empresa.com`): el menú oculta «Solicitar Ausencia» y «Mis Solicitudes»; por URL, «Dirección General no solicita ausencias»; `POST /leave/requests` → `422`.
 2. Ve en la bandeja y el calendario sólo las solicitudes de `rrhh@empresa.com` (su subordinado directo; para tener solicitudes que ver, `rrhh@` debe crear una); puede aprobarlas o rechazarlas. Una solicitud ajena → `403`.
 3. Aprobar una solicitud de `VACATION` funciona (la revalidación de saldo no da `403`).
+4. «Mi Ficha» (sin «y Saldo» en el menú) muestra la ficha sin el apartado de saldo; `GET /leave/balances/me` y `GET /leave/balances/employee/{su id}` → `403` (FR-017, 2026-11-19).
+
+### Escenario 15 — RRHH como resolutor (FR-018)
+1. `rrhh@empresa.com` tiene a `responsable@empresa.com` como subordinado directo: el menú le muestra «Solicitudes del Equipo» y «Calendario del Equipo», además de «Alta de Empleado» e «Informes».
+2. `responsable@empresa.com` ya puede crear una solicitud (su superior es resolutor válido; `eligibility` → `canRequest: true`).
+3. Como `rrhh@empresa.com`, la solicitud aparece en la bandeja; aprobarla y rechazarla con motivo funciona y notifica a `responsable@`. El calendario muestra solo a `responsable@`.
+4. Una solicitud de `empleado@empresa.com` (equipo de `responsable@`) no aparece a RRHH y `POST .../approve` → `403` con registro de acceso denegado.
+5. Dar de baja a `rrhh@empresa.com` cancela las pendientes de `responsable@` (FR-016) con una notificación.
 
 ---
 
@@ -117,4 +125,5 @@ cd frontend && npx ng test --watch=false
 | Regresión | Suites de HU-03/HU-04 siguen en verde con `V3` aplicada. |
 | HU-05.CA-4 | Notificación creada en la resolución; listado, contador y marcado propios; `403` sobre notificación ajena; *rollback* conjunto si falla la notificación. |
 | HU-05.CA-5 | Saldo derivado refleja la aprobación (también el de **ambos** años en una solicitud que cruza años, con la regla de reparto); saldo insuficiente → `422`; cruce de años validado año a año; año cerrado → `422`; aprobaciones concurrentes no dejan saldo negativo. |
+| FR-018 / FR-017 (2026-11-19) | `LeaveResolverPolicy` acepta `RRHH`; `RRHH` lista, aprueba, rechaza y ve el calendario solo de sus subordinados directos, `403` fuera de su equipo y en solicitudes propias (`HU-05.CA-1`); creación con superior `RRHH` → `201` y `canRequest=true`; baja de un superior `RRHH` cancela pendientes (FR-016); `DIRECCION_GENERAL` → `403` en `/balances/me` y `/balances/employee/{propio id}`, `RRHH` conserva acceso total; frontend: `canResolveRequests`, menú «Mi Ficha» y sin widget de saldo para Dirección General. |
 | FR-015 / FR-016 / FR-017 (2026-11-18) | `LeaveResolverPolicy` (casos: sin superior, inactivo, sin rol, autorreferencia, `DIRECCION_GENERAL`); `422` en creación; cancelación automática y una notificación por empleado al dar de baja al superior; `DIRECCION_GENERAL` resuelve (con saldo) y ve el calendario, `403` fuera de su equipo; `V7` aplicada; frontend: menú oculto, guard y mensaje de elegibilidad. |

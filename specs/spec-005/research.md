@@ -139,12 +139,33 @@
 ### 1.20 Rol `DIRECCION_GENERAL` (FR-017)
 
 - **Decisión**: nuevo valor en `UserRole`; migración `V7__direccion_general_role.sql` (`DROP CONSTRAINT chk_user_role` + `ADD CONSTRAINT` con los cuatro valores). `@PreAuthorize("hasAnyRole('RESPONSABLE_EQUIPO','DIRECCION_GENERAL')")` en `LeaveResolutionController` y `TeamCalendarController`. `LeaveBalanceServiceImpl` trata `DIRECCION_GENERAL` como `RESPONSABLE_EQUIPO` para el saldo de su equipo (necesario para la revalidación al aprobar). Alcance idéntico (Art. 10): sólo subordinados directos.
-- **Alta del rol** (decidido 2026-11-18; sin comprobar el puesto: se elimina `isTopManagement` de `createEmployee`, todo empleado salvo Dirección General tiene responsable; el alta exige `withoutManager=true` explícito: un `managerId` ausente sin él, o ambos a la vez, es `400`): al dar de alta, si RRHH elige la opción «Sin responsable (solo Dirección General)» del campo «Responsable de equipo» (`managerId` nulo), HU-01 crea el usuario con rol `DIRECCION_GENERAL`. *Seed*: `direccion@empresa.com`, superior de `rrhh@empresa.com`, que es el superior de `responsable@empresa.com` (jerarquía de pruebas desde 2026-11-19; RRHH no es resolutor válido, ver `quickstart.md` escenario 10).
+- **Alta del rol** (decidido 2026-11-18; sin comprobar el puesto: se elimina `isTopManagement` de `createEmployee`, todo empleado salvo Dirección General tiene responsable; el alta exige `withoutManager=true` explícito: un `managerId` ausente sin él, o ambos a la vez, es `400`): al dar de alta, si RRHH elige la opción «Sin responsable (solo Dirección General)» del campo «Responsable de equipo» (`managerId` nulo), HU-01 crea el usuario con rol `DIRECCION_GENERAL`. *Seed*: `direccion@empresa.com`, superior de `rrhh@empresa.com`, que es el superior de `responsable@empresa.com` (jerarquía de pruebas desde 2026-11-19; RRHH es resolutor válido desde FR-018, ver §1.22).
 - **Fuera de alcance**: Evaluaciones de desempeño (HU-08) y listados de empleados no cambian; si hace falta, spec propia.
 
 ### 1.21 Frontend (2026-11-18)
 
 - `UserRole` incluye `'DIRECCION_GENERAL'` y etiqueta «Dirección General»; `AuthService.isDireccionGeneral`. Bandeja y calendario se muestran con `isResponsable() || isDireccionGeneral()`. El menú oculta «Solicitar Ausencia» y «Mis Solicitudes» para `DIRECCION_GENERAL`; por URL, un guard muestra «Dirección General no solicita ausencias». La pantalla de solicitud consulta la elegibilidad (§1.17).
+
+### 1.22 RRHH como resolutor (FR-018, aclaración 2026-11-19)
+
+- **Decisión**: `RRHH` se suma a `RESPONSABLE_EQUIPO` y `DIRECCION_GENERAL` en tres puntos: `LeaveResolverPolicy.hasValidResolver` (un superior con rol `RRHH` ya cuenta como resolutor válido), `@PreAuthorize("hasAnyRole('RESPONSABLE_EQUIPO','RRHH','DIRECCION_GENERAL')")` en `LeaveResolutionController` y `TeamCalendarController`. El alcance NO cambia: el servicio sigue comparando `employee.manager.id` con el empleado de la sesión (Art. 10, nivel 2), así que RRHH solo ve y resuelve las solicitudes de sus subordinados directos. No hay migración (`chk_user_role` ya admite `RRHH`).
+- **`LeaveBalanceServiceImpl`**: sin cambio. `RRHH` ya tiene acceso total, por lo que la revalidación de saldo al aprobar no da `403`.
+- **Efecto sobre FR-016**: la regla de invalidez se hereda de `LeaveResolverPolicy`; un superior `RRHH` activo sigue siendo válido, y su baja cancela las pendientes de sus subordinados como en cualquier otro resolutor.
+- **Alternativas descartadas**: (B) calendario global para RRHH y (C) alcance global para resolver. Rompen el principio de que solo resuelve el responsable directo (Art. 13.8, no enmendado) y exigirían endpoints y filtros distintos.
+- **Constitución**: enmienda MINOR 1.2.0 (Art. 10.4, fila `RRHH`: «y, como responsable directo, solicitudes y calendario de sus subordinados (HU-05, 06)», y Anexo A). La nota del Art. 10.1 sobre `DIRECCION_GENERAL` no cambia.
+
+### 1.23 Saldo de Dirección General (FR-017, aclaración 2026-11-19)
+
+- **Decisión**: `LeaveBalanceServiceImpl.getMyLeaveBalance` y la rama «es él mismo» de `getEmployeeLeaveBalance` lanzan `AccessDeniedException` si el usuario en sesión tiene rol `DIRECCION_GENERAL`, lo que `GlobalExceptionHandler` traduce a `403` y deja registrado como acceso denegado (Art. 20.5). Las dos rutas deben cerrarse: `/balances/me` y `/balances/employee/{propio id}`.
+- **Orden en la creación**: `LeaveRequestServiceImpl.createLeaveRequest` ya devuelve `422` por rol antes de pedir el saldo (`creationBlockReason`); los tests deben fijar ese orden para que el `403` no cambie el `422` de FR-017.
+- **No cambia**: `RRHH` conserva acceso total a `/balances/employee/{id}` (también sobre Dirección General); no se pidió restringirlo y queda fuera de alcance.
+- **Frontend**: `my-profile.component` no pinta `<app-leave-balance-widget>` si `isDireccionGeneral()`, y el menú muestra «Mi Ficha» en lugar de «Mi Ficha y Saldo» para ese rol; la ficha personal se mantiene.
+
+### 1.24 Frontend (2026-11-19)
+
+- `AuthService` añade `canResolveRequests = computed(isResponsable || isRRHH || isDireccionGeneral)`; `app.html` y `landing.component.ts` lo usan para «Solicitudes del Equipo» y «Calendario del Equipo». RRHH conserva «Alta de Empleado» e «Informes», y sigue viendo «Solicitar Ausencia» y «Mis Solicitudes». Las rutas `team/requests` y `team/calendar` no tienen guard de rol propio: el servidor decide (`403`), por lo que no se añade uno.
+
+---
 
 ## 2. Cobertura de la Constitución
 
