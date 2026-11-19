@@ -261,4 +261,63 @@ public class LeaveBalanceIntegrationTest {
                 .andExpect(jsonPath("$.spentDays", is(secondYearDays)))
                 .andExpect(jsonPath("$.availableDays", is(22 - secondYearDays)));
     }
+
+    // ---- HU-05 fase 10 (FR-017 / spec-002 FR-008): Dirección General no tiene saldo propio ----
+
+    private Employee direccionGeneral(String username, String email, String nationalId) {
+        User dgUser = userRepository.save(new User(username, "$2a$10$xyz", UserRole.DIRECCION_GENERAL));
+        Employee dg = new Employee();
+        dg.setUser(dgUser);
+        dg.setFirstName("Elena");
+        dg.setLastName("Dirección");
+        dg.setEmail(email);
+        dg.setNationalId(nationalId);
+        dg.setHireDate(LocalDate.of(2019, 1, 1));
+        dg = employeeRepository.save(dg);
+        contractRecordRepository.save(new ContractRecord(
+                dg, LocalDate.of(2019, 1, 1), "Directora General", "Dirección",
+                new BigDecimal("90000"), agreement22, null, "RRHH"));
+        return dg;
+    }
+
+    @Test
+    @WithMockUser(username = "dg.saldo", roles = {"DIRECCION_GENERAL"})
+    @DisplayName("FR-017 / SC-008: Dirección General recibe 403 en /leave/balances/me")
+    void direccionGeneral_forbiddenOnOwnBalance() throws Exception {
+        direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/me"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.title", notNullValue()));
+    }
+
+    @Test
+    @WithMockUser(username = "dg.saldo", roles = {"DIRECCION_GENERAL"})
+    @DisplayName("FR-017 / SC-008: Dirección General recibe 403 al consultar su saldo por su propio id")
+    void direccionGeneral_forbiddenOnOwnBalanceById() throws Exception {
+        Employee dg = direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/employee/" + dg.getId()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"RRHH"})
+    @DisplayName("FR-017: RRHH conserva el acceso total a /leave/balances/employee/{id}, también sobre Dirección General")
+    void hr_stillReadsAnyBalance_includingDireccionGeneral() throws Exception {
+        User hrUser = userRepository.save(new User("admin", "$2a$10$xyz", UserRole.RRHH));
+        Employee hrEmployee = new Employee();
+        hrEmployee.setUser(hrUser);
+        hrEmployee.setFirstName("Rosa");
+        hrEmployee.setLastName("RRHH");
+        hrEmployee.setEmail("rrhh.balance2@empresa.com");
+        hrEmployee.setNationalId("44444444R");
+        hrEmployee.setHireDate(LocalDate.of(2020, 1, 1));
+        employeeRepository.save(hrEmployee);
+        Employee dg = direccionGeneral("dg.saldo", "dg.saldo@empresa.com", "55555555K");
+
+        mockMvc.perform(get("/leave/balances/employee/" + dg.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.employeeId", is(dg.getId().toString())));
+    }
 }

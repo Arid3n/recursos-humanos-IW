@@ -435,4 +435,41 @@ class LeaveRequestServiceTest {
         assertThat(response.canRequest()).isTrue();
         assertThat(response.reason()).isNull();
     }
+
+    // ---- HU-05 fase 10 (FR-018): un superior con rol RRHH es resolutor válido ----
+
+    @Test
+    @DisplayName("FR-018 / FR-015: con un responsable RRHH sí se crea la solicitud")
+    void testCreateLeaveRequest_ManagerIsHr_Allowed() {
+        manager.getUser().setRole(UserRole.RRHH);
+        CreateLeaveRequest request = validRequest();
+        sessionEmployeeIs(employee);
+        when(holidayCalendarService.countWorkingDays(request.startDate(), request.endDate())).thenReturn(5);
+        when(leaveRequestRepository.hasOverlappingRequests(eq(employeeId), eq(request.startDate()), eq(request.endDate()), any()))
+                .thenReturn(false);
+        when(leaveBalanceService.getMyLeaveBalance(2026)).thenReturn(
+                new LeaveBalanceResponse(employeeId, 2026, 22, 0, 0, 22, false, "Convenio TIC"));
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
+            LeaveRequest lr = invocation.getArgument(0);
+            lr.setId(UUID.randomUUID());
+            return lr;
+        });
+
+        LeaveRequestResponse response = leaveRequestService.createLeaveRequest(request);
+
+        assertThat(response.status()).isEqualTo(LeaveStatus.PENDING);
+        assertThat(response.managerId()).isEqualTo(managerId);
+    }
+
+    @Test
+    @DisplayName("FR-018 / FR-017: Dirección General se rechaza antes de consultar el saldo (el 403 del saldo no sustituye al 422)")
+    void testCreateLeaveRequest_DireccionGeneral_RejectedBeforeBalanceLookup() {
+        user.setRole(UserRole.DIRECCION_GENERAL);
+        sessionEmployeeIs(employee);
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(validRequest()))
+                .isInstanceOf(LeaveCreationNotAllowedException.class);
+
+        verifyNoInteractions(leaveBalanceService);
+    }
 }

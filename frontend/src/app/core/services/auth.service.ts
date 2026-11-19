@@ -22,6 +22,8 @@ export class AuthService {
   readonly isResponsable = computed(() => this.userRole() === 'RESPONSABLE_EQUIPO');
   readonly isEmpleado = computed(() => this.userRole() === 'EMPLEADO');
   readonly isDireccionGeneral = computed(() => this.userRole() === 'DIRECCION_GENERAL');
+  /** Esqueleto (T089-T094, tests en rojo): la implementación llega con T098 (HU-05 FR-018). */
+  readonly canResolveRequests = computed(() => false);
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.authUrl}/login`, credentials).pipe(

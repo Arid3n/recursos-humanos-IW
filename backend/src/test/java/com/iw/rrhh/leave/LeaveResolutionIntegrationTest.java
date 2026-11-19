@@ -717,14 +717,82 @@ class LeaveResolutionIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
-    @DisplayName("FR-017: el rol RRHH sigue recibiendo 403 en la bandeja y al resolver")
-    void hrRole_stillForbidden() throws Exception {
-        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+    // ---- HU-05 fase 10 (FR-018): RRHH resuelve como un responsable, solo para sus subordinados directos ----
 
-        mockMvc.perform(get("/leave/team-requests").with(as("rrhh.resolucion@empresa.com", UserRole.RRHH)))
+    private static final String RRHH = "rrhh.resolucion@empresa.com";
+
+    /** RRHH como superior directo de managerA (jerarquía: RRHH → managerA → memberA). */
+    private Employee hrAboveManagerA() {
+        Employee hr = employee(RRHH, UserRole.RRHH, "Rita", "Recursos Humanos", "30000093T", null);
+        managerA.setManager(hr);
+        employeeRepository.save(managerA);
+        return hr;
+    }
+
+    private static RequestPostProcessor asHr() {
+        return as(RRHH, UserRole.RRHH);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH ve en su bandeja solo las solicitudes de sus subordinados directos")
+    void hr_listsDirectReportsOnly() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest ofManager = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+        pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(get("/leave/team-requests").with(asHr()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(ofManager.getId().toString())));
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-2: RRHH aprueba unas vacaciones de un subordinado directo con revalidación de saldo")
+    void hr_approvesVacationOfDirectReport() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 3);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asHr()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("APPROVED")));
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        assertThat(notificationsOf(managerA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-2: RRHH rechaza con motivo la solicitud de un subordinado directo")
+    void hr_rejectsRequestOfDirectReport() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asHr())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"No es posible esa semana\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("REJECTED")));
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH recibe 403 al resolver la solicitud de alguien fuera de su equipo directo")
+    void hr_forbiddenOutsideDirectTeam() throws Exception {
+        hrAboveManagerA();
+        LeaveRequest ofMember = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", ofMember.getId()).with(asHr()))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(as("rrhh.resolucion@empresa.com", UserRole.RRHH)))
+
+        assertThat(leaveRequestRepository.findById(ofMember.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("FR-018 / HU-05.CA-1: RRHH recibe 403 al intentar resolver una solicitud propia")
+    void hr_forbiddenOnOwnRequest() throws Exception {
+        Employee hr = hrAboveManagerA();
+        LeaveRequest own = pendingVacation(hr, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(asHr()))
                 .andExpect(status().isForbidden());
     }
 }

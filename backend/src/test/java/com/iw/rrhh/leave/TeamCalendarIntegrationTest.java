@@ -313,11 +313,20 @@ class TeamCalendarIntegrationTest {
     }
 
     @Test
-    @DisplayName("FR-017 / HU-06.CA-4: el rol RRHH recibe 403 en el calendario")
-    void hrRoleForbidden() throws Exception {
+    @DisplayName("FR-018 / HU-06.CA-4: RRHH ve en el calendario solo a las personas que lo tienen como responsable directo")
+    void hrRole_seesOnlyDirectReports() throws Exception {
+        String hrUsername = "calendario.rrhh@empresa.com";
+        Employee hr = employee(hrUsername, UserRole.RRHH, "Rita", "RRHH", "30000092S", null, true);
+        managerA.setManager(hr);
+        employeeRepository.save(managerA);
+        request(managerA, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 1), LeaveStatus.APPROVED);
+        request(memberA1, LocalDate.of(2026, 12, 2), LocalDate.of(2026, 12, 2), LeaveStatus.APPROVED);
+
         mockMvc.perform(get(URL).param("month", "2026-12")
-                        .with(user("calendario.rrhh@empresa.com").roles(UserRole.RRHH.name())))
-                .andExpect(status().isForbidden())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+                        .with(user(hrUsername).roles(UserRole.RRHH.name())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.members[*].name", contains("Alicia Calendario A")))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-01')].absentCount", contains(1)))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-02')].absentCount", contains(0)));
     }
 }

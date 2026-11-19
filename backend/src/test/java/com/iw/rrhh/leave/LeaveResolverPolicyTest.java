@@ -74,10 +74,10 @@ class LeaveResolverPolicyTest {
     }
 
     @Test
-    @DisplayName("Responsable con rol RRHH: no hay resolutor válido")
-    void managerWithHrRole_isInvalid() {
+    @DisplayName("FR-018: responsable activo con rol RRHH: resolutor válido")
+    void managerWithHrRole_isValid() {
         employee.setManager(manager(UserRole.RRHH));
-        assertThat(policy.hasValidResolver(employee)).isFalse();
+        assertThat(policy.hasValidResolver(employee)).isTrue();
     }
 
     @Test

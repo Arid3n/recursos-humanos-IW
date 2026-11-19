@@ -318,4 +318,33 @@ public class LeaveBalanceServiceTest {
         assertEquals(2027, service.getMyLeaveBalance(null).year());
         assertTrue(service.getMyLeaveBalance(2026).isClosedYear());
     }
+
+    // ---- HU-05 fase 10 (FR-017 / spec-002 FR-008): Dirección General no tiene saldo propio ----
+
+    @Test
+    @DisplayName("FR-017 / HU-02 FR-008: Dirección General recibe AccessDeniedException al consultar su saldo propio")
+    void direccionGeneral_ownBalance_isDenied() {
+        testUser.setRole(UserRole.DIRECCION_GENERAL);
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> leaveBalanceService.getMyLeaveBalance(null));
+    }
+
+    @Test
+    @DisplayName("FR-017 / HU-02 FR-008: Dirección General recibe AccessDeniedException al consultar su saldo por su propio id")
+    void direccionGeneral_ownBalanceById_isDenied() {
+        testUser.setRole(UserRole.DIRECCION_GENERAL);
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> leaveBalanceService.getEmployeeLeaveBalance(testEmployee.getId(), null));
+    }
+
+    @Test
+    @DisplayName("FR-017: el resto de roles sigue consultando su saldo propio sin cambios")
+    void otherRoles_ownBalance_unchanged() {
+        for (UserRole role : List.of(UserRole.EMPLEADO, UserRole.RESPONSABLE_EQUIPO, UserRole.RRHH)) {
+            testUser.setRole(role);
+            assertNotNull(leaveBalanceService.getMyLeaveBalance(null), "rol " + role);
+        }
+    }
 }

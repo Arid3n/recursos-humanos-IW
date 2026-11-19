@@ -37,4 +37,18 @@ describe('AuthService (roles)', () => {
     expect(service.isEmpleado()).toBe(false);
     expect(service.isRRHH()).toBe(false);
   });
+
+  // ---- HU-05 fase 10 (FR-018, FR-017): quién resuelve solicitudes ----
+
+  it('FR-018: canResolveRequests is true for RESPONSABLE_EQUIPO, RRHH and DIRECCION_GENERAL', () => {
+    for (const role of ['RESPONSABLE_EQUIPO', 'RRHH', 'DIRECCION_GENERAL'] as UserRole[]) {
+      expect(serviceWithRole(role).canResolveRequests()).toBe(true);
+    }
+  });
+
+  it('FR-018: canResolveRequests is false for EMPLEADO and without session', () => {
+    for (const role of ['EMPLEADO', null] as (UserRole | null)[]) {
+      expect(serviceWithRole(role).canResolveRequests()).toBe(false);
+    }
+  });
 });

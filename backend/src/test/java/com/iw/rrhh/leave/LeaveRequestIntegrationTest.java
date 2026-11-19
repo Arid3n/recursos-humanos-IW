@@ -426,4 +426,35 @@ public class LeaveRequestIntegrationTest {
         mockMvc.perform(get("/leave/requests/eligibility"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // ---- HU-05 fase 10 (FR-018): un superior con rol RRHH es resolutor válido ----
+
+    @Test
+    @DisplayName("POST /leave/requests - Con un responsable RRHH se crea la solicitud (201) (FR-018)")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_ManagerIsHr_Returns201() throws Exception {
+        User managerUser = userRepository.findByUsername("manager.req@empresa.com").orElseThrow();
+        managerUser.setRole(UserRole.RRHH);
+        userRepository.save(managerUser);
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(julyRequest())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    @DisplayName("GET /leave/requests/eligibility - Con un responsable RRHH: canRequest=true (FR-018)")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testEligibility_ManagerIsHr_Allowed() throws Exception {
+        User managerUser = userRepository.findByUsername("manager.req@empresa.com").orElseThrow();
+        managerUser.setRole(UserRole.RRHH);
+        userRepository.save(managerUser);
+
+        mockMvc.perform(get("/leave/requests/eligibility"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canRequest").value(true))
+                .andExpect(jsonPath("$.reason").doesNotExist());
+    }
 }

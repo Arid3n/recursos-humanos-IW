@@ -361,4 +361,44 @@ public class EmployeeIntegrationTest {
                 .filter(n -> n.getRecipient().getId().equals(employee.getId()))
                 .count();
     }
+
+    // ---- HU-05 fase 10 (FR-018): un superior con rol RRHH también cuenta como resolutor ----
+
+    @Test
+    @WithMockUser(username = "rrhh_user", roles = {"RRHH"})
+    @DisplayName("FR-018 / FR-016: dar de baja a un superior RRHH cancela las PENDING de sus subordinados directos y notifica una vez por empleado")
+    void deactivateHrManager_cancelsPendingOfDirectReports() throws Exception {
+        Employee hr = savedEmployee(uniqueEmail("rrhhsup"), UserRole.RRHH, "40000020A", null);
+        Employee report = savedEmployee(uniqueEmail("subrrhh"), UserRole.RESPONSABLE_EQUIPO, "40000021B", hr);
+        Employee stranger = savedEmployee(uniqueEmail("ajenorrhh"), UserRole.EMPLEADO, "40000022C", null);
+
+        LeaveRequest pendingA = savedRequest(report, 1, LeaveStatus.PENDING);
+        LeaveRequest pendingB = savedRequest(report, 8, LeaveStatus.PENDING);
+        LeaveRequest ofStranger = savedRequest(stranger, 3, LeaveStatus.PENDING);
+
+        mockMvc.perform(delete("/employees/" + hr.getId()))
+                .andExpect(status().isNoContent());
+
+        assertEquals(LeaveStatus.CANCELLED, leaveRequestRepository.findById(pendingA.getId()).orElseThrow().getStatus());
+        assertEquals(LeaveStatus.CANCELLED, leaveRequestRepository.findById(pendingB.getId()).orElseThrow().getStatus());
+        assertEquals(LeaveStatus.PENDING, leaveRequestRepository.findById(ofStranger.getId()).orElseThrow().getStatus());
+        assertEquals(1, notificationsOf(report));
+        assertEquals(0, notificationsOf(stranger));
+    }
+
+    @Test
+    @WithMockUser(username = "rrhh_user", roles = {"RRHH"})
+    @DisplayName("FR-018 / FR-016: dar de baja a un empleado cuyo superior RRHH sigue activo no afecta a las solicitudes de otros")
+    void deactivateEmployeeWithActiveHrSuperior_doesNotAffectOthers() throws Exception {
+        Employee hr = savedEmployee(uniqueEmail("rrhhact"), UserRole.RRHH, "40000023D", null);
+        Employee leaving = savedEmployee(uniqueEmail("sale"), UserRole.RESPONSABLE_EQUIPO, "40000024E", hr);
+        Employee sibling = savedEmployee(uniqueEmail("hermano"), UserRole.RESPONSABLE_EQUIPO, "40000025F", hr);
+        LeaveRequest ofSibling = savedRequest(sibling, 2, LeaveStatus.PENDING);
+
+        mockMvc.perform(delete("/employees/" + leaving.getId()))
+                .andExpect(status().isNoContent());
+
+        assertEquals(LeaveStatus.PENDING, leaveRequestRepository.findById(ofSibling.getId()).orElseThrow().getStatus());
+        assertEquals(0, notificationsOf(sibling));
+    }
 }
