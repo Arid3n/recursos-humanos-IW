@@ -2,9 +2,6 @@
 -- La cúspide de la jerarquía: sin responsable, resuelve las solicitudes y ve el calendario de sus
 -- subordinados directos, y no solicita ausencias.
 
--- Plan de reversión (Art. 24.3): reasignar antes a los usuarios DIRECCION_GENERAL a otro rol y recrear
--- chk_user_role con ('EMPLEADO', 'RESPONSABLE_EQUIPO', 'RRHH').
-
 ALTER TABLE users
 DROP CONSTRAINT IF EXISTS chk_user_role;
 
