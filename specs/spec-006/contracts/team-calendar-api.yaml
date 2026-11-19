@@ -3,13 +3,13 @@ info:
   title: API de Calendario de Ausencias del Equipo (HU-06)
   description: |
     Calendario mensual de solo lectura con las ausencias aprobadas y pendientes de las personas
-    a cargo del responsable en sesión. Las coincidencias (2 o más personas ausentes en un día
+    a cargo del responsable (o de Dirección General) en sesión. Las coincidencias (2 o más personas ausentes en un día
     laborable, sea cual sea el tamaño del equipo) se calculan en el servidor (Art. 16.3). El equipo se
     deriva de la sesión (Art. 10) y no incluye al propio responsable. Solo se devuelven los estados
     PENDING y APPROVED: las solicitudes rechazadas y las retiradas por el empleado (CANCELLED) nunca
     aparecen. La respuesta no incluye justificaciones ni motivos (Art. 20.1). El parámetro `month`
     admite cualquier mes válido, sin límite.
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: /api/v1
 security:
@@ -48,7 +48,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/ProblemDetail' }
         '403':
-          description: El usuario no tiene rol RESPONSABLE_EQUIPO.
+          description: El usuario no tiene rol RESPONSABLE_EQUIPO ni DIRECCION_GENERAL.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/ProblemDetail' }

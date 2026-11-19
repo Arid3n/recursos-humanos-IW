@@ -21,7 +21,7 @@
 ## 2. Requirement Clarity & Precision
 
 - [x] CHK006 Is the monetary precision and scale of the salary attribute explicitly quantified to prevent floating-point discrepancies? [Clarity, Spec §Edge Cases, Constitution Art. 8.3]
-- [x] CHK007 Is the hierarchy exception rule allowing a null manager exclusively for "Dirección General / CEO" defined with exact matching criteria? [Clarity, Spec §FR-011, Spec §Edge Cases]
+- [x] CHK007 Is the hierarchy exception rule allowing a null manager exclusively for "Dirección General / CEO" (revised 2026-11-19: now explicit `withoutManager=true`, no position check) defined with exact matching criteria? [Clarity, Spec §FR-011, Spec §Edge Cases]
 - [x] CHK008 Is the concept of effective date (`effective_from`) defined as an immutable business date (`LocalDate`) distinct from the audit timestamp (`created_at`)? [Clarity, Spec §FR-002, Constitution Art. 14]
 - [x] CHK009 Is the chronological ordering rule for reconstructing contractual history explicitly specified for tie-breaking when two events share the same effective date? [Clarity, Spec §1. Acceptance Scenario 5]
 

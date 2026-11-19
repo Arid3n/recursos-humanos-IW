@@ -39,7 +39,7 @@
 | **FR-008** (Usuario automático y clave provisional) | Sí | T004, T005, T008, T014, T015, T020 | Contraseña provisional en modal sin SMTP. |
 | **FR-009** (Datos personales vs. contractuales) | Sí | T031, T032, T033 | Endpoint `personal-data` implementado en backend. |
 | **FR-010** (Baja lógica `active = false`) | Sí | T032, T033, T034 | Revocación de acceso con persistencia histórica. |
-| **FR-011** (Manager obligatorio salvo CEO) | Sí | T010, T015 | Excepción documentada y validada en servicio. |
+| **FR-011** (Manager obligatorio salvo Dirección General) | Sí | T010, T015 | Revisado 2026-11-19: la excepción ya no depende del puesto; alta explícita con `withoutManager=true` (HU-05, Fase 9, T069 y T083). Pendiente de implementar. |
 | **SC-001** (Alta completable en < 2 min) | Sí | T019 | Formulario reactivo asistido con validaciones inmediatas. |
 | **SC-002** (100% cambios inmutables sin sobrescritura) | Sí | T024 | Validado en test de integración con Testcontainers. |
 | **SC-003** (0% accesos no autorizados) | Sí | T034 | Suite de tests de seguridad negativa implementada. |

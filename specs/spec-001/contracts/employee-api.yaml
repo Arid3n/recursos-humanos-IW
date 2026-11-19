@@ -218,7 +218,11 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: "Obligatorio salvo que position sea CEO / Dirección General"
+          description: "Obligatorio salvo que withoutManager sea true (Dirección General)"
+        withoutManager:
+          type: boolean
+          default: false
+          description: "true solo cuando RRHH elige «Sin responsable (solo Dirección General)»: crea el usuario con rol DIRECCION_GENERAL. Con managerId también informado, o sin ninguno de los dos, la respuesta es 400."
         hireDate:
           type: string
           format: date

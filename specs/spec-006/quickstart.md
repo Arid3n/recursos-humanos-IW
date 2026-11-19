@@ -54,6 +54,11 @@
    curl -i -u responsable@empresa.com:admin123 "http://localhost:8080/api/v1/leave/team-calendar?month=2026-13"
    ```
    **Esperado**: `400 Bad Request` con ProblemDetail.
+4. Con un usuario `DIRECCION_GENERAL` (`direccion@empresa.com`, tras HU-05 fase 9):
+   ```bash
+   curl -i -u direccion@empresa.com:admin123 "http://localhost:8080/api/v1/leave/team-calendar?month=2026-12"
+   ```
+   **Esperado**: `200` con solo las personas que lo tienen como responsable directo.
 
 ### Escenario 5 — Filtro por empleado (US2)
 1. Seleccionar a Laura en el filtro.
@@ -97,3 +102,4 @@ cd frontend && npx ng test --watch=false
 | HU-06.CA-3 | `hasConflict` y `absentCount` con ≥ 2 empleados distintos; 1 ausencia no es coincidencia; fines de semana/festivos sin recuento; filtro mantiene el resalte. |
 | HU-06.CA-4 | Otro equipo excluido de eventos, recuento y miembros; empleado inactivo excluido; el propio responsable (también con `manager_id` autorreferenciado) excluido; `403` con rol `EMPLEADO`; `400` con mes inválido; mes lejano (p. ej. 2031-01) responde `200`. |
 | FR-003b | Vista de lista bajo 600 px con los mismos datos y marca de coincidencia con icono + texto; vuelve la cuadrícula en pantallas anchas; mes inicial en Europe/Madrid. |
+| FR-011 (2026-11-19) | `DIRECCION_GENERAL` obtiene `200` con solo sus subordinados directos; `EMPLEADO` y `RRHH` siguen con `403`. Tests: HU-05 Fase 9, T066. |

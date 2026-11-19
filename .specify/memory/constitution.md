@@ -3,7 +3,7 @@
 Constitution · MD
 # Constitución del Proyecto — SI-09 · Gestión de Recursos Humanos y Vacaciones
  
-**Versión:** 1.0.1 · **Ratificada:** 2026-10-20 · **Última enmienda:** 2026-10-27
+**Versión:** 1.1.0 · **Ratificada:** 2026-10-20 · **Última enmienda:** 2026-11-19
  
 **Pila tecnológica:** Angular + Angular Material · Spring Boot (arquitectura por capas) · PostgreSQL
  
@@ -113,7 +113,7 @@ El sistema se organiza en cuatro capas con dependencias en un solo sentido:
 Estas reglas derivan directamente de las historias de usuario. Se consideran **invariantes del sistema**: ninguna tarea, atajo o urgencia justifica romperlas.
  
 ### Art. 10 · Autorización siempre en el servidor
-1. Roles del sistema: **EMPLEADO**, **RESPONSABLE_EQUIPO** y **RRHH**.
+1. Roles del sistema: **EMPLEADO**, **RESPONSABLE_EQUIPO**, **DIRECCION_GENERAL** y **RRHH**. `DIRECCION_GENERAL` es la cúspide de la jerarquía: no tiene responsable y no solicita ausencias.
 2. Todo endpoint, salvo los explícitamente públicos (login y *health check*), exige autenticación.
 3. La autorización tiene **dos niveles, ambos obligatorios**:
    - *Por rol* (qué funciones puede usar): Spring Security con `@PreAuthorize`/reglas de ruta.
@@ -123,7 +123,8 @@ Estas reglas derivan directamente de las historias de usuario. Se consideran **i
    |---|---|
    | EMPLEADO | Únicamente **su propia** ficha, saldo, solicitudes y evaluaciones (HU-02, 04, 08) |
    | RESPONSABLE_EQUIPO | Únicamente las personas **de su equipo**: solicitudes, calendario y evaluaciones (HU-05, 06, 08) |
-   | RRHH | Alta y datos contractuales (HU-01) e informes (HU-07) |
+   | DIRECCION_GENERAL | Únicamente las personas que lo tienen como responsable directo: solicitudes y calendario (HU-05, 06). No solicita ausencias ni accede a otros datos de empleados |
+| RRHH | Alta y datos contractuales (HU-01) e informes (HU-07) |
 5. La identidad del solicitante **se obtiene del token/sesión**, NUNCA de un parámetro enviado por el cliente (se prohíbe confiar en un `employeeId` del cuerpo o de la URL para decidir alcance).
 6. Un acceso fuera de alcance DEBE devolver `403` (o `404` si se quiere no revelar existencia), y DEBE quedar registrado.
 7. Cada regla de «solo ve lo suyo / solo su equipo» DEBE tener un **test negativo** que intente violarla.
@@ -260,6 +261,7 @@ Las revisiones de código y los *quality gates* de CI comprueban el cumplimiento
 | Trayectoria / historial contractual | `ContractRecord` / `ContractHistory` | Append-only, con `effectiveFrom` |
 | Convenio | `CollectiveAgreement` | Determina los días de vacaciones que corresponden |
 | Responsable de equipo | `TeamManager` | Rol `RESPONSABLE_EQUIPO` |
+| Dirección General | `DIRECCION_GENERAL` (rol) | Empleado sin responsable; resuelve las solicitudes y ve el calendario de sus subordinados directos; no solicita ausencias (Art. 10) |
 | Departamento | `Department` | Eje de agrupación de informes |
 | Saldo de vacaciones | `LeaveBalance` | Derivado (Art. 12) |
 | Solicitud (vacaciones / permiso) | `LeaveRequest` (`LeaveType`: `VACATION`, `PERMIT`) | Estados `PENDING`, `APPROVED`, `REJECTED` |
@@ -281,6 +283,15 @@ Los textos de las HU no definen los siguientes puntos. Deben resolverse **antes*
 8. **Año de vacaciones (HU-02):** ¿año natural o ciclo propio? ¿Arrastre de días no disfrutados al año siguiente?
 9. **Conformidad (HU-08):** ¿qué ocurre si el empleado no está de acuerdo? ¿Existe un estado «No conforme» o se reabre la evaluación? ¿Cuál es exactamente la «conformidad de ambas partes» (el responsable la da al crear)?
 10. **Cambios retroactivos (HU-01):** ¿se admiten fechas de efectos pasadas? ¿Cómo se gestiona un cambio intercalado entre dos registros existentes?
-11. **Jerarquía y casos límite:** ¿quién aprueba las solicitudes de un responsable de equipo? ¿Puede una persona tener varios roles? ¿Qué pasa con las solicitudes pendientes cuando cambia el responsable de un empleado?
+11. **Jerarquía y casos límite:** ¿quién aprueba las solicitudes de un responsable de equipo? *(Resuelto parcialmente en la enmienda 1.1.0: las de un responsable las resuelve su superior directo, que puede ser Dirección General; sigue abierto quién aprueba las de la propia Dirección General, que hoy no solicita ausencias.)* ¿Puede una persona tener varios roles? ¿Qué pasa con las solicitudes pendientes cuando cambia el responsable de un empleado?
 12. **Autenticación (transversal):** mecanismo (SSO corporativo/OIDC, usuario y contraseña propios) y gestión del ciclo de vida de los usuarios.
 13. **Informes (HU-07):** definición exacta de «absentismo» y de «uso de vacaciones» (métricas, porcentajes, unidades) y formato de exportación requerido (CSV, XLSX).
+
+---
+
+## Anexo C — Registro de enmiendas
+
+| Versión | Fecha | Tipo | Cambio | Revisión de artefactos (Art. 27.3) |
+|---|---|---|---|---|
+| 1.0.1 | 2026-10-27 | PATCH | Aclaraciones | — |
+| 1.1.0 | 2026-11-19 | MINOR | Se añade el rol `DIRECCION_GENERAL` (Art. 10.1, tabla de 10.4, Anexo A, nota en Anexo B pregunta 11). Motivo: HU-05 (`specs/spec-005`, FR-015 a FR-017) necesita un resolutor para los responsables de equipo. El Art. 13.8 no cambia: quien resuelve sigue siendo el responsable directo de la persona. | `spec-005` (spec, plan, tasks, contratos): actualizados. `spec-001` (FR-011 revisado, FR-012, FR-013, contrato de alta con `withoutManager`): actualizado. `spec-003` (FR-009 a FR-011, contrato con `422` y `eligibility`): actualizado. `spec-006` (FR-011, contrato 1.2.0, quickstart): actualizado. El código correspondiente se implementa en la Fase 9 de `spec-005` (T061 en adelante). |
