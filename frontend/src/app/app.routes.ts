@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, performanceReviewGuard, rrhhGuard } from './core/guards/auth.guard';
+import { absenceRequestGuard, authGuard, performanceReviewGuard, rrhhGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -33,13 +33,18 @@ export const routes: Routes = [
   },
   {
     path: 'leave/request',
-    canActivate: [authGuard],
+    canActivate: [absenceRequestGuard],
     loadComponent: () => import('./features/leave/components/leave-request-create/leave-request-create.component').then(m => m.LeaveRequestCreateComponent)
   },
   {
     path: 'leave/my-requests',
-    canActivate: [authGuard],
+    canActivate: [absenceRequestGuard],
     loadComponent: () => import('./features/leave/components/leave-request-list/leave-request-list.component').then(m => m.LeaveRequestListComponent)
+  },
+  {
+    path: 'leave/not-available',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/leave/components/direccion-general-no-absences/direccion-general-no-absences.component').then(m => m.DireccionGeneralNoAbsencesComponent)
   },
   {
     path: 'team/requests',

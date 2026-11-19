@@ -11,7 +11,20 @@
     </div>
   </div>
 
-  <mat-card class="form-card surface-card" aria-label="Formulario de solicitud de ausencia">
+  @if (eligibility(); as eligible) {
+    @if (!eligible.canRequest) {
+      <mat-card class="form-card surface-card" role="status">
+        <mat-card-content>
+          <p class="alert-banner alert-warning">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            {{ eligible.reason }}
+          </p>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+
+  <mat-card *ngIf="eligibility()?.canRequest" class="form-card surface-card" aria-label="Formulario de solicitud de ausencia">
     <mat-card-content>
       <!-- Indicador de saldo actual para vacaciones -->
       <div *ngIf="balance() && form.get('leaveType')?.value === 'VACATION'" class="balance-badge-card" role="status">

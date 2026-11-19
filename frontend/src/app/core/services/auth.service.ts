@@ -21,8 +21,7 @@ export class AuthService {
   readonly isRRHH = computed(() => this.userRole() === 'RRHH');
   readonly isResponsable = computed(() => this.userRole() === 'RESPONSABLE_EQUIPO');
   readonly isEmpleado = computed(() => this.userRole() === 'EMPLEADO');
-  // TODO T076: devolver this.userRole() === 'DIRECCION_GENERAL' (esqueleto para la fase roja de los tests)
-  readonly isDireccionGeneral = computed(() => false);
+  readonly isDireccionGeneral = computed(() => this.userRole() === 'DIRECCION_GENERAL');
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.authUrl}/login`, credentials).pipe(

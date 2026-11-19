@@ -148,6 +148,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
 
+    @ExceptionHandler(LeaveCreationNotAllowedException.class)
+    public ResponseEntity<ProblemDetail> handleLeaveCreationNotAllowed(LeaveCreationNotAllowedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+        problemDetail.setTitle("Solicitud no permitida");
+        problemDetail.setType(URI.create("https://api.rrhh.iw/errors/leave-creation-not-allowed"));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(problemDetail);
+    }
+
     @ExceptionHandler(LeaveApprovalNotAllowedException.class)
     public ResponseEntity<ProblemDetail> handleLeaveApprovalNotAllowed(LeaveApprovalNotAllowedException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());

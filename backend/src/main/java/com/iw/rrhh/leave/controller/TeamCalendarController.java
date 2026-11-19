@@ -15,7 +15,7 @@ import java.time.YearMonth;
 
 @RestController
 @RequestMapping("/leave")
-@PreAuthorize("hasRole('RESPONSABLE_EQUIPO')")
+@PreAuthorize("hasAnyRole('RESPONSABLE_EQUIPO','DIRECCION_GENERAL')")
 @Tag(name = "TeamCalendar", description = "Calendario de ausencias del equipo del responsable (HU-06)")
 public class TeamCalendarController {
 

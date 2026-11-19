@@ -71,7 +71,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
 
         // Reglas de alcance (Art. 10):
         // RRHH: acceso total
-        // RESPONSABLE_EQUIPO: solo si es él mismo o de su equipo supervisado
+        // RESPONSABLE_EQUIPO y DIRECCION_GENERAL: solo si es él mismo o de su equipo directo
         // EMPLEADO: solo si es él mismo
         if (role == UserRole.RRHH) {
             return calculateBalance(target, year);
@@ -81,7 +81,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
             return calculateBalance(target, year);
         }
 
-        if (role == UserRole.RESPONSABLE_EQUIPO) {
+        if (role == UserRole.RESPONSABLE_EQUIPO || role == UserRole.DIRECCION_GENERAL) {
             if (target.getManager() != null && target.getManager().getId().equals(caller.getId())) {
                 return calculateBalance(target, year);
             }

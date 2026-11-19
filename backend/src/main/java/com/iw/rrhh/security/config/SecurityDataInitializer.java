@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Component
 public class SecurityDataInitializer implements CommandLineRunner {
@@ -162,6 +163,52 @@ public class SecurityDataInitializer implements CommandLineRunner {
                         employeeRepository.save(emp);
                         log.info("Asignado responsable de equipo a {}", empUsername);
                     }));
+
+            // 5. Dirección General (HU-05 FR-017): cúspide de la jerarquía; todo el resto tiene responsable
+            String direccionUsername = "direccion@empresa.com";
+            User direccionUser = userRepository.findByUsername(direccionUsername).orElseGet(() -> {
+                User u = new User(direccionUsername, passwordEncoder.encode(defaultPassword), UserRole.DIRECCION_GENERAL);
+                return userRepository.save(u);
+            });
+
+            String direccionNationalId = "22222222J";
+            if (employeeRepository.findByUserId(direccionUser.getId()).isEmpty()
+                    && !employeeRepository.existsByEmail(direccionUsername)
+                    && !employeeRepository.existsByNationalId(direccionNationalId)) {
+                Employee direccion = new Employee();
+                direccion.setUser(direccionUser);
+                direccion.setFirstName("Elena");
+                direccion.setLastName("Vidal Ortega");
+                direccion.setNationalId(direccionNationalId);
+                direccion.setEmail(direccionUsername);
+                direccion.setHireDate(LocalDate.of(2019, 1, 1));
+                direccion = employeeRepository.save(direccion);
+
+                contractRecordRepository.save(new ContractRecord(
+                        direccion,
+                        LocalDate.of(2019, 1, 1),
+                        "Dirección General",
+                        "Dirección",
+                        new BigDecimal("70000.00"),
+                        agreement,
+                        null,
+                        "SYSTEM"));
+                log.info("Inicializada ficha de Dirección General para {}", direccionUsername);
+            }
+
+            // 6. Dirección General es el responsable de RRHH y del responsable de equipo de pruebas (solo si faltan)
+            final List<User> directReportsOfDireccion = List.of(userRepository.findByUsername(rrhhUsername).orElseThrow(), managerUser);
+            employeeRepository.findByUserId(direccionUser.getId()).ifPresent(dg -> {
+                for (User subordinate : directReportsOfDireccion) {
+                    employeeRepository.findByUserId(subordinate.getId())
+                            .filter(emp -> emp.getManager() == null)
+                            .ifPresent(emp -> {
+                                emp.setManager(dg);
+                                employeeRepository.save(emp);
+                                log.info("Asignada Dirección General como responsable de {}", subordinate.getUsername());
+                            });
+                }
+            });
         } catch (Exception ex) {
             log.warn("Advertencia durante la inicialización de datos de seguridad: {}", ex.getMessage());
         }

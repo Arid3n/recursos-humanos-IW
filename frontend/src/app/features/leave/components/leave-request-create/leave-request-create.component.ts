@@ -12,7 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { LeaveService } from '../../services/leave.service';
-import { CreateLeaveRequest, LeaveBalanceResponse, LeaveType, WorkingDaysCalculationResponse } from '../../models/leave.models';
+import { CreateLeaveRequest, LeaveBalanceResponse, LeaveEligibility, LeaveType, WorkingDaysCalculationResponse } from '../../models/leave.models';
 
 @Component({
   selector: 'app-leave-request-create',
@@ -36,6 +36,8 @@ export class LeaveRequestCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly leaveService = inject(LeaveService);
 
+  /** Null mientras se consulta; si canRequest es falso se muestra el motivo en lugar del formulario (HU-05 FR-015, FR-017). */
+  readonly eligibility = signal<LeaveEligibility | null>(null);
   readonly balance = signal<LeaveBalanceResponse | null>(null);
   readonly loadingBalance = signal<boolean>(false);
   readonly workingDaysInfo = signal<WorkingDaysCalculationResponse | null>(null);
@@ -55,6 +57,11 @@ export class LeaveRequestCreateComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.leaveService.getEligibility().subscribe({
+      next: (e) => this.eligibility.set(e),
+      // Si falla la consulta se muestra el formulario: el servidor aplica la misma regla al crear
+      error: () => this.eligibility.set({ canRequest: true, reason: null })
+    });
     this.loadCurrentBalance();
     this.setupDateListeners();
     this.setupTypeListener();
