@@ -1,7 +1,7 @@
 # Quickstart: spec-005 — Aprobación o Rechazo de Solicitudes
 
 **Feature**: `spec-005` (HU-05)
-**Date**: 2026-11-03 · **Revisado**: 2026-11-16
+**Date**: 2026-11-03 · **Revisado**: 2026-11-18
 **Author**: Integrante 3
 
 ---
@@ -14,7 +14,8 @@
 - Usuarios de desarrollo (contraseña `admin123`, ver `research.md` §1.9):
   - `responsable@empresa.com` — `RESPONSABLE_EQUIPO`, responsable de `empleado@empresa.com`
   - `empleado@empresa.com` — `EMPLEADO`
-  - `rrhh@empresa.com` — `RRHH` (no pertenece al equipo; útil para pruebas negativas)
+  - `rrhh@empresa.com` — `RRHH` (no pertenece al equipo; sin superior: no puede solicitar ausencias, FR-015)
+  - `direccion@empresa.com` — `DIRECCION_GENERAL` (nuevo en el *seed*, 2026-11-18), superior de `responsable@empresa.com`; no solicita ausencias (FR-017)
 - Contrato de referencia: [contracts/leave-resolution-api.yaml](contracts/leave-resolution-api.yaml) · Modelo: [data-model.md](data-model.md)
 
 **Preparación**: como `empleado@empresa.com`, crear desde "Solicitar Ausencia" (HU-03) dos solicitudes de vacaciones en fechas distintas y un permiso.
@@ -78,12 +79,26 @@ curl -i -u rrhh@empresa.com:admin123 -X POST \
 ### Escenario 10 — Solicitud propia del responsable (HU-05.CA-1, Art. 10)
 1. Como `responsable@empresa.com`, crear una solicitud propia (HU-03).
 2. **Esperado**: no aparece en su bandeja; `POST .../approve` o `.../reject` sobre ella devuelve `403` y queda un `WARN` de auditoría.
-3. Con el superior del responsable (si existe y tiene rol `RESPONSABLE_EQUIPO`) sí aparece en su bandeja y puede resolverla.
-4. Si el responsable no tiene superior, o su superior no tiene ese rol, la solicitud queda `PENDING` y nadie puede resolverla en HU-05 (límite conocido; mejora pendiente en HU-01).
+3. Con el superior del responsable (`direccion@empresa.com`, `DIRECCION_GENERAL`) sí aparece en su bandeja y puede resolverla.
+4. Un responsable sin superior válido no puede crear solicitudes (FR-015, escenario 12).
 
 ### Escenario 11 — Solicitud retirada (HU-05.CA-3)
 1. Con la bandeja abierta, el empleado cancela la solicitud (HU-04).
 2. Aprobar desde la bandeja → `404`; la bandeja se recarga y la fila desaparece.
+
+### Escenario 12 — Sin resolutor válido (FR-015)
+1. Con un empleado sin superior preparado por *fixture* (en el seed solo `direccion@empresa.com` carece de él): «Solicitar Ausencia» muestra «no tienes un responsable asignado». `POST /leave/requests` → `422`.
+2. Repetir con un empleado cuyo superior está dado de baja o no tiene rol de responsable → `422`.
+
+### Escenario 13 — Superior que deja de ser válido (FR-016)
+1. Con una solicitud `PENDING` de `empleado@empresa.com`, RRHH da de baja a `responsable@empresa.com` (HU-01).
+2. La solicitud pasa a `CANCELLED` (no se borra), el empleado recibe una única notificación (una por empleado, aunque tuviera varias pendientes) con el motivo y ya no puede crear otra hasta que se le asigne un superior válido.
+3. Las variaciones de contrato no están soportadas hoy: no hay otro disparador.
+
+### Escenario 14 — Dirección General (FR-017)
+1. Como `direccion@empresa.com`: el menú oculta «Solicitar Ausencia» y «Mis Solicitudes»; por URL, «Dirección General no solicita ausencias»; `POST /leave/requests` → `422`.
+2. Ve en la bandeja y el calendario sólo las solicitudes de `responsable@empresa.com` (su subordinado directo); puede aprobarlas o rechazarlas. Una solicitud ajena → `403`.
+3. Aprobar una solicitud de `VACATION` funciona (la revalidación de saldo no da `403`).
 
 ---
 
@@ -102,3 +117,4 @@ cd frontend && npx ng test --watch=false
 | Regresión | Suites de HU-03/HU-04 siguen en verde con `V3` aplicada. |
 | HU-05.CA-4 | Notificación creada en la resolución; listado, contador y marcado propios; `403` sobre notificación ajena; *rollback* conjunto si falla la notificación. |
 | HU-05.CA-5 | Saldo derivado refleja la aprobación (también el de **ambos** años en una solicitud que cruza años, con la regla de reparto); saldo insuficiente → `422`; cruce de años validado año a año; año cerrado → `422`; aprobaciones concurrentes no dejan saldo negativo. |
+| FR-015 / FR-016 / FR-017 (2026-11-18) | `LeaveResolverPolicy` (casos: sin superior, inactivo, sin rol, autorreferencia, `DIRECCION_GENERAL`); `422` en creación; cancelación automática y una notificación por empleado al dar de baja al superior; `DIRECCION_GENERAL` resuelve (con saldo) y ve el calendario, `403` fuera de su equipo; `V7` aplicada; frontend: menú oculto, guard y mensaje de elegibilidad. |

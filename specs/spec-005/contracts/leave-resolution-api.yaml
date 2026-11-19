@@ -5,7 +5,7 @@ info:
     Bandeja de solicitudes pendientes del equipo, aprobación/rechazo atómico por el responsable
     y consulta de notificaciones internas por el empleado en sesión.
     La identidad se obtiene siempre de la sesión (Art. 10); nunca de parámetros del cliente.
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: /api/v1
 security:
@@ -15,7 +15,7 @@ paths:
   /leave/team-requests:
     get:
       summary: Solicitudes pendientes del equipo del responsable en sesión
-      description: Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
+      description: Roles RESPONSABLE_EQUIPO y DIRECCION_GENERAL. Devuelve solo solicitudes en estado PENDING de empleados cuyo responsable es el usuario en sesión, ordenadas por antigüedad (createdAt ASC).
       operationId: getTeamPendingRequests
       tags: [Leave Resolution]
       parameters:
@@ -116,6 +116,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
+  /leave/requests/eligibility:
+    get:
+      summary: Indica si el usuario en sesión puede crear solicitudes de ausencia
+      description: |
+        Falso si no tiene resolutor válido (sin superior, superior inactivo o sin rol de responsable/dirección; FR-015)
+        o si es de Dirección General (FR-017). La creación real aplica la misma regla y responde 422.
+      operationId: getLeaveEligibility
+      tags: [Leave Resolution]
+      responses:
+        '200':
+          description: Elegibilidad del usuario en sesión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveEligibilityResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /notifications:
     get:
       summary: Notificaciones del empleado en sesión (más recientes primero)
@@ -206,7 +224,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
     NotFound:
-      description: El recurso no existe (p. ej. solicitud retirada por el empleado: HU-04 la pasa a `CANCELLED` y HU-05 la trata como inexistente).
+      description: "El recurso no existe (p. ej. solicitud retirada por el empleado: HU-04 la pasa a `CANCELLED` y HU-05 la trata como inexistente)."
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
@@ -277,6 +295,16 @@ components:
         message: { type: string, example: 'Tu solicitud de Vacaciones del 01/12/2026 al 05/12/2026 ha sido rechazada. Motivo: Coincide con la entrega del proyecto.' }
         read: { type: boolean }
         createdAt: { type: string, format: date-time }
+
+    LeaveEligibilityResponse:
+      type: object
+      required: [canRequest]
+      properties:
+        canRequest: { type: boolean }
+        reason:
+          type: string
+          nullable: true
+          description: "Motivo cuando canRequest es false (p. ej. 'No tienes un responsable asignado' o 'Dirección General no solicita ausencias')."
 
     UnreadCountResponse:
       type: object

@@ -104,6 +104,8 @@
 
 ### 1.15 Resolutor de un responsable sin superior válido (aclaración C7, 2026-11-16)
 
+> **Sustituida el 2026-11-18** por FR-015 (se bloquea la creación sin resolutor válido) y FR-017 (rol `DIRECCION_GENERAL`): ya no quedan solicitudes `PENDING` sin resolutor. Se conserva como histórico.
+
 - **Decisión**: Sin cambios de código en HU-05: resuelve el `manager` directo con rol `RESPONSABLE_EQUIPO` (el `@PreAuthorize` ya lo exige). Sin superior, o con superior sin ese rol, la solicitud queda `PENDING` sin resolutor (límite conocido). HU-01 acepta hoy cualquier empleado como `managerId` sin validar su rol: mejora pendiente fuera de HU-05.
 - **Alternativas consideradas**: bandeja de RRHH (descartada en la aclaración); rechazar en HU-03 si no hay resolutor válido (descartado).
 
@@ -113,6 +115,36 @@
 - El servicio Angular, ante `409` o `404`, recarga la bandeja y muestra el mensaje en `MatSnackBar`; ante `422`, muestra el `detail` del ProblemDetail (saldo o año cerrado) y mantiene la fila.
 
 ---
+
+### 1.16 Resolutor válido y bloqueo de creación (FR-015, aclaración 2026-11-18)
+
+- **Decisión**: Componente único `LeaveResolverPolicy.hasValidResolver(Employee)` → `true` si `manager != null`, `manager.active`, `manager.id != employee.id` y el rol del usuario del superior es `RESPONSABLE_EQUIPO` o `DIRECCION_GENERAL`. HU-03 (`createLeaveRequest`) lo invoca antes de persistir y lanza `LeaveCreationNotAllowedException` → `422` («no tienes un responsable asignado»). Un usuario `DIRECCION_GENERAL` también recibe `422` (FR-017) con otro mensaje.
+- **Alternativas**: validar en el controlador (descartada, Art. 10: la regla va en el servicio); duplicar la regla en HU-01 (descartada, Art. 14.3 por analogía: una sola implementación).
+
+### 1.17 Elegibilidad para la interfaz (FR-015, FR-017)
+
+- **Decisión**: `GET /leave/requests/eligibility` → `{canRequest: boolean, reason: string|null}` con la identidad de la sesión. La pantalla de solicitud lo consulta y, si `canRequest=false`, muestra el mensaje en lugar del formulario. Para `DIRECCION_GENERAL` el menú ya oculta los enlaces (§1.21).
+- **Alternativa**: derivarlo en el cliente con los datos del perfil (descartada: duplica la regla y expone datos del superior).
+
+### 1.18 Cancelación automática (FR-016)
+
+- **Decisión**: `LeaveRequestAutoCancelService.cancelPendingOf(Employee, reason)`: carga las `PENDING` del empleado, aplica `LeaveRequest.cancel(now)` (HU-04), crea una única `Notification` por empleado (agrupa todas sus solicitudes canceladas) con el motivo, y registra un `INFO` de auditoría (Art. 20.5) sin datos personales. No se crean estados nuevos ni se borra ninguna fila.
+- **Concurrencia**: usa el mismo bloqueo pesimista del empleado que la resolución (§1.3) para no cruzarse con una aprobación simultánea; si la aprobación gana, la solicitud ya no es `PENDING` y no se toca.
+
+### 1.19 Dónde se dispara (aclaración 2026-11-18, opción A)
+
+- **Decisión**: en la transacción de HU-01. `deactivateEmployee(id)`: tras desactivar, `cancelPendingOf` para cada subordinado directo activo. Las variaciones de contrato no están soportadas hoy (decidido 2026-11-18): fuera de alcance, y con ellas el caso de las variaciones con fecha futura.
+- **Impacto**: dependencia `employee` → `leave` (registrada en *Complexity Tracking*).
+
+### 1.20 Rol `DIRECCION_GENERAL` (FR-017)
+
+- **Decisión**: nuevo valor en `UserRole`; migración `V7__direccion_general_role.sql` (`DROP CONSTRAINT chk_user_role` + `ADD CONSTRAINT` con los cuatro valores). `@PreAuthorize("hasAnyRole('RESPONSABLE_EQUIPO','DIRECCION_GENERAL')")` en `LeaveResolutionController` y `TeamCalendarController`. `LeaveBalanceServiceImpl` trata `DIRECCION_GENERAL` como `RESPONSABLE_EQUIPO` para el saldo de su equipo (necesario para la revalidación al aprobar). Alcance idéntico (Art. 10): sólo subordinados directos.
+- **Alta del rol** (decidido 2026-11-18; sin comprobar el puesto: se elimina `isTopManagement` de `createEmployee`, todo empleado salvo Dirección General tiene responsable; el alta exige `withoutManager=true` explícito: un `managerId` ausente sin él, o ambos a la vez, es `400`): al dar de alta, si RRHH elige la opción «Sin responsable (solo Dirección General)» del campo «Responsable de equipo» (`managerId` nulo), HU-01 crea el usuario con rol `DIRECCION_GENERAL`. *Seed*: `direccion@empresa.com`, superior de `responsable@empresa.com` y de `rrhh@empresa.com`.
+- **Fuera de alcance**: Evaluaciones de desempeño (HU-08) y listados de empleados no cambian; si hace falta, spec propia.
+
+### 1.21 Frontend (2026-11-18)
+
+- `UserRole` incluye `'DIRECCION_GENERAL'` y etiqueta «Dirección General»; `AuthService.isDireccionGeneral`. Bandeja y calendario se muestran con `isResponsable() || isDireccionGeneral()`. El menú oculta «Solicitar Ausencia» y «Mis Solicitudes» para `DIRECCION_GENERAL`; por URL, un guard muestra «Dirección General no solicita ausencias». La pantalla de solicitud consulta la elegibilidad (§1.17).
 
 ## 2. Cobertura de la Constitución
 

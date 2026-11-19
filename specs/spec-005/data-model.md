@@ -81,6 +81,16 @@ No se restringen `resolved_by`/`resolved_at` en BD (compatibilidad con *fixtures
 
 ---
 
+### 2.3 `V7__direccion_general_role.sql` (nueva, 2026-11-18)
+
+```sql
+ALTER TABLE users DROP CONSTRAINT chk_user_role;
+ALTER TABLE users ADD CONSTRAINT chk_user_role
+    CHECK (role IN ('EMPLEADO', 'RESPONSABLE_EQUIPO', 'RRHH', 'DIRECCION_GENERAL'));
+```
+
+Sin cambios de columnas. La cancelación automática reutiliza `leave_requests.status = 'CANCELLED'` (V5) y la tabla `notifications`.
+
 ## 3. DTOs (records)
 
 ### 3.1 Entrada
@@ -156,7 +166,10 @@ Listados paginados con el `PageResponse<T>` común existente.
 
 | Regla | Origen | Error |
 |---|---|---|
-| Solo rol `RESPONSABLE_EQUIPO` accede a bandeja y resolución | Art. 10 | `403` |
+| Solo roles `RESPONSABLE_EQUIPO` y `DIRECCION_GENERAL` acceden a bandeja y resolución | Art. 10, FR-017 | `403` |
+| Crear solicitud exige resolutor válido (superior activo, distinto, rol `RESPONSABLE_EQUIPO`/`DIRECCION_GENERAL`) | FR-015 (2026-11-18) | `422` |
+| `DIRECCION_GENERAL` no crea solicitudes | FR-017 | `422` |
+| Superior que deja de ser válido: `PENDING` → `CANCELLED` + notificación, misma transacción de HU-01 | FR-016 | — |
 | La solicitud debe ser de un miembro directo del responsable en sesión | FR-001, FR-006 | `403` |
 | Nadie resuelve sus propias solicitudes (`request.employee.id == resolver.id`) | FR-006 (2026-11-16) | `403` + `WARN` de auditoría |
 | La solicitud debe existir (retirada por el empleado = estado `CANCELLED` en HU-04; se trata como inexistente) | Edge case retirada, FR-004b | `404` |

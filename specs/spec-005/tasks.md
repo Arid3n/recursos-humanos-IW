@@ -2,7 +2,7 @@
 
 **Feature**: `spec-005` (HU-05) · **Revisado**: 2026-11-16 (tras `/speckit-clarify` y `/speckit-plan` de esa fecha)
 
-> **Estado**: T001–T032 corresponden a la implementación previa a las aclaraciones de 2026-11-16 y se conservan marcadas. Las tareas T033–T052 (Phase 6, incluye el ajuste del saldo de HU-02 por la aclaración C5; sus IDs T050–T052 no son correlativos con T044 porque se añadieron después) y T045–T049 (Phase 7) añaden lo que cambian las aclaraciones: auto-resolución, saldo por año natural, año cerrado, `422`, límite de 500 caracteres. Donde una tarea antigua contradice las aclaraciones lleva la nota «**Revisada**» y la tarea nueva que la corrige. N1 (HU-03 sin validación por año) queda como límite conocido; sin tarea en HU-05 (ver `plan.md`, Complexity Tracking). T053 (añadida tras `/speckit-analyze`) inyecta `Clock` en el saldo de HU-02.
+> **Estado**: T001–T032 corresponden a la implementación previa a las aclaraciones de 2026-11-16 y se conservan marcadas. Las tareas T033–T052 (Phase 6, incluye el ajuste del saldo de HU-02 por la aclaración C5; sus IDs T050–T052 no son correlativos con T044 porque se añadieron después) y T045–T049 (Phase 7) añaden lo que cambian las aclaraciones: auto-resolución, saldo por año natural, año cerrado, `422`, límite de 500 caracteres. Donde una tarea antigua contradice las aclaraciones lleva la nota «**Revisada**» y la tarea nueva que la corrige. N1 (HU-03 sin validación por año) queda como límite conocido; sin tarea en HU-05 (ver `plan.md`, Complexity Tracking). T053 (añadida tras `/speckit-analyze`) inyecta `Clock` en el saldo de HU-02. T054–T056 (Phase 8) son de `/speckit-converge`. T057–T082 (Phase 9, 2026-11-18) añaden FR-015 (bloqueo sin resolutor válido), FR-016 (cancelación automática) y FR-017 (rol `DIRECCION_GENERAL`).
 
 **Input**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/leave-resolution-api.yaml](contracts/leave-resolution-api.yaml), [quickstart.md](quickstart.md)
 
@@ -174,6 +174,7 @@
 - **Polish (Phase 5)**: depende de US1 y US2.
 - **Refinamiento (Phase 6)**: depende de Phases 1–4 (código previo). Dentro: T033–T036 y T050 antes de T037–T044 y T051–T052; T053 antes de T050, T052 y T035; T038 y T040 antes de T041; T039 antes de T041; T041 antes de T035 en verde; T043–T044 antes de T036 en verde.
 - **Polish 2 (Phase 7)**: depende de Phase 6.
+- **Phase 9 (2026-11-18)**: T057–T060 (Constitución y specs, Art. 1.3 y 27) bloquean todo el código de la fase; tests T061–T067 y T083 antes de la implementación T068–T079 y T084 (T084 después de T069 y T076) (deben FALLAR); T068 (V7) y T069 (`UserRole`) antes de T070–T075; T070 antes de T071–T073; T073 antes de T065 en verde; T076 antes de T077–T079; Polish T080–T082 al final.
 
 ### Within Each User Story
 
@@ -258,3 +259,58 @@ Task: "T017 ResolveRequestDialogComponent"
 - [X] T054 [US1] Make the server-side length validation of the reject reason and approve comment operate on the trimmed text and report field errors, in `backend/src/main/java/com/iw/rrhh/leave/dto/RejectLeaveRequest.java` and `ApproveLeaveRequest.java` (e.g. trim-aware constraint or compact constructor) and drop the `IllegalArgumentException` fallback in `LeaveResolutionServiceImpl.reject`: today `@Size` runs on the untrimmed value, so `"  abc  "` passes the DTO and returns `400` without `invalidFields.reason`, and a 500-char reason with surrounding spaces is rejected. Add to `LeaveResolutionIntegrationTest.java` (`HU-05.CA-2`): `"  abc  "` → `400` with `invalidFields.reason`; 500 chars + surrounding spaces → `200`; same for approve comment (`invalidFields.comment` only when the trimmed text exceeds 500) per FR-003 (partial)
 - [X] T055 [P] [US1] Add integration test in `backend/src/test/java/com/iw/rrhh/leave/LeaveResolutionIntegrationTest.java`: after `POST .../reject` with a reason, the employee calls the HU-04 endpoint (my requests) and sees status `REJECTED` and the same `rejectionReason`; an approve comment is not exposed as a rejection (`HU-05.CA-2`, US1/AC3, FR-005) (partial: only an HU-04 test with a hand-built fixture exists, not the HU-05 → HU-04 flow)
 - [X] T056 [P] [US1] Add audit-log tests (log appender capture) in `backend/src/test/java/com/iw/rrhh/leave/LeaveResolutionServiceTest.java`: approve and reject emit one `INFO` line with request id, status and resolver UUID; out-of-scope and self-resolution attempts emit `WARN` "Acceso denegado"; no log line contains employee name, reason or comment (`HU-05.CA-1`, FR-013, Art. 20.4-20.5) per FR-013 (partial: behavior implemented, no test)
+
+---
+
+## Phase 9: Resolutor válido, cancelación automática y Dirección General (2026-11-18)
+
+**Purpose**: Implementar FR-015, FR-016 y FR-017 (`spec.md` sesión 2026-11-18; `plan.md` «Decisiones de la sesión de aclaraciones 2026-11-18»). Primero Constitución y specs (Art. 1.3 y 27), después tests (deben FALLAR), después implementación.
+
+**Goal**: (1) sin resolutor válido no se pueden crear solicitudes; (2) si el superior deja de ser válido, las `PENDING` pasan a `CANCELLED` con notificación, en la misma transacción de HU-01; (3) rol `DIRECCION_GENERAL`: no solicita, sí resuelve y ve el calendario de sus subordinados directos.
+
+**Independent Test**: quickstart escenarios 12–14.
+
+### Gobierno: Constitución y specs (bloquea el código de esta fase)
+
+> T057–T060 van en su propio commit/PR, antes del código (Art. 27.1).
+
+- [ ] T057 Amend `.specify/memory/constitution.md` (MINOR, Art. 27): add the `DIRECCION_GENERAL` role to Art. 10.1, a row in the Art. 10.4 scope table («solo las personas que lo tienen de superior directo: solicitudes y calendario; no solicita ausencias»), the Annex A term, and a note in Annex B question 11 (Dirección General resolves its direct reports; who approves Dirección General's own absences stays open). Bump the version to 1.1.0 with the amendment date, and register the review of the affected `spec.md`/`plan.md`/`tasks.md` (Art. 27.3).
+- [ ] T058 [P] Update `specs/spec-001/spec.md` (and `plan.md`/`tasks.md` if affected): hiring with the option «Sin responsable (solo Dirección General)» creates the user with role `DIRECCION_GENERAL`; add FR-016 (deactivating a superior cancels the pending requests of their direct reports; contract variations are out of scope). Remove the `isTopManagement` position check from hiring (no manager ⇒ `DIRECCION_GENERAL`; everyone else must have a manager), and require an explicit `withoutManager=true` flag for that case. Also update the files that state the old rule: `specs/spec-001/spec.md` (Clarifications line 16, line 66, FR-011), `data-model.md` (lines 39 and 127) and `analysis.md` (line 42). `EmployeeServiceImpl.addContractVariation` keeps its own `isTopManagement` check: contract variations are out of scope, so it is a leftover, not a change. Record that role validation at superior assignment stays a pending improvement.
+- [ ] T059 [P] Update `specs/spec-003/spec.md` (and `plan.md`/`tasks.md` if affected): add FR-015 (creation blocked with `422` and the message «no tienes un responsable asignado» when there is no valid resolver) and FR-017 (`DIRECCION_GENERAL` cannot create requests); add the eligibility endpoint to its contract.
+- [ ] T060 [P] Update `specs/spec-006/spec.md` and `contracts/team-calendar-api.yaml`: the calendar endpoint accepts `DIRECCION_GENERAL` with the same scope (direct reports); add the test case to its quickstart.
+
+### Tests (escribir primero, verificar que FALLAN)
+
+- [ ] T061 [P] [US1] Unit tests for `LeaveResolverPolicy` in `backend/src/test/java/com/iw/rrhh/leave/LeaveResolverPolicyTest.java`: no manager, inactive manager, manager without manager role (`EMPLEADO`, `RRHH`), self-referencing manager, valid `RESPONSABLE_EQUIPO`, valid `DIRECCION_GENERAL`.
+- [ ] T062 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestServiceTest.java`: `createLeaveRequest` throws `LeaveCreationNotAllowedException` when the caller has no valid resolver and when the caller has role `DIRECCION_GENERAL` (even with a valid manager); nothing is persisted; valid resolver still creates.
+- [ ] T063 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestIntegrationTest.java` (Testcontainers + MockMvc): `POST /leave/requests` → `422` problem+json with the message for no resolver, and for `DIRECCION_GENERAL`; `GET /leave/requests/eligibility` → `canRequest` true/false with `reason`; `401` without session.
+- [ ] T064 [P] [US1] Unit tests (Mockito, fixed `Clock`) for `LeaveRequestAutoCancelService` in `backend/src/test/java/com/iw/rrhh/leave/LeaveRequestAutoCancelServiceTest.java`: only `PENDING` requests become `CANCELLED` (`APPROVED`/`REJECTED` untouched), one notification per employee with the reason, one `INFO` audit line without personal data, no row deleted.
+- [ ] T065 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/employee/EmployeeIntegrationTest.java`: deactivating a manager cancels the pending requests of their direct reports and notifies them; one notification per employee even with several pending requests; a failure in the cancellation rolls back the HU-01 change (Art. 13.7).
+- [ ] T066 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/leave/LeaveResolutionIntegrationTest.java` and `TeamCalendarIntegrationTest.java`: a `DIRECCION_GENERAL` user lists, approves (vacation with balance check, no `403` from the balance service) and rejects requests of direct reports, `403` for requests outside their team and for their own; the calendar returns only their direct reports; `EMPLEADO` and `RRHH` keep getting `403`; the `V7` constraint accepts the new role.
+- [ ] T067 [P] [US1] Frontend specs: `auth.service.spec.ts` (`isDireccionGeneral`), `app` menu spec (hides «Solicitar Ausencia» and «Mis Solicitudes» for `DIRECCION_GENERAL`, shows the inbox and calendar links), guard spec (URL access shows «Dirección General no solicita ausencias»), `leave-request-create` spec (eligibility `canRequest=false` shows the reason instead of the form).
+- [ ] T083 [P] [US1] Extend `backend/src/test/java/com/iw/rrhh/employee/EmployeeIntegrationTest.java` (negative tests first): `POST` hiring without `managerId` and without `withoutManager` → `400`; with `withoutManager=true` → user with role `DIRECCION_GENERAL`; with both `managerId` and `withoutManager=true` → `400`; with `managerId` → role `EMPLEADO`. Add `withoutManager` to `CreateEmployeeRequest` (T069).
+
+### Backend Implementation
+
+- [ ] T068 [P] [US1] Create Flyway migration `backend/src/main/resources/db/migration/V7__direccion_general_role.sql` (drop and recreate `chk_user_role` with `EMPLEADO`, `RESPONSABLE_EQUIPO`, `RRHH`, `DIRECCION_GENERAL`, see `data-model.md` §2.3).
+- [ ] T069 [P] [US1] Add `DIRECCION_GENERAL` to `backend/src/main/java/com/iw/rrhh/security/domain/UserRole.java`; in `EmployeeServiceImpl.createEmployee` create the user with that role when no `managerId` is given, i.e. RRHH picked «Sin responsable (solo Dirección General)» in the form (T058 defines the rule; the request carries `withoutManager=true`, see T083); remove the `isTopManagement` position check from `createEmployee`, adapting the HU-01 tests that expect `400` for a non-director without manager.
+- [ ] T070 [US1] Create `LeaveResolverPolicy` (`hasValidResolver(Employee)`) in `backend/src/main/java/com/iw/rrhh/leave/service/LeaveResolverPolicy.java` (T061).
+- [ ] T071 [US1] Create `LeaveCreationNotAllowedException` in `backend/src/main/java/com/iw/rrhh/common/exception/`, map it to `422` in `GlobalExceptionHandler`, and call the policy and the role check at the start of `LeaveRequestServiceImpl.createLeaveRequest` (T062, T063).
+- [ ] T072 [US1] Add `GET /leave/requests/eligibility` to `LeaveRequestController` with `LeaveEligibilityResponse(canRequest, reason)` and the matching service method (T063).
+- [ ] T073 [US1] Create `LeaveRequestAutoCancelService` in `backend/src/main/java/com/iw/rrhh/leave/service/`; add `EmployeeRepository.findByManagerId...` and the `PENDING` finder in `LeaveRequestRepository`; call it from `EmployeeServiceImpl.deactivateEmployee` as in `research.md` §1.19 (contract variations out of scope; one notification per employee), in the same transaction (T064, T065).
+- [ ] T074 [P] [US1] Change `@PreAuthorize` to `hasAnyRole('RESPONSABLE_EQUIPO','DIRECCION_GENERAL')` in `LeaveResolutionController` and `TeamCalendarController`; in `LeaveBalanceServiceImpl.getEmployeeLeaveBalance` give `DIRECCION_GENERAL` the same hierarchy access as `RESPONSABLE_EQUIPO` (T066).
+- [ ] T075 [P] [US1] Seed data: in `SecurityDataInitializer` add `direccion@empresa.com` (`DIRECCION_GENERAL`, no superior, password `admin123`) as superior of `responsable@empresa.com` and `rrhh@empresa.com` (every employee but Dirección General has a manager; re-check the HU-01 to HU-08 tests that assume `rrhh@` has no superior); create the `Employee` and `ContractRecord` of `direccion@` like the other seed users, and assign the superior of the existing `rrhh@` and `responsable@` only when missing (idempotent, also for an existing dev DB); update `research.md` §1.9 and `quickstart.md` if the credentials differ.
+
+### Frontend Implementation
+
+- [ ] T076 [US1] Add `'DIRECCION_GENERAL'` to `frontend/src/app/core/models/auth.models.ts` (type and label «Dirección General»); add `isDireccionGeneral` to `AuthService`; update `app.html` and `landing.component.ts` so the inbox and calendar show for `isResponsable() || isDireccionGeneral()` and the two absence links are hidden for `DIRECCION_GENERAL` (T067).
+- [ ] T077 [US1] Add a route guard in `frontend/src/app/core/guards/auth.guard.ts` for the absence routes: `DIRECCION_GENERAL` sees the message «Dirección General no solicita ausencias»; allow the inbox and calendar routes for the new role (T067).
+- [ ] T078 [US1] In `leave-request-create`, call the eligibility endpoint through the leave service and show `reason` instead of the form when `canRequest` is false (T067).
+- [ ] T079 [P] [US1] Check that the leave list, team pending requests and team calendar screens render for `DIRECCION_GENERAL` without role-specific text; fix any remaining `isResponsable()`-only conditions found with a search.
+- [ ] T084 [P] [US1] In `frontend/src/app/employees/components/employee-create/employee-create.component.ts` send `withoutManager: true` when the option «Sin responsable (solo Dirección General)» is chosen and `managerId` otherwise; add a spec for both payloads.
+
+### Polish
+
+- [ ] T080 Run the full suites: `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` and `cd frontend && npx ng test --watch=false`; all green, no regression in HU-01 to HU-08 (Docker must be up).
+- [ ] T081 Validate quickstart scenarios 12–14 manually (frontend in Chrome, API with `curl`), and record the result in this file.
+- [ ] T082 Definition of Done check (Art. 24.3) and update the status of `spec.md` of spec-005, spec-001, spec-003 and spec-006; update the Obsidian notes.
