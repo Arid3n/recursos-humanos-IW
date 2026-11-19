@@ -9,7 +9,8 @@ import {
   WorkingDaysCalculationResponse,
   LeaveRequestSummary,
   PageResponse,
-  LeaveStatus
+  LeaveStatus,
+  LeaveEligibility
 } from '../models/leave.models';
 
 @Injectable({
@@ -48,6 +49,10 @@ export class LeaveService {
       .set('startDate', startDate)
       .set('endDate', endDate);
     return this.http.get<WorkingDaysCalculationResponse>(`${this.apiUrl}/requests/calculate-days`, { params });
+  }
+
+  getEligibility(): Observable<LeaveEligibility> {
+    return this.http.get<LeaveEligibility>(`${this.apiUrl}/requests/eligibility`);
   }
 
   createLeaveRequest(request: CreateLeaveRequest): Observable<LeaveRequestResponse> {

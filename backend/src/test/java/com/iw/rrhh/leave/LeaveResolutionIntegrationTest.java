@@ -628,4 +628,103 @@ class LeaveResolutionIntegrationTest {
                 .andExpect(jsonPath("$.days[?(@.date=='2026-12-01')].events[0].employeeName", contains("Marta Miembro A")))
                 .andExpect(jsonPath("$.days[?(@.date=='2026-12-10')].absentCount", contains(0)));
     }
+
+    // ---- HU-05 fase 9 (FR-017): Dirección General resuelve como un responsable ----
+
+    private static final String DIRECCION = "direccion.resolucion@empresa.com";
+
+    /** Dirección General como superior directo de managerA (jerarquía: DG → managerA → memberA). */
+    private Employee direccionGeneralAboveManagerA() {
+        Employee dg = employee(DIRECCION, UserRole.DIRECCION_GENERAL, "Diana", "Dirección General", "30000090Q", null);
+        managerA.setManager(dg);
+        employeeRepository.save(managerA);
+        return dg;
+    }
+
+    private static RequestPostProcessor asDireccionGeneral() {
+        return as(DIRECCION, UserRole.DIRECCION_GENERAL);
+    }
+
+    @Test
+    @DisplayName("FR-017: la migración V7 admite el rol DIRECCION_GENERAL en users")
+    void v7_acceptsDireccionGeneralRole() {
+        Employee dg = direccionGeneralAboveManagerA();
+
+        assertThat(userRepository.findByUsername(DIRECCION).orElseThrow().getRole()).isEqualTo(UserRole.DIRECCION_GENERAL);
+        assertThat(dg.getId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General ve en su bandeja solo las solicitudes de sus subordinados directos")
+    void direccionGeneral_listsDirectReportsOnly() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest ofManager = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+        pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(get("/leave/team-requests").with(asDireccionGeneral()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(ofManager.getId().toString())));
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General aprueba unas vacaciones de un subordinado directo con revalidación de saldo (sin 403 del saldo)")
+    void direccionGeneral_approvesVacationOfDirectReport() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 3);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("APPROVED")));
+
+        assertThat(leaveRequestRepository.findById(pending.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        assertThat(notificationsOf(managerA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General rechaza con motivo la solicitud de un subordinado directo")
+    void direccionGeneral_rejectsRequestOfDirectReport() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest pending = pendingVacation(managerA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/reject", pending.getId())
+                        .with(asDireccionGeneral())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"No es posible esa semana\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("REJECTED")));
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General recibe 403 al resolver la solicitud de alguien fuera de su equipo directo")
+    void direccionGeneral_forbiddenOutsideDirectTeam() throws Exception {
+        direccionGeneralAboveManagerA();
+        LeaveRequest ofMember = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", ofMember.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isForbidden());
+
+        assertThat(leaveRequestRepository.findById(ofMember.getId()).orElseThrow().getStatus()).isEqualTo(LeaveStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("FR-017: Dirección General recibe 403 al intentar resolver una solicitud propia")
+    void direccionGeneral_forbiddenOnOwnRequest() throws Exception {
+        Employee dg = direccionGeneralAboveManagerA();
+        LeaveRequest own = pendingVacation(dg, LocalDate.of(2026, 12, 1), 1);
+
+        mockMvc.perform(post("/leave/requests/{id}/approve", own.getId()).with(asDireccionGeneral()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("FR-017: el rol RRHH sigue recibiendo 403 en la bandeja y al resolver")
+    void hrRole_stillForbidden() throws Exception {
+        LeaveRequest pending = pendingVacation(memberA, LocalDate.of(2026, 12, 1), 2);
+
+        mockMvc.perform(get("/leave/team-requests").with(as("rrhh.resolucion@empresa.com", UserRole.RRHH)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/leave/requests/{id}/approve", pending.getId()).with(as("rrhh.resolucion@empresa.com", UserRole.RRHH)))
+                .andExpect(status().isForbidden());
+    }
 }

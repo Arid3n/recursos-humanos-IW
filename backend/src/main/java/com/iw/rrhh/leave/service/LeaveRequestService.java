@@ -12,6 +12,9 @@ public interface LeaveRequestService {
 
     LeaveRequestResponse createLeaveRequest(CreateLeaveRequest request);
 
+    /** Si el usuario en sesión puede crear solicitudes (HU-05 FR-015, FR-017). */
+    com.iw.rrhh.leave.dto.LeaveEligibilityResponse getMyEligibility();
+
     com.iw.rrhh.common.dto.PageResponse<com.iw.rrhh.leave.dto.LeaveRequestSummaryResponse> getMyRequests(
             java.security.Principal principal,
             com.iw.rrhh.leave.domain.LeaveStatus status,

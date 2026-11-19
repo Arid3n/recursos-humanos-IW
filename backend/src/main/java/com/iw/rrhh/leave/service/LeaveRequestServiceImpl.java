@@ -37,6 +37,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final LeaveBalanceService leaveBalanceService;
     private final HolidayCalendarService holidayCalendarService;
     private final java.time.Clock clock;
+    private final LeaveResolverPolicy leaveResolverPolicy;
 
     @Autowired
     public LeaveRequestServiceImpl(
@@ -45,7 +46,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             UserRepository userRepository,
             LeaveBalanceService leaveBalanceService,
             HolidayCalendarService holidayCalendarService,
-            java.time.Clock clock
+            java.time.Clock clock,
+            LeaveResolverPolicy leaveResolverPolicy
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
@@ -53,16 +55,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         this.leaveBalanceService = leaveBalanceService;
         this.holidayCalendarService = holidayCalendarService;
         this.clock = clock;
-    }
-
-    public LeaveRequestServiceImpl(
-            LeaveRequestRepository leaveRequestRepository,
-            EmployeeRepository employeeRepository,
-            UserRepository userRepository,
-            LeaveBalanceService leaveBalanceService,
-            HolidayCalendarService holidayCalendarService
-    ) {
-        this(leaveRequestRepository, employeeRepository, userRepository, leaveBalanceService, holidayCalendarService, java.time.Clock.systemUTC());
+        this.leaveResolverPolicy = leaveResolverPolicy;
     }
 
     @Override
@@ -84,6 +77,12 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 breakdown.weekendDays(),
                 breakdown.holidayDays()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.iw.rrhh.leave.dto.LeaveEligibilityResponse getMyEligibility() {
+        throw new UnsupportedOperationException("Pendiente de implementar (T072)");
     }
 
     @Override

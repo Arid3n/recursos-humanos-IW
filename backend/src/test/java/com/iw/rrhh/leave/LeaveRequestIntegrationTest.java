@@ -320,4 +320,110 @@ public class LeaveRequestIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.justification").value("Vacaciones de verano en familia"));
     }
+
+    // ---- HU-05 fase 9 (FR-015, FR-017): resolutor válido y elegibilidad ----
+
+    private CreateLeaveRequest julyRequest() {
+        return new CreateLeaveRequest(LeaveType.VACATION, LocalDate.of(2026, 7, 6), LocalDate.of(2026, 7, 10));
+    }
+
+    private Employee direccionGeneralWithManager(Employee superior) {
+        User dgUser = userRepository.save(new User("direccion.req@empresa.com", "$2a$10$dummyHash", UserRole.DIRECCION_GENERAL));
+        Employee dg = new Employee();
+        dg.setUser(dgUser);
+        dg.setFirstName("Dirección");
+        dg.setLastName("General");
+        dg.setNationalId("55667788D");
+        dg.setEmail("direccion.req@empresa.com");
+        dg.setHireDate(LocalDate.of(2019, 1, 1));
+        dg.setManager(superior);
+        return employeeRepository.save(dg);
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Sin responsable asignado responde 422 con «no tienes un responsable asignado» y no persiste (FR-015)")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_NoManager_Returns422() throws Exception {
+        employee.setManager(null);
+        employeeRepository.save(employee);
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(julyRequest())))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail", containsString("no tienes un responsable asignado")));
+
+        org.junit.jupiter.api.Assertions.assertEquals(0, leaveRequestRepository.count());
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Con el responsable dado de baja responde 422 (FR-015)")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testCreateLeaveRequest_InactiveManager_Returns422() throws Exception {
+        manager.setActive(false);
+        employeeRepository.save(manager);
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(julyRequest())))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail", containsString("no tienes un responsable asignado")));
+    }
+
+    @Test
+    @DisplayName("POST /leave/requests - Un usuario DIRECCION_GENERAL responde 422 aunque tenga responsable válido (FR-017)")
+    @WithMockUser(username = "direccion.req@empresa.com", roles = "DIRECCION_GENERAL")
+    void testCreateLeaveRequest_DireccionGeneral_Returns422() throws Exception {
+        direccionGeneralWithManager(manager);
+
+        mockMvc.perform(post("/leave/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(julyRequest())))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail", containsString("Dirección General no solicita ausencias")));
+    }
+
+    @Test
+    @DisplayName("GET /leave/requests/eligibility - Empleado con resolutor válido: canRequest=true sin motivo")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testEligibility_Allowed() throws Exception {
+        mockMvc.perform(get("/leave/requests/eligibility"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canRequest").value(true))
+                .andExpect(jsonPath("$.reason").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("GET /leave/requests/eligibility - Sin responsable: canRequest=false con el motivo")
+    @WithMockUser(username = "empleado.req@empresa.com", roles = "EMPLEADO")
+    void testEligibility_NoManager() throws Exception {
+        employee.setManager(null);
+        employeeRepository.save(employee);
+
+        mockMvc.perform(get("/leave/requests/eligibility"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canRequest").value(false))
+                .andExpect(jsonPath("$.reason", containsStringIgnoringCase("no tienes un responsable asignado")));
+    }
+
+    @Test
+    @DisplayName("GET /leave/requests/eligibility - Dirección General: canRequest=false con su motivo")
+    @WithMockUser(username = "direccion.req@empresa.com", roles = "DIRECCION_GENERAL")
+    void testEligibility_DireccionGeneral() throws Exception {
+        direccionGeneralWithManager(manager);
+
+        mockMvc.perform(get("/leave/requests/eligibility"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canRequest").value(false))
+                .andExpect(jsonPath("$.reason", containsString("Dirección General no solicita ausencias")));
+    }
+
+    @Test
+    @DisplayName("GET /leave/requests/eligibility - Sin sesión responde 401")
+    void testEligibility_Unauthenticated() throws Exception {
+        mockMvc.perform(get("/leave/requests/eligibility"))
+                .andExpect(status().isUnauthorized());
+    }
 }

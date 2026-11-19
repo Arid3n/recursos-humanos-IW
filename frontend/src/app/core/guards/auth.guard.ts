@@ -44,3 +44,9 @@ export const performanceReviewGuard: CanActivateFn = () => {
   }
   return router.createUrlTree(['/']);
 };
+
+/**
+ * Rutas de solicitud de ausencia (HU-05 FR-017): Dirección General no solicita ausencias y se le
+ * redirige a /leave/not-available. TODO T077: esqueleto para la fase roja de los tests.
+ */
+export const absenceRequestGuard: CanActivateFn = () => true;

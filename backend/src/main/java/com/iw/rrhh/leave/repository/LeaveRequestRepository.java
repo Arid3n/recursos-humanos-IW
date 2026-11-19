@@ -85,6 +85,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
         @Param("statuses") List<LeaveStatus> statuses
     );
 
+    /** Solicitudes de un empleado en un estado (HU-05 FR-016: cancelación automática). */
+    List<LeaveRequest> findByEmployeeIdAndStatus(UUID employeeId, LeaveStatus status);
+
     org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(UUID employeeId, org.springframework.data.domain.Pageable pageable);
 
     org.springframework.data.domain.Page<LeaveRequest> findByEmployeeIdAndStatusOrderByCreatedAtDesc(UUID employeeId, LeaveStatus status, org.springframework.data.domain.Pageable pageable);

@@ -15,6 +15,9 @@ import com.iw.rrhh.leave.dto.LeaveRequestResponse;
 import com.iw.rrhh.leave.repository.LeaveRequestRepository;
 import com.iw.rrhh.leave.service.LeaveBalanceService;
 import com.iw.rrhh.leave.service.LeaveRequestServiceImpl;
+import com.iw.rrhh.leave.service.LeaveResolverPolicy;
+import com.iw.rrhh.common.exception.LeaveCreationNotAllowedException;
+import com.iw.rrhh.leave.dto.LeaveEligibilityResponse;
 import com.iw.rrhh.security.domain.User;
 import com.iw.rrhh.security.domain.UserRole;
 import com.iw.rrhh.security.repository.UserRepository;
@@ -78,7 +81,8 @@ class LeaveRequestServiceTest {
                 userRepository,
                 leaveBalanceService,
                 holidayCalendarService,
-                clock
+                clock,
+                new LeaveResolverPolicy()
         );
 
         user = new User("empleado@empresa.com", "hash", UserRole.EMPLEADO);
@@ -87,6 +91,8 @@ class LeaveRequestServiceTest {
         manager.setId(managerId);
         manager.setFirstName("Jefe");
         manager.setLastName("García");
+        // Resolutor válido (HU-05 FR-015): activo y con rol de responsable
+        manager.setUser(new User("jefe@empresa.com", "hash", UserRole.RESPONSABLE_EQUIPO));
 
         employee = new Employee();
         employee.setId(employeeId);
@@ -307,5 +313,126 @@ class LeaveRequestServiceTest {
                 .hasMessageContaining("4");
 
         verify(leaveRequestRepository, never()).save(any());
+    }
+
+    // ---- HU-05 fase 9 (FR-015, FR-017): resolutor válido ----
+
+    private CreateLeaveRequest validRequest() {
+        return new CreateLeaveRequest(LeaveType.VACATION, LocalDate.of(2026, 7, 6), LocalDate.of(2026, 7, 10));
+    }
+
+    private void sessionEmployeeIs(Employee e) {
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
+        when(employeeRepository.findByUserId(user.getId())).thenReturn(Optional.of(e));
+    }
+
+    @Test
+    @DisplayName("FR-015: sin responsable asignado no se crea la solicitud y se informa «no tienes un responsable asignado»")
+    void testCreateLeaveRequest_NoManager_NotAllowed() {
+        employee.setManager(null);
+        sessionEmployeeIs(employee);
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(validRequest()))
+                .isInstanceOf(LeaveCreationNotAllowedException.class)
+                .hasMessageContaining("no tienes un responsable asignado");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("FR-015: con un responsable dado de baja no se crea la solicitud")
+    void testCreateLeaveRequest_InactiveManager_NotAllowed() {
+        manager.setActive(false);
+        sessionEmployeeIs(employee);
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(validRequest()))
+                .isInstanceOf(LeaveCreationNotAllowedException.class)
+                .hasMessageContaining("no tienes un responsable asignado");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("FR-015: con un responsable sin rol de responsable no se crea la solicitud")
+    void testCreateLeaveRequest_ManagerWithoutManagerRole_NotAllowed() {
+        manager.getUser().setRole(UserRole.EMPLEADO);
+        sessionEmployeeIs(employee);
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(validRequest()))
+                .isInstanceOf(LeaveCreationNotAllowedException.class)
+                .hasMessageContaining("no tienes un responsable asignado");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("FR-017: un usuario DIRECCION_GENERAL no crea solicitudes aunque tenga un responsable válido")
+    void testCreateLeaveRequest_DireccionGeneral_NotAllowed() {
+        user.setRole(UserRole.DIRECCION_GENERAL);
+        sessionEmployeeIs(employee);
+
+        assertThatThrownBy(() -> leaveRequestService.createLeaveRequest(validRequest()))
+                .isInstanceOf(LeaveCreationNotAllowedException.class)
+                .hasMessageContaining("Dirección General no solicita ausencias");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("FR-015: con un responsable DIRECCION_GENERAL sí se crea la solicitud")
+    void testCreateLeaveRequest_ManagerIsDireccionGeneral_Allowed() {
+        manager.getUser().setRole(UserRole.DIRECCION_GENERAL);
+        CreateLeaveRequest request = validRequest();
+        sessionEmployeeIs(employee);
+        when(holidayCalendarService.countWorkingDays(request.startDate(), request.endDate())).thenReturn(5);
+        when(leaveRequestRepository.hasOverlappingRequests(eq(employeeId), eq(request.startDate()), eq(request.endDate()), any()))
+                .thenReturn(false);
+        when(leaveBalanceService.getMyLeaveBalance(2026)).thenReturn(
+                new LeaveBalanceResponse(employeeId, 2026, 22, 0, 0, 22, false, "Convenio TIC"));
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
+            LeaveRequest lr = invocation.getArgument(0);
+            lr.setId(UUID.randomUUID());
+            return lr;
+        });
+
+        LeaveRequestResponse response = leaveRequestService.createLeaveRequest(request);
+
+        assertThat(response.status()).isEqualTo(LeaveStatus.PENDING);
+        assertThat(response.managerId()).isEqualTo(managerId);
+    }
+
+    @Test
+    @DisplayName("FR-015: getMyEligibility informa canRequest=false y el motivo cuando no hay resolutor válido")
+    void testEligibility_NoResolver() {
+        employee.setManager(null);
+        sessionEmployeeIs(employee);
+
+        LeaveEligibilityResponse response = leaveRequestService.getMyEligibility();
+
+        assertThat(response.canRequest()).isFalse();
+        assertThat(response.reason()).containsIgnoringCase("no tienes un responsable asignado");
+    }
+
+    @Test
+    @DisplayName("FR-017: getMyEligibility informa el motivo de Dirección General")
+    void testEligibility_DireccionGeneral() {
+        user.setRole(UserRole.DIRECCION_GENERAL);
+        sessionEmployeeIs(employee);
+
+        LeaveEligibilityResponse response = leaveRequestService.getMyEligibility();
+
+        assertThat(response.canRequest()).isFalse();
+        assertThat(response.reason()).contains("Dirección General no solicita ausencias");
+    }
+
+    @Test
+    @DisplayName("FR-015: getMyEligibility informa canRequest=true y sin motivo con un resolutor válido")
+    void testEligibility_Allowed() {
+        sessionEmployeeIs(employee);
+
+        LeaveEligibilityResponse response = leaveRequestService.getMyEligibility();
+
+        assertThat(response.canRequest()).isTrue();
+        assertThat(response.reason()).isNull();
     }
 }

@@ -291,4 +291,33 @@ class TeamCalendarIntegrationTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status", is(400)));
     }
+
+    // ---- HU-05 fase 9 (FR-017): Dirección General ve el calendario de sus subordinados directos ----
+
+    @Test
+    @DisplayName("FR-017 / HU-06.CA-4: Dirección General ve solo a sus subordinados directos, no al equipo de estos")
+    void direccionGeneral_seesDirectReportsOnly() throws Exception {
+        String dgUsername = "calendario.direccion@empresa.com";
+        Employee dg = employee(dgUsername, UserRole.DIRECCION_GENERAL, "Helena", "Dirección", "30000091R", null, true);
+        managerA.setManager(dg);
+        employeeRepository.save(managerA);
+        request(managerA, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 1), LeaveStatus.APPROVED);
+        request(memberA1, LocalDate.of(2026, 12, 2), LocalDate.of(2026, 12, 2), LeaveStatus.APPROVED);
+
+        mockMvc.perform(get(URL).param("month", "2026-12")
+                        .with(user(dgUsername).roles(UserRole.DIRECCION_GENERAL.name())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.members[*].name", contains("Alicia Calendario A")))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-01')].absentCount", contains(1)))
+                .andExpect(jsonPath("$.days[?(@.date=='2026-12-02')].absentCount", contains(0)));
+    }
+
+    @Test
+    @DisplayName("FR-017 / HU-06.CA-4: el rol RRHH recibe 403 en el calendario")
+    void hrRoleForbidden() throws Exception {
+        mockMvc.perform(get(URL).param("month", "2026-12")
+                        .with(user("calendario.rrhh@empresa.com").roles(UserRole.RRHH.name())))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+    }
 }
