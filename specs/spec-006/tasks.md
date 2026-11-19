@@ -190,3 +190,9 @@ Task: "T014 TeamCalendarComponent spec"
 2. US2 → filtro por empleado.
 3. Polish → suites completas y validación manual.
 4. Refinamiento 2026-11-18 (Phase 6) → reglas aclaradas; entregable independiente sobre la implementación ya hecha, validable con quickstart 6–9.
+
+---
+
+## Revisión por HU-05 (2026-11-19)
+
+La ampliación del calendario a `RRHH` y `DIRECCION_GENERAL` (FR-011) se implementa y prueba en `specs/spec-005` (fases 9 y 10: T066, T090, T096). No hay tareas nuevas en esta spec.

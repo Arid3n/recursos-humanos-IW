@@ -92,3 +92,7 @@ Escenarios probados en frontend:
    - Como empleado autenticado, intentar consultar la URL directa del saldo de otro compañero.
    - Comprobar que la aplicación muestra un mensaje de acceso denegado (403) y no revela información ajena.
 
+### 3.x. Dirección General (2026-11-19, FR-008)
+
+1. Como `direccion@empresa.com`: el menú muestra «Mi Ficha» y la ficha no tiene apartado de saldo.
+2. `curl -i -u direccion@empresa.com:admin123 http://localhost:8080/api/v1/leave/balances/me` → `403`; lo mismo con `/balances/employee/{su id}`. `rrhh@empresa.com` conserva acceso a `/balances/employee/{id}`.

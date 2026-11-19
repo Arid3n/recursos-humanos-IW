@@ -89,7 +89,7 @@ public record TeamCalendarEventResponse(
 
 | Regla | Origen | Resultado |
 |---|---|---|
-| Solo rol `RESPONSABLE_EQUIPO` | Art. 10, FR-011 | `403` en otro caso |
+| Solo roles `RESPONSABLE_EQUIPO`, `RRHH` y `DIRECCION_GENERAL` (los dos últimos desde HU-05, FR-017/FR-018) | Art. 10, FR-011 | `403` en otro caso |
 | Solo personas del equipo del responsable en sesión | FR-001, FR-010 | Otros equipos nunca se consultan |
 | Solo `PENDING` y `APPROVED` | FR-001, FR-005 | `REJECTED` y `CANCELLED` excluidas en la consulta |
 | Sin datos de motivo | FR-002, Art. 20.1 | Los DTO no tienen campo de justificación |

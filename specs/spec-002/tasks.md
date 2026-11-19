@@ -139,3 +139,9 @@
 2. Añadir **US3**: Reforzar el control de acceso en el servidor con tests negativos de autorización HTTP 403.
 3. Añadir **US4**: Incorporar el selector de año y la consulta de ejercicios históricos cerrados.
 4. Ejecutar **Phase 7: Polish** y validación final de accesibilidad y tests end-to-end.
+
+---
+
+## Revisión por HU-05 (2026-11-19)
+
+FR-008 y FR-009 se implementan y prueban en `specs/spec-005` (fase 10: T092, T097–T099). No hay tareas nuevas en esta spec.

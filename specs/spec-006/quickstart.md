@@ -59,6 +59,11 @@
    curl -i -u direccion@empresa.com:admin123 "http://localhost:8080/api/v1/leave/team-calendar?month=2026-12"
    ```
    **Esperado**: `200` con solo las personas que lo tienen como responsable directo.
+5. Con un usuario `RRHH` (`rrhh@empresa.com`, tras HU-05 fase 10):
+   ```bash
+   curl -i -u rrhh@empresa.com:admin123 "http://localhost:8080/api/v1/leave/team-calendar?month=2026-12"
+   ```
+   **Esperado**: `200` con solo las personas que lo tienen como responsable directo (en el *seed*, `responsable@empresa.com`), no toda la empresa; `empleado@empresa.com` no aparece.
 
 ### Escenario 5 — Filtro por empleado (US2)
 1. Seleccionar a Laura en el filtro.

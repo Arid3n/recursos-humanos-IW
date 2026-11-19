@@ -46,7 +46,7 @@ La funcionalidad **HU-06 (`spec-006`)** ofrece al responsable de equipo un calen
 | **Art. 5 / 7** (Capas) | `TeamCalendarController` → `TeamCalendarService` (`@Transactional(readOnly = true)`) → `LeaveRequestRepository`/`EmployeeRepository`; DTOs `record`. | ✅ |
 | **Art. 8.5** (Índices) | La consulta por equipo y rango usa `idx_leave_calendar` existente. | ✅ |
 | **Art. 9** (API REST) | `GET /api/v1/leave/team-calendar?month=YYYY-MM`; contrato en `contracts/`. No es un listado paginado: el tamaño está acotado por el mes (Art. 16.4). | ✅ |
-| **Art. 10** (Autorización 2 niveles) | Rol: `hasRole('RESPONSABLE_EQUIPO')`. Alcance: el equipo se obtiene del responsable en sesión; el cliente no envía identificadores de empleado. Test negativo con otro equipo y con rol `EMPLEADO`. | ✅ |
+| **Art. 10** (Autorización 2 niveles) | Rol: `hasRole('RESPONSABLE_EQUIPO')` (ampliado a `RRHH` y `DIRECCION_GENERAL` por HU-05, FR-017/FR-018; mismo alcance por responsable directo). Alcance: el equipo se obtiene del responsable en sesión; el cliente no envía identificadores de empleado. Test negativo con otro equipo y con rol `EMPLEADO`. | ✅ |
 | **Art. 14** (Fechas y cómputo) | Días laborables y festivos desde `HolidayCalendarService` (único componente de cómputo); se amplía con el nombre del festivo sin duplicar la regla. | ✅ |
 | **Art. 16** (Calendario) | Solo equipo (16.1); aprobada/pendiente con icono y texto (16.2); coincidencias en servidor (16.3); consulta por mes (16.4). | ✅ |
 | **Art. 19** (Errores) | Mes con formato inválido → `400` ProblemDetail; `401`/`403` estándar. | ✅ |

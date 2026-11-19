@@ -112,3 +112,9 @@ frontend/src/app/
 ## 5. Complexity Tracking
 
 > **Sin violaciones**: El diseño respeta íntegramente los principios del Art. 23 (solución directa y simple mediante cálculo en memoria y consultas agregadas JPA/SQL, sin caches distribuidas ni estructuras de datos redundantes).
+
+---
+
+## Revisión por HU-05 (2026-11-19)
+
+FR-008 y FR-009: sin saldo propio para `DIRECCION_GENERAL` (`403` en servidor, apartado oculto en la interfaz, rótulo «Mi Ficha»). Diseño e implementación en `specs/spec-005` (`research.md` §1.23, tareas T092, T097–T099); no cambia el cálculo del saldo.

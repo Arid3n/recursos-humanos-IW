@@ -106,7 +106,7 @@
 | Artículo | Requisito | Enfoque spec-006 |
 |---|---|---|
 | Art. 2 | Trazabilidad | Tests `HU-06.CA-1…4`. |
-| Art. 10 | Rol + alcance, tests negativos | `hasRole('RESPONSABLE_EQUIPO')`; equipo derivado de la sesión; tests con otro equipo y rol `EMPLEADO`. |
+| Art. 10 | Rol + alcance, tests negativos | `hasRole('RESPONSABLE_EQUIPO')` (ampliado a `RRHH` y `DIRECCION_GENERAL` por HU-05, FR-017/FR-018); equipo derivado de la sesión; tests con otro equipo y rol `EMPLEADO`. |
 | Art. 14 | Regla de días única | `HolidayCalendarService` ampliado, no duplicado. |
 | Art. 16 | Calendario | Solo equipo, estados distinguibles, solapes en servidor, consulta mensual. |
 | Art. 21 | Accesibilidad | Icono + texto + leyenda; botones con teclado. |

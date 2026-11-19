@@ -332,10 +332,10 @@ Task: "T017 ResolveRequestDialogComponent"
 
 > T085–T088 van en su propio commit/PR, antes del código (Art. 27.1).
 
-- [ ] T085 Amend `.specify/memory/constitution.md` (MINOR 1.2.0, Art. 27): Art. 10.4 row `RRHH` gains «y, como responsable directo, solicitudes y calendario de sus subordinados (HU-05, 06)», same in Annex A, new row in the Annex C amendment registry with the reason (spec-005 FR-018) and the version/date line. Art. 13.8 is NOT amended.
-- [ ] T086 [P] Update `specs/spec-006/spec.md` (FR-011 accepts `RRHH` with the scope of direct reports; clarification entry), `contracts/team-calendar-api.yaml` (roles, version), its `quickstart.md` (RRHH case) and its `plan.md`/`tasks.md` if affected.
-- [ ] T087 [P] Update `specs/spec-002/spec.md` (new FR: `DIRECCION_GENERAL` has no own balance; `GET /balances/me` and `GET /balances/employee/{own id}` → `403`, access denied logged; `RRHH` access unchanged), and its `plan.md`/`tasks.md`/`quickstart.md` if affected. Fix the menu labels in the spec: «Mi Ficha y Saldo» for roles with balance, «Mi Ficha» for `DIRECCION_GENERAL`. The contract `contracts/leave-balance-api.yaml` (1.1.0) is already updated.
-- [ ] T088 [P] Update `specs/spec-003/spec.md` (FR-009 to FR-011: valid resolver includes `RRHH`) and `contracts/leave-request-api.yaml` (description of `422` and `eligibility`, version).
+- [X] T085 Amend `.specify/memory/constitution.md` (MINOR 1.2.0, Art. 27): Art. 10.4 row `RRHH` gains «y, como responsable directo, solicitudes y calendario de sus subordinados (HU-05, 06)», same in Annex A, new row in the Annex C amendment registry with the reason (spec-005 FR-018) and the version/date line. Art. 13.8 is NOT amended.
+- [X] T086 [P] Update `specs/spec-006/spec.md` (FR-011 accepts `RRHH` with the scope of direct reports; clarification entry), `contracts/team-calendar-api.yaml` (roles, version), its `quickstart.md` (RRHH case) and its `plan.md`/`tasks.md` if affected.
+- [X] T087 [P] Update `specs/spec-002/spec.md` (new FR: `DIRECCION_GENERAL` has no own balance; `GET /balances/me` and `GET /balances/employee/{own id}` → `403`, access denied logged; `RRHH` access unchanged), and its `plan.md`/`tasks.md`/`quickstart.md` if affected. Fix the menu labels in the spec: «Mi Ficha y Saldo» for roles with balance, «Mi Ficha» for `DIRECCION_GENERAL`. The contract `contracts/leave-balance-api.yaml` (1.1.0) is already updated.
+- [X] T088 [P] Update `specs/spec-003/spec.md` (FR-009 to FR-011: valid resolver includes `RRHH`) and `contracts/leave-request-api.yaml` (description of `422` and `eligibility`, version).
 
 ### Tests (escribir primero, verificar que FALLAN)
 

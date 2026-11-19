@@ -19,9 +19,10 @@
 - Q: ¿Permite el calendario filtrar por empleado específico dentro del equipo? → A: Sí; además de la visión global del equipo, incluye un filtro por empleado para consultar individualmente la planificación de una persona a su cargo.
 - Q: ¿Qué información se muestra al interactuar con una ausencia en el calendario? → A: Al pulsar sobre una ausencia se despliega un panel o diálogo con el nombre del empleado, tipo de ausencia, rango completo de fechas y estado (Aprobada o Pendiente).
 
-### Session 2026-11-19 (revisión por HU-05, FR-017)
+### Session 2026-11-19 (revisión por HU-05, FR-017 y FR-018)
 
 - Q: ¿Puede consultar el calendario el rol `DIRECCION_GENERAL`? → A: Sí, con el mismo alcance que un responsable: solo las personas que lo tienen como responsable directo.
+- Q: ¿Puede consultar el calendario el rol `RRHH`? → A: Sí, con el mismo alcance que un responsable: solo las personas que lo tienen como responsable directo, no toda la empresa (HU-05, FR-018).
 
 ### Session 2026-11-18
 
@@ -95,7 +96,7 @@ Como responsable de equipo, selecciono a una persona concreta de mi equipo en un
 - **FR-008**: En la cuadrícula, los fines de semana y festivos DEBEN mostrarse atenuados y los festivos con una etiqueta descriptiva; no cuentan como días de ausencia ni para las coincidencias. En la vista de lista de pantallas estrechas (FR-003b) no aparecen.
 - **FR-009**: El calendario DEBE incluir un filtro opcional por empleado que solo ofrezca personas del equipo del responsable.
 - **FR-010**: NO DEBE mostrarse ninguna ausencia de personas ajenas al equipo del responsable en sesión, ni siquiera manipulando la petición; la identidad del responsable se obtiene de la sesión (Art. 10.5).
-- **FR-011**: Solo los usuarios con rol de responsable de equipo (`RESPONSABLE_EQUIPO`) o de Dirección General (`DIRECCION_GENERAL`) PUEDEN consultar el calendario, y solo el de las personas que los tienen como responsable directo; los intentos fuera de alcance quedan registrados (Art. 10.6).
+- **FR-011**: Solo los usuarios con rol de responsable de equipo (`RESPONSABLE_EQUIPO`) de Dirección General (`DIRECCION_GENERAL`) o de Recursos Humanos (`RRHH`) PUEDEN consultar el calendario, y solo el de las personas que los tienen como responsable directo; los intentos fuera de alcance quedan registrados (Art. 10.6).
 
 ### Key Entities *(include if feature involves data)*
 

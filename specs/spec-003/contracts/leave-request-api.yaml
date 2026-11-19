@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de Solicitud de Vacaciones y Permisos (HU-03)
-  version: 1.1.0
+  version: 1.2.0
   description: Endpoints para el cómputo oficial de días laborables en servidor y la creación de solicitudes de ausencia en estado PENDING.
 paths:
   /api/v1/leave/requests/calculate-days:
@@ -91,7 +91,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '422':
-          description: El usuario no puede crear solicitudes (sin resolutor válido, o rol DIRECCION_GENERAL; FR-009, FR-010)
+          description: El usuario no puede crear solicitudes (sin resolutor válido —superior activo con rol RESPONSABLE_EQUIPO, RRHH o DIRECCION_GENERAL— o rol DIRECCION_GENERAL; FR-009, FR-010)
           content:
             application/problem+json:
               schema:
@@ -100,7 +100,7 @@ paths:
   /api/v1/leave/requests/eligibility:
     get:
       summary: Indica si el usuario en sesión puede crear solicitudes de ausencia
-      description: Falso si no tiene resolutor válido o es de Dirección General (FR-009, FR-010, FR-011).
+      description: Falso si no tiene resolutor válido (superior activo con rol RESPONSABLE_EQUIPO, RRHH o DIRECCION_GENERAL) o es de Dirección General (FR-009, FR-010, FR-011).
       operationId: getLeaveEligibility
       tags:
         - LeaveRequests

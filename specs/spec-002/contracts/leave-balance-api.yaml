@@ -71,7 +71,7 @@ paths:
   /api/v1/leave/balances/employee/{employeeId}:
     get:
       summary: Saldo de vacaciones de un empleado por ID
-      description: Permite consultar el saldo a RRHH o al responsable de equipo del empleado. Si un rol EMPLEADO consulta un ID ajeno, se rechaza con 403 Forbidden (Art. 10, FR-005).
+      description: Permite consultar el saldo a RRHH o al responsable de equipo del empleado. Si un rol EMPLEADO consulta un ID ajeno, se rechaza con 403 Forbidden (Art. 10, FR-005). Un usuario DIRECCION_GENERAL recibe 403 también sobre su propio ID (FR-008, 2026-11-19).
       operationId: getEmployeeLeaveBalance
       tags:
         - LeaveBalance

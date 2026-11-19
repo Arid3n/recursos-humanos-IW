@@ -3,10 +3,15 @@
 **Feature Branch**: `spec-002`  
 **Created**: 2026-10-27  
 **Status**: Ready for Planning  
+**Revisada**: 2026-11-19 por HU-05 fase 10 (FR-008 y FR-009); implementado en `spec-005`.  
 **Historia de Usuario**: HU-02  
 **Asignación**: Integrante 1 (Grupo RRHH / Personal)
 
 ## Clarifications
+
+### Session 2026-11-19 (revisión por HU-05, FR-017)
+
+- Q: ¿Tiene saldo de vacaciones propio el rol `DIRECCION_GENERAL`, que no solicita ausencias? → A: No. La ficha personal se mantiene, pero el apartado de saldo se oculta en la interfaz y el servidor responde `403` a `GET /leave/balances/me` y a `GET /leave/balances/employee/{propio id}`, con registro de acceso denegado. `RRHH` conserva su acceso total.
 
 ### Session 2026-10-27
 - Q: ¿Cómo se calculan los días de vacaciones para empleados incorporados a mitad de año? → A: Prorrateo proporcional a los meses trabajados en el año natural: `round((días_anuales / 12) * meses_restantes)`, redondeando al entero o medio día más cercano.
@@ -68,6 +73,8 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
 - **FR-005**: El acceso a la ficha de otro empleado DEBE estar estrictamente denegado para el rol `EMPLEADO`.
 - **FR-006**: Para incorporaciones durante el año en curso, el sistema DEBE prorratear los días correspondientes según los meses restantes hasta fin de año.
 - **FR-007**: La vista DEBE permitir consultar el saldo correspondiente a ejercicios fiscales anteriores en modo solo lectura.
+- **FR-008** (2026-11-19): Un usuario con rol `DIRECCION_GENERAL` NO DEBE poder consultar un saldo propio: `GET /leave/balances/me` y `GET /leave/balances/employee/{su propio id}` responden `403` y se registran como acceso denegado (Art. 10.6); la interfaz oculta el apartado de saldo de su ficha. El resto de roles no cambia.
+- **FR-009** (2026-11-19): El enlace de menú a la ficha se rotula «Mi Ficha y Saldo» para los roles con saldo (`EMPLEADO`, `RESPONSABLE_EQUIPO`, `RRHH`) y «Mi Ficha» para `DIRECCION_GENERAL`.
 
 ### Key Entities
 - **LeaveBalance (Saldo de Vacaciones - Objeto de Dominio Derivado)**:
@@ -85,6 +92,7 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
 - **SC-001**: El empleado visualiza su ficha y saldo actualizado en pantalla en menos de 800ms tras acceder.
 - **SC-002**: 100% de coherencia matemática: en todo momento `días correspondientes == días disfrutados + días disponibles`.
 - **SC-003**: 0% de fugas de datos entre empleados (100% de tests negativos de autorización superados).
+- **SC-004** (2026-11-19): El 0% de las consultas de saldo propio de un usuario `DIRECCION_GENERAL` devuelven datos (todas `403`).
 
 ---
 
