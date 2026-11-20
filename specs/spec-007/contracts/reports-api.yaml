@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: API de Informes de Absentismo y Uso de Vacaciones (HU-07)
+  description: |
+    Endpoints de solo lectura restringidos al rol RRHH para generar informes de absentismo
+    e índice de uso de vacaciones agregados por departamento y rango temporal.
+    La misma capa de servicio alimenta la consulta y la exportación, garantizando
+    paridad matemática exacta entre pantalla y CSV (FR-004, Art. 17).
+    El CSV exportado cumple RFC 4180 con codificación UTF-8 con BOM para compatibilidad Excel.
+    Si no existen registros para el periodo consultado, la consulta devuelve `hasData: false`
+    y la exportación responde `204 No Content`.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - basicAuth: []
+
+paths:
+  /reports:
+    get:
+      summary: Generar informe departamental de absentismo o uso de vacaciones
+      operationId: getDepartmentReport
+      tags: [Reports]
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: Tipo de informe.
+          schema:
+            $ref: '#/components/schemas/ReportType'
+        - name: startDate
+          in: query
+          required: true
+          description: Inicio del periodo (ISO 8601, inclusivo).
+          schema:
+            type: string
+            format: date
+            example: '2026-01-01'
+        - name: endDate
+          in: query
+          required: true
+          description: Fin del periodo (ISO 8601, inclusivo).
+          schema:
+            type: string
+            format: date
+            example: '2026-12-31'
+      responses:
+        '200':
+          description: Informe generado. Si no hay datos, `hasData` es false y `departments` está vacío.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentReportResponse'
+        '400':
+          description: Parámetros ausentes, tipo inválido o endDate anterior a startDate.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '401':
+          description: Credenciales no proporcionadas o inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RRHH.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  /reports/export:
+    get:
+      summary: Exportar el informe departamental en formato CSV UTF-8 con BOM
+      operationId: exportDepartmentReportCsv
+      tags: [Reports]
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportType'
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: >
+            Archivo CSV descargable. Columnas: Tipo, Periodo, Departamento, Nivel,
+            Nombre, Empleados, Días Correspondientes, Días Disfrutados, Días Restantes, Porcentaje.
+            Incluye filas de nivel "Departamento" y "Empleado". BOM UTF-8 al inicio.
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: 'attachment; filename="informe-{type}-{startDate}-{endDate}.csv"'
+              schema:
+                type: string
+        '204':
+          description: No existen registros para el periodo y tipo consultados.
+        '400':
+          description: Parámetros inválidos.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '401':
+          description: Credenciales inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RRHH.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ReportType:
+      type: string
+      enum: [ABSENTEEISM, VACATION_USAGE]
+      description: >
+        ABSENTEEISM — índice de absentismo (permisos y ausencias no vacacionales).
+        VACATION_USAGE — porcentaje de uso de vacaciones sobre la asignación anual.
+
+    DepartmentReportResponse:
+      type: object
+      required: [type, startDate, endDate, periodLabel, hasData, departments]
+      properties:
+        type:
+          $ref: '#/components/schemas/ReportType'
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        periodLabel:
+          type: string
+          example: '2026-01-01 – 2026-12-31'
+        hasData:
+          type: boolean
+          description: False si no hay solicitudes aprobadas en el periodo.
+        departments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartmentReportRow'
+
+    DepartmentReportRow:
+      type: object
+      required: [department, headcount, totalEntitledDays, totalTakenDays, totalRemainingDays, metricPercentage, employees]
+      properties:
+        department:
+          type: string
+        headcount:
+          type: integer
+          description: Número de empleados activos en el departamento a endDate.
+        totalEntitledDays:
+          type: number
+          format: double
+          description: Suma de días correspondientes del departamento.
+        totalTakenDays:
+          type: number
+          format: double
+          description: Suma de días disfrutados/ausencias del departamento.
+        totalRemainingDays:
+          type: number
+          format: double
+        metricPercentage:
+          type: number
+          format: double
+          description: Porcentaje de uso o absentismo (escala 2; 0.00 si denominador = 0).
+        employees:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeReportRow'
+
+    EmployeeReportRow:
+      type: object
+      required: [employeeId, employeeName, totalEntitledDays, totalTakenDays, totalRemainingDays, metricPercentage]
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+        employeeName:
+          type: string
+        totalEntitledDays:
+          type: number
+          format: double
+        totalTakenDays:
+          type: number
+          format: double
+        totalRemainingDays:
+          type: number
+          format: double
+        metricPercentage:
+          type: number
+          format: double
+
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri

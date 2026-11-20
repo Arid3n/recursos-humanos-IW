@@ -1,0 +1,106 @@
+# Implementation Plan: spec-007 — Informes de Absentismo y Uso de Vacaciones
+
+**Branch**: `spec-007` | **Date**: 2026-10-27 | **Spec**: [specs/spec-007/spec.md](spec.md)  
+**Input**: Especificación HU-07 (clarificada con 4 decisiones cerradas)
+
+---
+
+## 1. Summary
+
+Implementar el módulo de informes de RRHH que genera métricas de **absentismo** y **uso de vacaciones** agregadas por departamento y rango temporal, garantizando:
+
+- Acceso exclusivo al rol `RRHH` en ambos endpoints (consulta y exportación CSV).
+- Cálculo de métricas basado en solicitudes `APPROVED` con la misma lógica de días laborables que usa `HolidayCalendarService`.
+- Paridad matemática exacta entre los datos mostrados en pantalla y el archivo CSV exportado (misma capa de servicio).
+- Desglose departamental expandible con filas individuales de empleado.
+- Exportación RFC 4180 con BOM UTF-8 para compatibilidad con Excel (tildes y caracteres especiales).
+- Respuesta semántica (`hasData: false`) cuando no existen registros para el periodo consultado.
+
+---
+
+## 2. Technical Context
+
+- **Language/Version**: Java 21 LTS (Backend) · TypeScript 5.x estricto / Angular 21 (Frontend)
+- **Primary Dependencies**: Spring Boot 3.4.3 (Web, Security, Data JPA) · Angular Material 22
+- **Storage**: PostgreSQL 16 — tablas existentes `employees`, `contract_records`, `collective_agreements`, `leave_requests`. **Sin migraciones nuevas**.
+- **Testing**: JUnit 5, Mockito, Spring Boot Test, Testcontainers (PostgreSQL real), Vitest (Frontend)
+- **Target Platform**: Aplicación Web SPA responsive
+- **Project Type**: Monolito modular por capas desacopladas
+- **Performance Goals**: Generación de informe y exportación < 1.5 s para toda la plantilla (SC-001)
+- **Constraints**: Consulta de solo lectura; sin dependencias CSV externas (Art. 23.4); cálculo de días en servidor (Art. 14)
+
+---
+
+## 3. Constitution Check
+
+| Invariante Constitucional | Estado | Evidencia en el Diseño |
+| :--- | :--- | :--- |
+| **Art. 1 (Spec como verdad)** | **PASS** | Todas las funcionalidades derivan de HU-07 y sus 4 clarificaciones registradas. |
+| **Art. 5 (4 capas desacopladas)** | **PASS** | `DepartmentReportController` → `DepartmentReportService` → `DepartmentReportRepository` → PostgreSQL. |
+| **Art. 8 (PostgreSQL real)** | **PASS** | Consultas nativas validadas con Testcontainers en `DepartmentReportIntegrationTest`. |
+| **Art. 10 (Autorización en servidor)** | **PASS** | `@PreAuthorize("hasRole('RRHH')")` a nivel de clase en el controlador. |
+| **Art. 14 (Regla de días única)** | **PASS** | `HolidayCalendarService.countWorkingDays` reutilizado; sin duplicación de lógica de festivos. |
+| **Art. 17 (Exportación)** | **PASS** | CSV RFC 4180 con BOM UTF-8; paridad pantalla ↔ archivo garantizada por la misma capa de servicio. |
+| **Art. 22 (Test-First con Testcontainers)** | **PASS** | Test de integración contra PostgreSQL real; datos de demo inyectados por `DepartmentReportDemoDataInitializer`. |
+| **Art. 23 (Simplicidad)** | **PASS** | Sin librerías CSV externas; un servicio, dos endpoints; repositorio de solo lectura. |
+
+---
+
+## 4. Project Structure
+
+### Documentation (`specs/spec-007/`)
+```text
+specs/spec-007/
+├── spec.md              # Especificación funcional clarificada
+├── plan.md              # Este plan de implementación técnico
+├── research.md          # Decisiones arquitectónicas y alternativas
+├── data-model.md        # DTOs, proyecciones y consultas de repositorio
+├── quickstart.md        # Guía de ejecución y validación
+└── contracts/
+    └── reports-api.yaml # Contrato OpenAPI 3.0
+```
+
+### Source Code
+```text
+backend/src/main/java/com/iw/rrhh/
+└── report/
+    ├── controller/
+    │   └── DepartmentReportController.java
+    ├── service/
+    │   ├── DepartmentReportService.java
+    │   └── DepartmentReportServiceImpl.java
+    ├── repository/
+    │   ├── DepartmentReportRepository.java
+    │   ├── ReportEmployeeProjection.java
+    │   ├── ReportDepartmentAggregateProjection.java
+    │   ├── ReportLeaveDaysProjection.java
+    │   └── ReportLeavePeriodProjection.java
+    ├── dto/
+    │   ├── DepartmentReportResponse.java
+    │   ├── DepartmentReportRow.java
+    │   ├── EmployeeReportRow.java
+    │   └── ReportType.java
+    └── config/
+        └── DepartmentReportDemoDataInitializer.java
+
+backend/src/test/java/com/iw/rrhh/report/
+├── DepartmentReportIntegrationTest.java
+└── DepartmentReportDemoDataInitializerTest.java
+
+frontend/src/app/features/reports/
+├── components/
+│   └── department-reports/
+│       ├── department-reports.component.ts
+│       └── department-reports.component.html
+├── models/
+│   └── department-report.models.ts
+└── services/
+    ├── department-report.service.ts
+    └── department-report.service.spec.ts
+```
+
+---
+
+## 5. Complexity Tracking
+
+> **Sin violaciones**: El diseño usa Spring Data JPA estándar con consultas nativas para la agregación SQL eficiente. No se introducen dependencias nuevas, colas, cachés ni patrones arquitectónicos adicionales.
