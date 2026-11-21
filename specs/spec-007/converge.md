@@ -17,7 +17,7 @@ En la referencia solo existían `spec.md` y `quickstart.md`. Después se añadie
 ## Hallazgos
 | ID | Tipo | Detalle | Estado |
 | :-- | :-- | :-- | :-- |
-| C1 | Contradicción entre documentos | `memoria.md` §3.1 da a Dirección General acceso a los informes, pero FR-001 y el código lo limitan a `RRHH` | Resuelto en la dirección del código: solo `RRHH` accede a informes; pendiente corregir `docs/memoria.md` §3.1 |
+| C1 | Contradicción entre documentos | `memoria.md` §4.1 da a Dirección General acceso a los informes, pero FR-001 y el código lo limitan a `RRHH` | Resuelto en la dirección del código: solo `RRHH` accede a informes; pendiente corregir `docs/memoria.md` §4.1 |
 | C2 | Sin evidencia | SC-001 (menos de 1,5 s) no tiene medición; sin prueba E2E ni de interfaz | Abierto (sin medición, aceptado) |
 
 Sin brechas de código frente a FR-001 a FR-007 en lo comprobado.

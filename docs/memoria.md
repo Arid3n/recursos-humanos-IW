@@ -3,7 +3,26 @@
 
 ---
 
-### Portada y Datos del Proyecto
+## Índice
+
+1. [Portada y resumen](#1-portada-y-resumen)
+2. [URL del repositorio en GITHUB](#2-url-del-repositorio-en-github)
+3. [Introducción](#3-introducción)
+4. [Análisis](#4-análisis)
+5. [Diseño](#5-diseño)
+6. [Implementación](#6-implementación)
+7. [Pruebas y validación](#7-pruebas-y-validación)
+8. [Despliegue y uso](#8-despliegue-y-uso)
+9. [Planificación y seguimiento](#9-planificación-y-seguimiento)
+10. [Conclusiones](#10-conclusiones)
+11. [Demo](#11-demo)
+12. [Anexos](#12-anexos)
+
+---
+
+## 1. Portada y resumen
+
+### 1.1 Datos del proyecto
 
 * **Asignatura:** Ingeniería Web (IW)
 * **Sistema desarrollado:** Sistema de información para la gestión de empleados y contratos, vacaciones y permisos, calendario de equipo, informes de absentismo y evaluación de desempeño (SI-09)
@@ -11,7 +30,7 @@
 * **Versión del código de esta memoria:** rama `memoria-y-entregables`, sobre el commit `662da39`; commit de referencia previo al refinamiento: tag `ref-refinamiento` (`afed4c4`, 2026-11-10)
 * **Fecha de entrega:** noviembre de 2026
 
-#### Equipo de desarrollo y reparto de responsabilidades
+### 1.2 Equipo de desarrollo y reparto de responsabilidades
 
 Cada integrante se responsabiliza de dos historias de usuario, desde su especificación hasta su verificación. El reparto está documentado en [`docs/AGRUPAMIENTO.md`](AGRUPAMIENTO.md) y en el `README.md`.
 
@@ -24,15 +43,15 @@ Cada integrante se responsabiliza de dos historias de usuario, desde su especifi
 
 ---
 
-### Resumen Ejecutivo
+### 1.3 Resumen ejecutivo
 
 El sistema es una aplicación web para el departamento de Recursos Humanos de una empresa y para los empleados y responsables de equipo que interactúan con él. Permite dar de alta empleados con su trayectoria contractual y convenio colectivo, consultar el saldo de vacaciones (un valor derivado, nunca almacenado), solicitar vacaciones y permisos, que el responsable los apruebe o rechace con notificación al empleado, ver el calendario de ausencias del equipo con las coincidencias resaltadas, generar informes de absentismo por departamento con exportación a CSV, y formalizar evaluaciones de desempeño con doble conformidad.
 
-Se construyó siguiendo el ciclo *specify → clarify → plan → tasks → analyze → implement → converge* sobre ocho historias de usuario, con una constitución del proyecto que fija los principios no negociables. El resultado es un monorepo con un backend Spring Boot 3.4.3 (Java 21, PostgreSQL 16, Flyway) y una SPA Angular 21 con Angular Material. En la versión final, las suites automatizadas ejecutan **224 pruebas de backend y 86 de frontend sin fallos**, y dos recorridos E2E que cruzan las ocho historias se ejecutaron contra la API real con **49 de 49 pasos conformes**. De los 66 criterios de la matriz de trazabilidad, 65 están verificados por una prueba nombrada o por un recorrido. Quedan cuatro límites de alcance aceptados y documentados (apartado 9.3).
+Se construyó siguiendo el ciclo *specify → clarify → plan → tasks → analyze → implement → converge* sobre ocho historias de usuario, con una constitución del proyecto que fija los principios no negociables. El resultado es un monorepo con un backend Spring Boot 3.4.3 (Java 21, PostgreSQL 16, Flyway) y una SPA Angular 21 con Angular Material. En la versión final, las suites automatizadas ejecutan **224 pruebas de backend y 86 de frontend sin fallos**, y dos recorridos E2E que cruzan las ocho historias se ejecutaron contra la API real con **49 de 49 pasos conformes**. De los 66 criterios de la matriz de trazabilidad, 65 están verificados por una prueba nombrada o por un recorrido. Quedan cuatro límites de alcance aceptados y documentados (apartado 10.3).
 
 ---
 
-## 1. URL del Repositorio GitHub
+## 2. URL del repositorio en GITHUB
 
 * **Repositorio:** [https://github.com/Arid3n/recursos-humanos-IW](https://github.com/Arid3n/recursos-humanos-IW)
 * **Rama principal:** `main`
@@ -42,9 +61,9 @@ Se construyó siguiendo el ciclo *specify → clarify → plan → tasks → ana
 
 ---
 
-## 2. Introducción
+## 3. Introducción
 
-### 2.1 Contexto y problema que resuelve
+### 3.1 Contexto y problema que resuelve
 
 Los departamentos de Recursos Humanos de empresas medianas suelen trabajar con datos dispersos: contratos en hojas de cálculo, solicitudes de vacaciones por correo y evaluaciones en documentos sin trazabilidad. Eso provoca cuatro problemas que el sistema ataca de forma específica:
 
@@ -53,7 +72,7 @@ Los departamentos de Recursos Humanos de empresas medianas suelen trabajar con d
 3. **Privacidad.** El calendario nunca expone motivos, justificaciones ni causas de rechazo (Art. 16 y 20 de la constitución).
 4. **Trazabilidad de las decisiones.** Cada resolución queda registrada con quién la tomó y cuándo, es inmutable, y se notifica al empleado dentro de la misma transacción.
 
-### 2.2 Objetivos del sistema
+### 3.2 Objetivos del sistema
 
 * Mantener una **trayectoria contractual inmutable** (append-only) por empleado, con fecha de efectos, también retroactiva (Art. 11).
 * Calcular el **saldo de vacaciones en tiempo real** a partir del convenio y de las solicitudes aprobadas y pendientes, con prorrateo por fecha de alta (Art. 12).
@@ -63,7 +82,7 @@ Los departamentos de Recursos Humanos de empresas medianas suelen trabajar con d
 * Formalizar **evaluaciones de desempeño** con conformidad del empleado e inmutabilidad posterior (Art. 18).
 * Respetar el enunciado de la práctica: ocho historias, ciclo SDD con *loop engineering*, y refinamiento con clarify, analyze y converge.
 
-### 2.3 Metodología Spec-Driven Development (SDD)
+### 3.3 Metodología Spec-Driven Development (SDD)
 
 La especificación funcional dirige el proceso y el código es un producto derivado. Cada historia recorre el ciclo siguiente, y cualquier fase puede reabrir la anterior (*loop engineering*):
 
@@ -88,9 +107,9 @@ Además existe una **constitución** (`.specify/memory/constitution.md`, versió
 
 ---
 
-## 3. Análisis
+## 4. Análisis
 
-### 3.1 Actores y control de acceso por roles
+### 4.1 Actores y control de acceso por roles
 
 El sistema tiene cuatro roles, guardados en `users.role` y aplicados en el servidor con `@PreAuthorize` (Art. 10). La interfaz oculta opciones, pero nunca es la barrera de seguridad.
 
@@ -103,7 +122,7 @@ El sistema tiene cuatro roles, guardados en `users.role` y aplicados en el servi
 
 Jerarquía de los datos semilla: `direccion@` → `rrhh@` → `responsable@` → `empleado@`.
 
-### 3.2 Catálogo de historias de usuario
+### 4.2 Catálogo de historias de usuario
 
 La descripción funcional del sistema no traía historias; se identificaron ocho a partir del texto. Cada una tiene su carpeta en `specs/`. Las cifras de requisitos son las de la versión final.
 
@@ -118,7 +137,7 @@ La descripción funcional del sistema no traía historias; se identificaron ocho
 | HU-07 | [spec-007](../specs/spec-007/spec.md) | José | Informes por departamento y rango de fechas, desglose por empleado, exportación CSV | 7 | 18 |
 | HU-08 | [spec-008](../specs/spec-008/spec.md) | José | Evaluación 1-5 del responsable y conformidad del empleado, con inmutabilidad posterior | 8 | 19 |
 
-Reglas de negocio clave por historia (todas verificadas contra el código, ver apartado 6):
+Reglas de negocio clave por historia (todas verificadas contra el código, ver apartado 7):
 
 * **HU-01.** El alta crea el empleado, su cuenta de usuario con clave provisional y su primer registro contractual. El responsable es obligatorio salvo que RRHH elija «Sin responsable (solo Dirección General)» (`withoutManager=true`), que crea el rol `DIRECCION_GENERAL`; sin esa indicación o con ambas cosas, el alta devuelve `400`. Dar de baja a un responsable cancela en la misma transacción las solicitudes `PENDING` de sus subordinados (FR-012).
 * **HU-02.** `disponibles = correspondientes − disfrutados`; los pendientes se informan aparte. El saldo se calcula en `LeaveBalanceServiceImpl`; las solicitudes que cruzan el 31 de diciembre se reparten por año natural.
@@ -129,7 +148,7 @@ Reglas de negocio clave por historia (todas verificadas contra el código, ver a
 * **HU-07.** Solo `RRHH`. Informe y CSV salen del mismo método de servicio, lo que garantiza la paridad; el CSV es UTF-8 con BOM y respeta RFC 4180. Periodo sin datos: `hasData=false` y `204` en la exportación.
 * **HU-08.** El responsable crea la evaluación (`PENDING_ACKNOWLEDGMENT`), el empleado da su conformidad (`FINALIZED` con `finalizedAt`). Después no puede modificarse: lo impiden el servicio (`409`) y un disparador de base de datos. La conformidad usa bloqueo pesimista para evitar condiciones de carrera.
 
-### 3.3 Requisitos no funcionales
+### 4.3 Requisitos no funcionales
 
 Los requisitos transversales salen de la constitución (Títulos II y IV) y de los criterios de éxito (SC) de cada spec.
 
@@ -144,7 +163,7 @@ Los requisitos transversales salen de la constitución (Títulos II y IV) y de l
 | Calidad | Desarrollo test-first y trazabilidad HU → criterio → prueba (Art. 2 y 22) | Matriz de trazabilidad |
 | Rendimiento | Objetivos por spec (p. ej. calendario y saldo en menos de 800 ms, informes en menos de 1,5 s) | **No medidos**: excepción documentada en `docs/verificacion-integrada.md` |
 
-### 3.4 Refinamiento y *loop engineering*
+### 4.4 Refinamiento y *loop engineering*
 
 El refinamiento parte de la versión funcional de `ref-refinamiento` y aplica clarify, analyze y converge según el enunciado. Resultado: de 29 a 83 preguntas de clarify respondidas, de 72 a 83 requisitos funcionales y de 160 a 290 tareas. Ejemplos de iteraciones reales, con el motivo del cambio de rumbo:
 
@@ -158,9 +177,9 @@ La evidencia de cada actividad está en `specs/spec-00N/clarify.md`, `analysis.m
 
 ---
 
-## 4. Diseño
+## 5. Diseño
 
-### 4.1 Arquitectura
+### 5.1 Arquitectura
 
 Monorepo con cuatro capas desacopladas (Art. 5): presentación (SPA Angular), contrato de API (REST más OpenAPI), aplicación y dominio (Spring Boot: controlador → servicio → repositorio) y persistencia (PostgreSQL). El frontend solo conoce el contrato, nunca el esquema.
 
@@ -189,7 +208,7 @@ flowchart TD
 * En desarrollo, `proxy.conf.json` reenvía `/api` desde `4200` hacia `8080`; el CORS del backend admite el origen `http://localhost:4200`.
 * Los contratos OpenAPI de cada historia están en `specs/spec-00N/contracts/`; springdoc publica además la documentación generada.
 
-### 4.2 Modelo de datos
+### 5.2 Modelo de datos
 
 Siete tablas, creadas por `V1__init_shared_schema.sql` y modificadas por `V3` a `V7` (`V2` carga los datos semilla):
 
@@ -205,7 +224,7 @@ Siete tablas, creadas por `V1__init_shared_schema.sql` y modificadas por `V3` a 
 
 El modelo unificado y su diagrama ER están en [`specs/data-model.md`](../specs/data-model.md), y el de cada historia en su `data-model.md`. No existe ninguna columna de saldo: se calcula (Art. 12).
 
-### 4.3 Decisiones técnicas y por qué se tomaron
+### 5.3 Decisiones técnicas y por qué se tomaron
 
 | Decisión | Motivo | Origen |
 | :-- | :-- | :-- |
@@ -221,15 +240,15 @@ El modelo unificado y su diagrama ER están en [`specs/data-model.md`](../specs/
 | HTTP Basic sin estado en lugar de tokens firmados | Simplicidad y proporcionalidad para el alcance de la práctica (Art. 23) | `plan.md` compartido |
 | No editar jamás una migración Flyway aplicada | Un cambio rompe la suma de verificación; el rollback se documenta en `tasks.md` | Incidencia 2026-11-19 |
 
-### 4.4 Principios de la constitución
+### 5.4 Principios de la constitución
 
 La constitución (`.specify/memory/constitution.md`, v1.2.0) ordena sus 28 artículos en cinco títulos: principios SDD (Art. 1 a 4), arquitectura (5 a 9), reglas de dominio inviolables (10 a 18), calidad transversal (19 a 25) y gobernanza (26 a 28). Las más determinantes: Art. 1 (la especificación es la fuente de verdad), Art. 2 (trazabilidad HU → criterio → prueba), Art. 10 (autorización en servidor), Art. 12 (saldo derivado), Art. 19 (RFC 9457), Art. 22 (test-first) y Art. 27 (toda enmienda exige revisar specs, planes y tareas afectados). Registro de enmiendas: v1.1.0 añadió el rol `DIRECCION_GENERAL`; v1.2.0, RRHH como resolutor de sus subordinados y el saldo de Dirección General.
 
 ---
 
-## 5. Implementación
+## 6. Implementación
 
-### 5.1 Pila tecnológica
+### 6.1 Pila tecnológica
 
 * **Backend:** Java 21, Spring Boot 3.4.3 (Web, Security, Validation, Data JPA, Actuator), Flyway, driver PostgreSQL, springdoc-openapi, Maven con `mvnw`.
 * **Frontend:** Angular 21, Angular Material y CDK 21, RxJS 7.8, TypeScript 5.9, Vitest 4.
@@ -237,7 +256,7 @@ La constitución (`.specify/memory/constitution.md`, v1.2.0) ordena sus 28 artí
 * **Pruebas:** JUnit 5, Mockito, Spring Security Test y Testcontainers con PostgreSQL real.
 * **Metodología:** GitHub Spec Kit 1.0.6, desarrollo test-first.
 
-### 5.2 Estructura del repositorio
+### 6.2 Estructura del repositorio
 
 ```
 recursos-humanos-IW/
@@ -259,7 +278,7 @@ recursos-humanos-IW/
 └── docker-compose.yml   # PostgreSQL
 ```
 
-### 5.3 Partes más relevantes del código
+### 6.3 Partes más relevantes del código
 
 * **`LeaveBalanceServiceImpl`.** Calcula el saldo al vuelo con un `Clock` inyectado: correspondientes por convenio y fecha de alta, disfrutados (`APPROVED`) y pendientes (`PENDING`) por año natural. Niega con `403` el saldo propio a Dirección General.
 * **`LeaveDayAllocator`.** Reparte los días de una solicitud entre los años naturales que abarca; el total siempre es `calculatedDays`. Lo usan el saldo y la aprobación.
@@ -271,7 +290,7 @@ recursos-humanos-IW/
 * **`PerformanceReviewService` y `V4__immutable_finalized_performance_reviews.sql`.** Creación por el responsable, conformidad con `PESSIMISTIC_WRITE` e inmutabilidad en servicio y en base de datos.
 * **Frontend.** Componentes standalone con carga diferida por ruta (`app.routes.ts`), `auth.interceptor.ts` y guardas por rol; el calendario cambia a lista con `BreakpointObserver` (CDK).
 
-### 5.4 Decisiones tomadas sobre la marcha
+### 6.4 Decisiones tomadas sobre la marcha
 
 * El saldo `disponible` no descuenta los pendientes (el primer diseño de los recorridos asumía lo contrario; se corrigió el documento, no el código).
 * El saldo insuficiente se devuelve como `409` y la cancelación como `204`, según los contratos de HU-03 y HU-04.
@@ -282,9 +301,9 @@ recursos-humanos-IW/
 
 ---
 
-## 6. Pruebas y Validación
+## 7. Pruebas y validación
 
-### 6.1 Estrategia
+### 7.1 Estrategia
 
 1. **Unitarias** (JUnit 5 y Mockito en backend; Vitest en frontend) para reglas de dominio y componentes.
 2. **Integración** (MockMvc y Testcontainers con PostgreSQL real) para controladores, seguridad, migraciones y transaccionalidad.
@@ -293,7 +312,7 @@ recursos-humanos-IW/
 
 Las pruebas siguen el criterio test-first (Art. 22) y se etiquetan, en las historias más refinadas, con `HU-0N.CA-M`.
 
-### 6.2 Resultados de la regresión (commit `662da39`)
+### 7.2 Resultados de la regresión (commit `662da39`)
 
 | Suite | Comando | Resultado | Evidencia |
 | :-- | :-- | :-- | :-- |
@@ -302,7 +321,7 @@ Las pruebas siguen el criterio test-first (Art. 22) y se etiquetan, en las histo
 
 Desglose del backend por clase: `LeaveResolutionIntegrationTest` 37, `LeaveRequestServiceTest` 19, `LeaveRequestIntegrationTest` 18, `LeaveResolutionServiceTest` 16, `TeamCalendarIntegrationTest` 15, `LeaveBalanceServiceTest` 14, `LeaveProratingUnitTest` 14, `EmployeeIntegrationTest` 12, `LeaveBalanceIntegrationTest` 10, `HolidayCalendarServiceTest` 10, `TeamCalendarServiceTest` 10, `LeaveResolverPolicyTest` 9, `LeaveDayAllocatorTest` 6, `LeaveRequestTrackingServiceTest` 6, `LeaveRequestTrackingIntegrationTest` 6, `LeaveRequestAutoCancelServiceTest` 5, `NotificationIntegrationTest` 5, `DepartmentReportIntegrationTest` 5, `PerformanceReviewIntegrationTest` 4, `EmployeeDeactivationAtomicityIntegrationTest` 1, `LeaveResolutionAtomicityIntegrationTest` 1 y `RecursosHumanosBackendApplicationTests` 1.
 
-### 6.3 Recorridos completos integrados (E2E)
+### 7.3 Recorridos completos integrados (E2E)
 
 Dos recorridos que cruzan las ocho historias y los módulos de los cuatro integrantes, ejecutados contra la API real (backend sobre PostgreSQL limpio, migraciones V1 a V7 y datos semilla) con [`docs/evidencias/e2e/run_recorridos.py`](evidencias/e2e/run_recorridos.py).
 
@@ -313,11 +332,11 @@ Dos recorridos que cruzan las ocho historias y los módulos de los cuatro integr
 
 El resultado paso a paso (precondiciones, datos, esperado, observado y versión) está en [`docs/evidencias/e2e/resultado-recorridos.md`](evidencias/e2e/resultado-recorridos.md), y el diseño en [`docs/recorridos-e2e.md`](recorridos-e2e.md). Limitación: se ejecutaron por API, no por la interfaz gráfica. Los valores esperados de la primera redacción se corrigieron donde no coincidían con los contratos (saldo con pendientes, `409` por saldo insuficiente, `204` al cancelar); véase `docs/verificacion-integrada.md`.
 
-### 6.4 Validación manual
+### 7.4 Validación manual
 
 HU-05 y HU-06 se validaron en un navegador Chrome real con backend y frontend locales (escenarios de `quickstart.md`), y los escenarios restantes por API: detalle en `specs/spec-005/converge.md` y `specs/spec-006/converge.md`. No se emularon escalas de grises ni se midieron tiempos de carga.
 
-### 6.5 Balance de la iteración (versión inicial `ref-refinamiento` frente a la final)
+### 7.5 Balance de la iteración (versión inicial `ref-refinamiento` frente a la final)
 
 | Indicador | Inicial | Final | Evidencia |
 | :-- | :-: | :-: | :-- |
@@ -333,13 +352,13 @@ Los denominadores y la tabla de registro mínimo (historia y criterio, hallazgo,
 
 ---
 
-## 7. Despliegue y Manual de Uso
+## 8. Despliegue y uso
 
-### 7.1 Requisitos previos
+### 8.1 Requisitos previos
 
 * JDK 21, Node.js 20 o superior con npm, Docker con Docker Compose (también necesario para las pruebas de integración) y Git.
 
-### 7.2 Instalación y ejecución en local
+### 8.2 Instalación y ejecución en local
 
 ```bash
 git clone https://github.com/Arid3n/recursos-humanos-IW.git
@@ -367,11 +386,7 @@ cd backend  && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test
 cd frontend && npx ng test --watch=false
 ```
 
-### 7.2 bis Demostración en vídeo
-
-`demo/index.html` reproduce `demo/demo-rrhh.mp4` (14 min 7 s) con un índice de 46 escenarios navegable y un botón «Ver historia» por cada historia. El vídeo se graba sobre la aplicación real con `demo/record-demo.mjs` (Playwright) y se monta con `demo/build-demo.py` (ffmpeg); incluye flujos principales, errores y restricciones de permisos de las ocho historias, y tarjetas «API REST» con petición y respuesta reales para lo que no tiene pantalla (trayectoria contractual, baja, permisos cruzados).
-
-### 7.3 Credenciales de los datos semilla
+### 8.3 Credenciales de los datos semilla
 
 Todas con la contraseña `admin123`:
 
@@ -382,7 +397,7 @@ Todas con la contraseña `admin123`:
 | Responsable de equipo | `responsable@empresa.com` | Carlos Ruiz Navarro |
 | Empleado | `empleado@empresa.com` | Laura Martínez Gómez, con Carlos como responsable |
 
-### 7.4 Manual de usuario breve
+### 8.4 Manual de usuario breve
 
 La barra superior muestra solo las opciones del rol: **Inicio**, **Mi Ficha y Saldo** (**Mi Ficha** para Dirección General), **Solicitar Ausencia**, **Mis Solicitudes**, **Evaluaciones**, **Solicitudes del Equipo**, **Calendario del Equipo**, **Alta de Empleado** e **Informes**.
 
@@ -391,13 +406,13 @@ La barra superior muestra solo las opciones del rol: **Inicio**, **Mi Ficha y Sa
 * **RRHH.** En «Alta de Empleado» registra a una persona: la aplicación crea su cuenta y muestra la clave provisional en un diálogo. En «Informes» elige tipo (absentismo o uso de vacaciones) y rango, expande el desglose por empleado y descarga el CSV. Además resuelve y ve el calendario de sus subordinados directos.
 * **Dirección General.** Resuelve y ve el calendario de sus subordinados directos; no solicita ausencias ni tiene saldo.
 
-La variación contractual, la consulta de la trayectoria y la baja de empleados se operan por API (`POST` y `GET /api/v1/employees/{id}/contracts`, `DELETE /api/v1/employees/{id}`); no tienen pantalla enlazada en esta versión (apartado 9.3).
+La variación contractual, la consulta de la trayectoria y la baja de empleados se operan por API (`POST` y `GET /api/v1/employees/{id}/contracts`, `DELETE /api/v1/employees/{id}`); no tienen pantalla enlazada en esta versión (apartado 10.3).
 
 ---
 
-## 8. Planificación, Seguimiento y Gobernanza
+## 9. Planificación y seguimiento
 
-### 8.1 Iteraciones y cronograma real
+### 9.1 Iteraciones y cronograma real
 
 El repositorio tiene 56 commits entre el 2026-10-20 y el 2026-11-21. Los pull requests integrados en `main` marcan las entregas:
 
@@ -417,7 +432,7 @@ El repositorio tiene 56 commits entre el 2026-10-20 y el 2026-11-21. Los pull re
 
 Los *issues* del repositorio (#5, #7 y #10) siguen el trabajo de HU-07, HU-08 y el refinamiento de ambas, y están cerrados.
 
-### 8.2 Fases de la práctica y su evidencia
+### 9.2 Fases de la práctica y su evidencia
 
 | Fase del enunciado | Evidencia |
 | :-- | :-- |
@@ -428,7 +443,7 @@ Los *issues* del repositorio (#5, #7 y #10) siguen el trabajo de HU-07, HU-08 y 
 | 4. Verificación integrada (5.4) | `docs/verificacion-integrada.md`, `docs/recorridos-e2e.md`, `docs/evidencias/` |
 | 5. Cierre y entrega | Esta memoria, [`demo/index.html`](../demo/index.html) (vídeo `demo/demo-rrhh.mp4`, 14 min, con índice de escenarios) |
 
-### 8.3 Trazabilidad de decisiones y hallazgos
+### 9.3 Trazabilidad de decisiones y hallazgos
 
 La matriz global (`docs/matriz-trazabilidad.md`) relaciona, para las ocho historias, cada criterio con la decisión del plan, las tareas que lo cubren, la prueba prevista y el revisor. El registro consolidado (`docs/registro-hallazgos.md`) recoge los 27 hallazgos de analyze con gravedad, evidencia, remediación, responsable y revisor. Los hallazgos de implementación con tarea y commit están en cada `converge.md` y en la tabla de registro mínimo de `docs/verificacion-integrada.md`. Algunos de los más relevantes:
 
@@ -444,16 +459,16 @@ La matriz global (`docs/matriz-trazabilidad.md`) relaciona, para las ocho histor
 
 ---
 
-## 9. Conclusiones y Lecciones Aprendidas
+## 10. Conclusiones
 
-### 9.1 Logros
+### 10.1 Logros
 
 1. **Sistema funcional de extremo a extremo.** Las ocho historias están implementadas, con 224 pruebas de backend y 86 de frontend en verde y dos recorridos E2E conformes.
 2. **Especificación y código alineados.** El 100 % de las tareas está marcado, y los criterios se verifican por prueba nombrada o por recorrido en 65 de 66 casos. Las decisiones tomadas después de implementar quedaron en la spec antes de tocar el código.
 3. **Refinamiento documentado.** De 29 a 83 aclaraciones, de 72 a 83 requisitos y 290 tareas, con registros de clarify, analyze y converge por historia, matriz de trazabilidad y revisión cruzada.
 4. **Reglas de dominio críticas.** Saldo derivado, trayectoria inmutable, resolución atómica con concurrencia controlada, privacidad en el calendario y evaluaciones inmutables protegidas también en base de datos.
 
-### 9.2 Dificultades encontradas
+### 10.2 Dificultades encontradas
 
 * **Una decisión de producto toca muchas specs.** Quién resuelve la solicitud de un responsable afectó a HU-01, HU-02, HU-03, HU-05 y HU-06 y a la constitución. Conviene fijar el significado de «borrar» (aquí, `CANCELLED`) antes de registrar una respuesta.
 * **Cambio de respuesta tras registrarla.** Revertir una aclaración ya anotada obligó a añadir FR-016 y una dependencia entre módulos.
@@ -462,7 +477,7 @@ La matriz global (`docs/matriz-trazabilidad.md`) relaciona, para las ocho histor
 * **Documentación frente a código.** Los primeros recorridos E2E contenían valores esperados incorrectos y la matriz citaba una prueba inexistente; se corrigieron al ejecutarlos y contrastarlos.
 * **Pruebas dependientes de la máquina.** Las pruebas del mes inicial en `Europe/Madrid` no pueden fallar en un equipo configurado en CET.
 
-### 9.3 Límites conocidos del alcance (aceptados y documentados)
+### 10.3 Límites conocidos del alcance (aceptados y documentados)
 
 Cuatro puntos se aceptaron al congelar el código. Reducen el alcance de interfaz o de funcionalidad y, según el enunciado, requieren validación del docente:
 
@@ -471,7 +486,7 @@ Cuatro puntos se aceptaron al congelar el código. Reducen el alcance de interfa
 3. **HU-08.** Solo `RESPONSABLE_EQUIPO` crea evaluaciones; RRHH y Dirección General con subordinados no pueden evaluarlos.
 4. **Rendimiento.** Los objetivos de tiempo de respuesta no se han medido.
 
-### 9.4 Trabajo futuro
+### 10.4 Trabajo futuro
 
 * Enlazar en la interfaz las pantallas de variación contractual, trayectoria y baja (y validar el rol del responsable al asignarlo, FR-013 de HU-01).
 * Validar el saldo año a año en HU-03 con `LeaveDayAllocator`.
@@ -482,9 +497,15 @@ Cuatro puntos se aceptaron al congelar el código. Reducen el alcance de interfa
 
 ---
 
-## 10. Anexos y Referencias
+## 11. Demo
 
-### 10.1 Especificaciones completas
+`demo/index.html` reproduce `demo/demo-rrhh.mp4` (14 min 7 s) con un índice de 46 escenarios navegable y un botón «Ver historia» por cada historia. El vídeo se graba sobre la aplicación real con `demo/record-demo.mjs` (Playwright) y se monta con `demo/build-demo.py` (ffmpeg); incluye flujos principales, errores y restricciones de permisos de las ocho historias, y tarjetas «API REST» con petición y respuesta reales para lo que no tiene pantalla (trayectoria contractual, baja, permisos cruzados).
+
+---
+
+## 12. Anexos
+
+### 12.1 Especificaciones completas
 
 Cada historia tiene su ciclo en `specs/spec-00N/`: `spec.md`, `clarify.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, `tasks.md`, `analysis.md`, `converge.md` e `implementation-report.md`.
 
@@ -499,7 +520,7 @@ Cada historia tiene su ciclo en `specs/spec-00N/`: `spec.md`, `clarify.md`, `pla
 | HU-07 | [spec](../specs/spec-007/spec.md) | [plan](../specs/spec-007/plan.md) | [tasks](../specs/spec-007/tasks.md) | [analysis](../specs/spec-007/analysis.md) | [clarify](../specs/spec-007/clarify.md) | [converge](../specs/spec-007/converge.md) |
 | HU-08 | [spec](../specs/spec-008/spec.md) | [plan](../specs/spec-008/plan.md) | [tasks](../specs/spec-008/tasks.md) | [analysis](../specs/spec-008/analysis.md) | [clarify](../specs/spec-008/clarify.md) | [converge](../specs/spec-008/converge.md) |
 
-### 10.2 Documentos complementarios
+### 12.2 Documentos complementarios
 
 * [Reparto de historias entre integrantes](AGRUPAMIENTO.md)
 * [Constitución del proyecto](../.specify/memory/constitution.md), [plan compartido](../specs/plan.md) y [modelo de datos unificado](../specs/data-model.md)
@@ -509,7 +530,7 @@ Cada historia tiene su ciclo en `specs/spec-00N/`: `spec.md`, `clarify.md`, `pla
 * [Verificación integrada y balance de la iteración](verificacion-integrada.md)
 * Evidencias: [`docs/evidencias/`](evidencias/) (suites de pruebas, diffs de specs, informes de analyze)
 
-### 10.3 Glosario
+### 12.3 Glosario
 
 * **SDD (*Spec-Driven Development*).** Metodología donde la especificación funcional dirige la implementación.
 * **Spec Kit.** Conjunto de comandos (`specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`, `converge`) que producen los artefactos de cada spec.

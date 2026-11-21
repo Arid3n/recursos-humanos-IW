@@ -35,7 +35,7 @@ La primera redacción de `docs/recorridos-e2e.md` contenía valores esperados qu
 
 Las historias dependientes de las correcciones (HU-02, HU-03, HU-04 por el cambio de HU-05/FR-015 a FR-018) están cubiertas por estas suites completas, y los dos recorridos las reejecutan de extremo a extremo. Verificación manual que no cubre la suite: pantallas y escalas de grises (no emuladas), tiempos de carga (SC-001 de HU-02, HU-06, HU-07), contratos y trayectoria de HU-01 en la interfaz (no accesibles, ver `specs/spec-001/converge.md`).
 
-La cifra de 93 pruebas de `docs/memoria.md` §6.2 corresponde solo a ocho clases unitarias del módulo de ausencias; el total real del backend es 224.
+La cifra de 93 pruebas de `docs/memoria.md` §7.2 corresponde solo a ocho clases unitarias del módulo de ausencias; el total real del backend es 224.
 
 ## 3. Balance de la iteración (versión inicial `ref-refinamiento` frente a la final)
 
