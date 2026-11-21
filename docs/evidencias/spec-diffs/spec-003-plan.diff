@@ -1,0 +1,41 @@
+diff --git a/specs/spec-003/plan.md b/specs/spec-003/plan.md
+index 1eddf41..8302475 100644
+--- a/specs/spec-003/plan.md
++++ b/specs/spec-003/plan.md
+@@ -9,10 +9,11 @@
+ 
+ Implementar el módulo completo para la solicitud de ausencias (vacaciones o permisos) por parte del empleado, garantizando:
+ - Previsualización interactiva del cómputo oficial de días laborables calculados estrictamente por el servidor (`HolidayCalendarService`), descontando fines de semana y festivos oficiales (Art. 14, FR-002).
+-- Creación segura de la solicitud (`POST /api/v1/leave/requests`) naciendo exclusivamente con estado `PENDING` y asignada automáticamente al responsable del empleado (Art. 13, FR-003, FR-006).
+-- Validación estricta contra el saldo disponible de vacaciones en ausencias de tipo `VACATION`, reutilizando el motor dinámico de HU-02 (`LeaveBalanceService`), e independencia de bolsa para ausencias de tipo `PERMIT` (Art. 12, FR-004, FR-008).
++- Creación segura de la solicitud (`POST /api/v1/leave/requests`) naciendo exclusivamente con estado `PENDING`, con campo `justification` (obligatorio en `PERMIT`, opcional en `VACATION`) y asignada automáticamente al responsable del empleado (Art. 13, FR-001, FR-003, FR-006).
++- Validación de fechas estrictamente en presente/futuro (`startDate >= LocalDate.now()`) y consistencia de intervalo (`endDate >= startDate`) (FR-005).
++- Validación estricta contra el saldo disponible de vacaciones con reserva preventiva (`disponible = total - aprobados - pendientes`), reutilizando el motor de HU-02 (`LeaveBalanceService`) y deduciendo solicitudes `PENDING` activas, manteniendo independencia de bolsa para ausencias de tipo `PERMIT` (Art. 12, FR-004, FR-008).
+ - Bloqueo preventivo y automático ante solapamiento de fechas con cualquier otra solicitud previa del empleado en estado `PENDING` o `APPROVED` (FR-007, SC-002).
+-- Formulario reactivo en Angular 21 con Angular Material, datepicker de rango, aviso informativo de antelación (< 7 días) y accesibilidad WCAG 2.1 AA (Art. 21, SC-001).
++- Formulario reactivo en Angular 21 con Angular Material, campo de justificación condicional, datepicker de rango con fecha mínima (`minDate = hoy`), aviso informativo de antelación (< 7 días) y accesibilidad WCAG 2.1 AA (Art. 21, SC-001).
+ 
+ ---
+ 
+@@ -35,16 +36,16 @@ Implementar el módulo completo para la solicitud de ausencias (vacaciones o per
+ 
+ | Invariante Constitucional | Estado | Evidencia en el Diseño |
+ | :--- | :--- | :--- |
+-| **Art. 1 (Spec como verdad)** | **PASS** | Todas las funcionalidades y validaciones derivan estrictamente de HU-03 y sus clarificaciones cerradas. |
++| **Art. 1 (Spec como verdad)** | **PASS** | Todas las funcionalidades y validaciones derivan estrictamente de HU-03 y sus clarificaciones cerradas (incluyendo justificación obligatoria en PERMIT y no retroactividad). |
+ | **Art. 5 (4 capas desacopladas)** | **PASS** | `LeaveRequestController` delega en `LeaveRequestService`, este en repositorios JPA, y el frontend interactúa únicamente a través del contrato OpenAPI. |
+ | **Art. 8 (PostgreSQL real)** | **PASS** | Se apoya en la tabla `leave_requests` de Flyway con `CHECK (end_date >= start_date)`. Tests de integración con Testcontainers PostgreSQL. |
+ | **Art. 10 (Autorización en servidor)** | **PASS** | La identidad del empleado solicitante se obtiene siempre de `SecurityContextHolder` en la sesión, sin confiar en identificadores recibidos del cliente. |
+-| **Art. 12 (Saldo es dato derivado)** | **PASS** | Se invoca `LeaveBalanceService.getMyLeaveBalance` para verificar si hay saldo suficiente sin crear contadores desacoplados. |
++| **Art. 12 (Saldo es dato derivado con reserva preventiva)** | **PASS** | Se invoca `LeaveBalanceService.getMyLeaveBalance` para obtener el saldo oficial y se descuentan los días de solicitudes `PENDING` del empleado mediante `LeaveRequestRepository.sumPendingDaysByEmployeeIdAndYear`, previniendo sobrecupo. |
+ | **Art. 13 (Ciclo de vida y atomicidad)** | **PASS** | Toda solicitud nace estrictamente en estado `PENDING`, con versión para concurrencia optimista y vinculación automática al responsable. |
+-| **Art. 14 (Fechas y cómputo de días)** | **PASS** | El cálculo de días hábiles reside exclusivamente en el backend (`HolidayCalendarService`) y es consumido por el frontend vía API. |
+-| **Art. 19 (Errores RFC 9457)** | **PASS** | Errores de validación, fechas inválidas, saldo insuficiente o solapamientos devuelven `ProblemDetail` estructurado. |
++| **Art. 14 (Fechas y cómputo de días)** | **PASS** | El cálculo de días hábiles enteros (`Integer >= 1`) reside exclusivamente en el backend (`HolidayCalendarService`) y es consumido por el frontend vía API. |
++| **Art. 19 (Errores RFC 9457)** | **PASS** | Errores de validación, fechas pasadas, saldo insuficiente o solapamientos devuelven `ProblemDetail` estructurado con desglose por campo. |
+ | **Art. 21 (Accesibilidad WCAG AA)** | **PASS** | Formulario con Angular Material, soporte para teclado, contraste adecuado y mensajes de error asociados mediante `mat-error`. |
+-| **Art. 22 (Test-First con Testcontainers)** | **PASS** | Pruebas de integración sobre PostgreSQL real con verificación de solapes, saldo insuficiente y concurrencia. |
++| **Art. 22 (Test-First con Testcontainers)** | **PASS** | Pruebas de integración sobre PostgreSQL real con verificación de solapes, saldo insuficiente acumulado y concurrencia. |
+ | **Art. 23 (Simplicidad y proporcionalidad)**| **PASS** | Sin servicios externos complejos; cálculo en memoria de días y consulta SQL optimizada por índices. |
+ 
+ ---

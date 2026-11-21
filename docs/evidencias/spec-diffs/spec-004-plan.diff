@@ -1,0 +1,41 @@
+diff --git a/specs/spec-004/plan.md b/specs/spec-004/plan.md
+index 4c048cc..9ec5c51 100644
+--- a/specs/spec-004/plan.md
++++ b/specs/spec-004/plan.md
+@@ -8,7 +8,7 @@
+ 
+ ## Summary
+ 
+-La funcionalidad **HU-04 (`spec-004`)** permite a cada empleado autenticado realizar un seguimiento completo y transparente de sus solicitudes de vacaciones y permisos. Implementa un listado paginado y ordenado cronológicamente (`created_at DESC`), con filtros por estado (`Todas`, `Pendientes`, `Aprobadas`, `Rechazadas`), visualización del motivo en solicitudes denegadas y la capacidad de cancelar solicitudes propias en estado `PENDING` liberando el periodo sin penalización, con estricto aislamiento de datos garantizado en el servidor (Art. 10 de la Constitución).
++La funcionalidad **HU-04 (`spec-004`)** permite a cada empleado autenticado realizar un seguimiento completo y transparente de sus solicitudes de vacaciones y permisos. Implementa un listado paginado y ordenado cronológicamente (`created_at DESC`), con filtros por estado (`Todas`, `Pendientes`, `Aprobadas`, `Rechazadas`, `Canceladas`), visualización de la justificación aportada por el empleado (`justification`), visualización del motivo en solicitudes denegadas (`rejectionReason`) y la capacidad de cancelar solicitudes propias en estado `PENDING` transicionando al estado formal `CANCELLED` y liberando el periodo y el saldo retenido sin penalización, con estricto aislamiento de datos garantizado en el servidor (Art. 10 de la Constitución).
+ 
+ ---
+ 
+@@ -22,20 +22,22 @@ La funcionalidad **HU-04 (`spec-004`)** permite a cada empleado autenticado real
+ **Project Type**: Aplicación web SPA + Servicio REST desacoplado (Art. 5)  
+ **Performance Goals**: Listado renderizado en < 500ms (SC-001) · Filtros reactivos instantáneos (SC-002)  
+ **Constraints**: RFC 9457 ProblemDetail (Art. 19) · WCAG 2.1 AA (Art. 21) · Autorización en servidor por identidad de sesión (Art. 10)  
+-**Scale/Scope**: Paginación estándar de 10 registros por página, navegación accesible y confirmación modal de cancelación  
++**Scale/Scope**: Paginación estándar de 10 registros por página, navegación accesible, selector de filtros de 5 estados y confirmación modal de cancelación  
+ 
+ ---
+ 
+-## Constitution Check
++## Constitution Check & Complejidad Justificada (Art. 26)
+ 
+ *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+ 
+-- [x] **Art. 1 (Especificación como fuente de verdad)**: Plan fundamentado exclusivamente en los 5 escenarios y requisitos de `spec.md`.
++- [x] **Art. 1 (Especificación como fuente de verdad)**: Plan fundamentado exclusivamente en los escenarios, requisitos y clarificaciones cerradas de `spec.md`.
+ - [x] **Art. 2 (Trazabilidad HU → CA → Test)**: Cada criterio de aceptación tiene mapeado al menos un test unitario o de integración (`HU-04.CA-1` a `HU-04.CA-5`).
+ - [x] **Art. 5 (Arquitectura en capas)**: Cuatro capas desacopladas (Presentación Angular → Contrato OpenAPI → Dominio/Servicio Spring Boot → Persistencia PostgreSQL).
+-- [x] **Art. 9 (API REST y Contratos)**: `GET /api/v1/leave/my-requests` paginado y `POST /api/v1/leave/requests/{id}/cancel` documentados en `contracts/leave-tracking-api.yaml`.
++- [x] **Art. 9 (API REST y Contratos)**: `GET /api/v1/leave/my-requests` paginado y `POST /api/v1/leave/requests/{id}/cancel` documentados en `contracts/leave-tracking-api.yaml` con seguridad JWT (`bearerAuth`).
+ - [x] **Art. 10 (Autorización en el servidor)**: El empleado se obtiene exclusivamente de `Principal` en sesión. No se confía en ningún parámetro externo. Se incluye test negativo para acceso denegado (`403 Forbidden`).
+-- [x] **Art. 13 (Ciclo de vida de la solicitud)**: Solo solicitudes en `PENDING` son cancelables. Si la solicitud está `APPROVED` o `REJECTED`, se rechaza con `409 Conflict`.
++- [x] **Art. 13 & Art. 26 (Ciclo de vida y Complejidad Justificada)**:
++  - *Desviación constitucional controlada*: El Art. 13 original lista `PENDIENTE`, `APROBADA` y `RECHAZADA`. La especificación formaliza la adición de `CANCELLED` (`CANCELADA`) como estado final strictly *append-only* derivado de la transición unívoca `PENDIENTE → CANCELADA`.
++  - *Justificación (Art. 26)*: La auditoría exigida por el Art. 20 (RGPD/LOPDGDD) y la necesidad de visibilidad histórica del empleado impiden el borrado físico de la solicitud. Mantener el registro con estado `CANCELLED` preserva la trazabilidad completa, libera el bloqueo preventivo de fechas y saldo en HU-03, y evita sobreescribir o confundir la acción del empleado con un rechazo patronal (`REJECTED`).
+ - [x] **Art. 19 (Problem Details RFC 9457)**: Todas las respuestas de error (`403`, `404`, `409`) usan `ProblemDetail`.
+ - [x] **Art. 21 (Accesibilidad WCAG 2.1 AA)**: Badges de estado con iconografía y texto, diálogos con foco accesible y controles navegables por teclado.
+ 

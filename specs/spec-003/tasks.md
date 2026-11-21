@@ -21,7 +21,7 @@
 
 - [x] T003 [P] Implement HolidayCalendarService excluding weekends and official holidays in backend/src/main/java/com/iw/rrhh/common/service/HolidayCalendarService.java
 - [x] T004 [P] Create DTO records CreateLeaveRequest (including justification), LeaveRequestResponse, and WorkingDaysCalculationResponse in backend/src/main/java/com/iw/rrhh/leave/dto/
-- [x] T005 [P] Add hasOverlappingRequests and sumPendingDaysByEmployeeIdAndYear queries to LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java
+- [x] T005 [P] Add hasOverlappingRequests query to LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/repository/LeaveRequestRepository.java *(nota 2026-11-21: este texto citaba también la consulta `sumPendingDaysByEmployeeIdAndYear`, que no existe; el saldo pendiente se calcula en `LeaveBalanceServiceImpl.sumDaysInYear`)*
 - [x] T006 [P] Add business exceptions LeaveRequestOverlapException and InsufficientLeaveBalanceException mapped to RFC 9457 ProblemDetail in backend/src/main/java/com/iw/rrhh/common/exception/GlobalExceptionHandler.java
 
 ---

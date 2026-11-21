@@ -1,0 +1,55 @@
+npm notice run frontend@0.0.0 npx
+npm notice run 'ng' test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                                                                   | Names                                                                                              |  Raw size
+spec-app-features-leave-components-leave-request-list-leave-request-list.component.js                 | spec-app-features-leave-components-leave-request-list-leave-request-list.component                 |  69.60 kB | 
+spec-app-features-team-calendar-components-team-calendar-team-calendar.component.js                   | spec-app-features-team-calendar-components-team-calendar-team-calendar.component                   |  66.00 kB | 
+styles.css                                                                                            | styles                                                                                             |  62.09 kB | 
+spec-app-features-leave-components-leave-request-create-leave-request-create.component.js             | spec-app-features-leave-components-leave-request-create-leave-request-create.component             |  47.92 kB | 
+spec-app-features-reports-components-department-reports-department-reports.component.js               | spec-app-features-reports-components-department-reports-department-reports.component               |  41.20 kB | 
+spec-app-employees-components-employee-create-employee-create.component.js                            | spec-app-employees-components-employee-create-employee-create.component                            |  37.85 kB | 
+spec-app-features-team-calendar-components-team-pending-requests-team-pending-requests.component.js   | spec-app-features-team-calendar-components-team-pending-requests-team-pending-requests.component   |  35.27 kB | 
+chunk-EHINHHF6.js                                                                                     | -                                                                                                  |  30.60 kB | 
+spec-app-core-components-landing-landing.component.js                                                 | spec-app-core-components-landing-landing.component                                                 |  30.19 kB | 
+spec-app-app.js                                                                                       | spec-app-app                                                                                       |  22.25 kB | 
+spec-app-features-employees-components-my-profile-my-profile.component.js                             | spec-app-features-employees-components-my-profile-my-profile.component                             |  21.15 kB | 
+chunk-NB7FV5H3.js                                                                                     | -                                                                                                  |  14.55 kB | 
+chunk-FV3RXDCC.js                                                                                     | -                                                                                                  |  12.73 kB | 
+chunk-RSTWSNOR.js                                                                                     | -                                                                                                  |   4.75 kB | 
+spec-app-features-team-calendar-components-resolve-request-dialog-resolve-request-dialog.component.js | spec-app-features-team-calendar-components-resolve-request-dialog-resolve-request-dialog.component |   3.88 kB | 
+spec-app-core-components-notification-bell-notification-bell.component.js                             | spec-app-core-components-notification-bell-notification-bell.component                             |   3.63 kB | 
+spec-app-features-leave-components-leave-balance-widget-leave-balance-widget.component.js             | spec-app-features-leave-components-leave-balance-widget-leave-balance-widget.component             |   3.43 kB | 
+chunk-OHRI6XLP.js                                                                                     | -                                                                                                  |   3.33 kB | 
+spec-app-features-performance-services-performance-review.service.js                                  | spec-app-features-performance-services-performance-review.service                                  |   3.19 kB | 
+chunk-SKW6SPKZ.js                                                                                     | -                                                                                                  |   2.33 kB | 
+spec-app-core-guards-absence-request.guard.js                                                         | spec-app-core-guards-absence-request.guard                                                         |   2.17 kB | 
+spec-app-core-services-auth.service.js                                                                | spec-app-core-services-auth.service                                                                |   2.08 kB | 
+spec-app-features-reports-services-department-report.service.js                                       | spec-app-features-reports-services-department-report.service                                       |   2.04 kB | 
+chunk-JGO4TZVY.js                                                                                     | -                                                                                                  |   1.79 kB | 
+chunk-DMYDVXJK.js                                                                                     | -                                                                                                  |   1.40 kB | 
+init-testbed.js                                                                                       | init-testbed                                                                                       |   1.21 kB | 
+vitest-mock-patch.js                                                                                  | vitest-mock-patch                                                                                  | 974 bytes | 
+chunk-3WYDCOAB.js                                                                                     | -                                                                                                  | 262 bytes | 
+
+                                                                                                      | Initial total                                                                                      | 527.88 kB
+
+Lazy chunk files                                                                                      | Names                                                                                              |  Raw size
+chunk-HLXXHV7E.js                                                                                     | notification-bell-component                                                                        | 180 bytes | 
+
+Application bundle generation complete. [3.076 seconds] - 2026-11-21T18:06:16.475Z
+
+
+ RUN  v4.1.12 /home/ariden/Documents/Uni/IW/recursos-humanos-IW/frontend
+
+(node:33712) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33711) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  16 passed (16)
+      Tests  86 passed (86)
+   Start at  19:06:16
+   Duration  4.55s (transform 1.24s, setup 2.28s, import 6.76s, tests 11.22s, environment 12.34s)
+
+exit=0
