@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: API de Evaluación de Desempeño con Conformidad (HU-08)
+  description: |
+    Gestión del ciclo bilateral de evaluaciones de desempeño: el responsable de equipo
+    crea evaluaciones (nacen en PENDING_ACKNOWLEDGMENT) y el empleado registra su
+    conformidad (pasa a FINALIZED de forma inmutable). Los accesos están restringidos
+    por rol y por alcance derivado de la sesión (Art. 10, Art. 18):
+    - RESPONSABLE_EQUIPO: consulta y crea evaluaciones solo de su equipo actual.
+    - EMPLEADO: consulta y da conformidad solo a sus propias evaluaciones.
+    La valoración está restringida a enteros 1–5. Las evaluaciones FINALIZED son
+    inmutables: cualquier intento de modificación devuelve 409 Conflict.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - basicAuth: []
+
+paths:
+  /performance-reviews/me:
+    get:
+      summary: Consultar las evaluaciones propias del empleado autenticado
+      operationId: getMyReviews
+      tags: [Performance Reviews]
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Lista de evaluaciones propias, ordenadas por periodo desc y fecha de creación desc.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerformanceReviewResponse'
+        '401':
+          description: Credenciales no proporcionadas o inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol EMPLEADO.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  /performance-reviews/team:
+    get:
+      summary: Consultar las evaluaciones del equipo actual del responsable
+      operationId: getTeamReviews
+      tags: [Performance Reviews]
+      responses:
+        '200':
+          description: Lista de evaluaciones del equipo, ordenadas por fecha de creación desc.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerformanceReviewResponse'
+        '401':
+          description: Credenciales inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RESPONSABLE_EQUIPO.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  /performance-reviews/team/employees:
+    get:
+      summary: Listar miembros activos del equipo para el selector de creación de evaluación
+      operationId: getTeamEmployees
+      tags: [Performance Reviews]
+      responses:
+        '200':
+          description: Empleados activos del equipo, ordenados por apellido y nombre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerformanceReviewEmployeeResponse'
+        '401':
+          description: Credenciales inválidas.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RESPONSABLE_EQUIPO.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  /performance-reviews/team/{employeeId}:
+    post:
+      summary: Crear una evaluación pendiente de conformidad para un miembro del equipo
+      operationId: createReview
+      tags: [Performance Reviews]
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePerformanceReviewRequest'
+      responses:
+        '201':
+          description: Evaluación creada en estado PENDING_ACKNOWLEDGMENT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceReviewResponse'
+        '400':
+          description: Datos de entrada inválidos (rating fuera de rango, campos vacíos).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '403':
+          description: El usuario no tiene rol RESPONSABLE_EQUIPO o el empleado no pertenece a su equipo.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '404':
+          description: El empleado no existe.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  /performance-reviews/{reviewId}/acknowledge:
+    post:
+      summary: Dar conformidad y formalizar una evaluación propia
+      operationId: acknowledgeReview
+      tags: [Performance Reviews]
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgePerformanceReviewRequest'
+      responses:
+        '200':
+          description: Evaluación formalizada (FINALIZED) con la fecha del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceReviewResponse'
+        '403':
+          description: El usuario no tiene rol EMPLEADO o la evaluación no le pertenece.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '404':
+          description: La evaluación no existe.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '409':
+          description: La evaluación ya está formalizada (inmutable).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    PerformanceReviewStatus:
+      type: string
+      enum: [PENDING_ACKNOWLEDGMENT, FINALIZED]
+
+    CreatePerformanceReviewRequest:
+      type: object
+      required: [period, objectives, rating, comments]
+      properties:
+        period:
+          type: string
+          minLength: 1
+          example: '2026-ANUAL'
+        objectives:
+          type: string
+          minLength: 1
+          description: Objetivos y metas asignadas al empleado.
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Valoración cuantitativa (1=Insatisfactorio, 5=Sobresaliente).
+        comments:
+          type: string
+          minLength: 1
+          description: Comentarios cualitativos del responsable.
+
+    AcknowledgePerformanceReviewRequest:
+      type: object
+      properties:
+        employeeComments:
+          type: string
+          nullable: true
+          description: Observaciones opcionales del empleado antes de confirmar la conformidad.
+
+    PerformanceReviewResponse:
+      type: object
+      required: [id, employeeId, employeeName, evaluatorId, evaluatorName, period, objectives, rating, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        employeeName:
+          type: string
+        evaluatorId:
+          type: string
+          format: uuid
+        evaluatorName:
+          type: string
+        period:
+          type: string
+          example: '2026-ANUAL'
+        objectives:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comments:
+          type: string
+          nullable: true
+        employeeComments:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PerformanceReviewStatus'
+        employeeAcknowledgedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finalizedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de formalización generada en el servidor (nunca manipulable por el cliente).
+        createdAt:
+          type: string
+          format: date-time
+
+    PerformanceReviewEmployeeResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri

@@ -2,11 +2,16 @@
 
 **Feature Branch**: `spec-008`  
 **Created**: 2026-10-27  
-**Status**: Ready for Planning  
+**Status**: Implemented  
 **Historia de Usuario**: HU-08  
 **Asignación**: Integrante 4 (Analítica de RRHH y Desempeño)
 
 ## Clarifications
+
+### Session 2026-11-20
+- Q: ¿Cómo se implementa el control de valoración (1–5) en la UI del responsable? → A: `<select>` nativo con 5 opciones textuales descriptivas (1–Insatisfactorio, 2–En desarrollo, 3–Cumple expectativas, 4–Supera expectativas, 5–Sobresaliente) ligado con `ngModel`; más accesible que un slider y consistente con Art. 21 (no transmite información solo visualmente).
+- Q: ¿Qué mecanismo de concurrencia protege el flujo de conformidad? → A: Bloqueo pesimista `PESSIMISTIC_WRITE` en `findByIdForUpdate` del repositorio; como red de seguridad adicional, `@Version` en la entidad para bloqueo optimista. La segunda petición simultánea recibe `409 Conflict`.
+- Q: ¿Existen ambigüedades adicionales en la spec tras revisar el código implementado? → A: No. Todos los requisitos (FR-001 a FR-008, SC-001 a SC-003) están completamente especificados y el comportamiento implementado es fiel a la spec.
 
 ### Session 2026-10-27
 - Q: ¿Qué escala de valoración cuantitativa se utiliza en la evaluación? → A: Escala entera de 1 a 5 con descriptores cualitativos estándar (1: Insatisfactorio, 2: En desarrollo, 3: Cumple expectativas, 4: Supera expectativas, 5: Sobresaliente).
