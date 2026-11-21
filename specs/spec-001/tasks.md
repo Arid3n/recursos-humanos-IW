@@ -63,7 +63,7 @@
 - [x] T022 [US2] Implement EmployeeService.addContractVariation inserting new append-only ContractRecord in backend/src/main/java/com/iw/rrhh/employee/service/EmployeeServiceImpl.java
 - [x] T023 [US2] Implement POST /api/v1/employees/{id}/contracts endpoint in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeController.java
 - [x] T024 [US2] Add integration test testAddContractVariation_AppendOnly_Retroactive in backend/src/test/java/com/iw/rrhh/employee/ContractVariationIntegrationTest.java
-- [x] T025 [US2] Implement contract variation dialog/form component in frontend/src/app/employees/components/contract-variation/contract-variation.component.ts
+- [x] T025 [US2] Implement contract variation dialog/form component in frontend/src/app/employees/components/contract-variation/contract-variation.component.ts — *Nota 2026-11-21: componente implementado y probado, no enlazado en la navegación (límite conocido, `converge.md` C1)*
 
 ---
 
@@ -79,7 +79,7 @@
 - [x] T027 [US3] Add repository queries findCurrentContract and findFullHistoryChronological in backend/src/main/java/com/iw/rrhh/employee/repository/ContractRecordRepository.java
 - [x] T028 [US3] Implement EmployeeService.getEmployeeDetail and getContractHistory in backend/src/main/java/com/iw/rrhh/employee/service/EmployeeServiceImpl.java
 - [x] T029 [US3] Implement GET /api/v1/employees/{id} and GET /api/v1/employees/{id}/contracts in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeController.java
-- [x] T030 [US3] Implement ContractHistoryComponent with mat-table in frontend/src/app/employees/components/contract-history/contract-history.component.ts
+- [x] T030 [US3] Implement ContractHistoryComponent with mat-table in frontend/src/app/employees/components/contract-history/contract-history.component.ts — *Nota 2026-11-21: componente implementado y probado, no enlazado en la navegación (límite conocido, `converge.md` C1)*
 
 ---
 

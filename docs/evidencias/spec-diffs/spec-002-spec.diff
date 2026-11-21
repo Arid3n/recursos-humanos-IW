@@ -1,0 +1,66 @@
+diff --git a/specs/spec-002/spec.md b/specs/spec-002/spec.md
+index 02f685a..8030c88 100644
+--- a/specs/spec-002/spec.md
++++ b/specs/spec-002/spec.md
+@@ -3,17 +3,25 @@
+ **Feature Branch**: `spec-002`  
+ **Created**: 2026-10-27  
+ **Status**: Ready for Planning  
++**Revisada**: 2026-11-19 por HU-05 fase 10 (FR-008 y FR-009); implementado y verificado en `spec-005`.  
+ **Historia de Usuario**: HU-02  
+ **Asignación**: Integrante 1 (Grupo RRHH / Personal)
+ 
+ ## Clarifications
+ 
++### Session 2026-11-19 (revisión por HU-05, FR-017)
++
++- Q: ¿Tiene saldo de vacaciones propio el rol `DIRECCION_GENERAL`, que no solicita ausencias? → A: No. La ficha personal se mantiene, pero el apartado de saldo se oculta en la interfaz y el servidor responde `403` a `GET /leave/balances/me` y a `GET /leave/balances/employee/{propio id}`, con registro de acceso denegado. `RRHH` conserva su acceso total.
++
+ ### Session 2026-10-27
+ - Q: ¿Cómo se calculan los días de vacaciones para empleados incorporados a mitad de año? → A: Prorrateo proporcional a los meses trabajados en el año natural: `round((días_anuales / 12) * meses_restantes)`, redondeando al entero o medio día más cercano.
+ - Q: ¿Se permite el arrastre de días de vacaciones no disfrutados al año natural siguiente? → A: No por defecto; las vacaciones corresponden al año natural y vencen el 31 de diciembre (salvo prórroga excepcional hasta el 15 de enero), operando el cálculo sobre el año de ejercicio en curso.
+ - Q: ¿Cómo se reflejan las solicitudes pendientes en el saldo mostrado al empleado? → A: El desglose oficial normativo mantiene `Correspondientes - Disfrutados = Disponibles`; adicionalmente se muestra un indicador informativo "En trámite (pendientes)" para que el empleado conozca su crédito proyectado.
+ - Q: ¿Puede el empleado consultar el saldo y ausencias de años fiscales pasados? → A: Sí, la interfaz incluye un selector de año (por defecto el año en curso) que permite consultar el balance histórico consolidado de años anteriores en modo solo lectura.
+ 
++### Session 2026-11-17
++- Q: ¿Qué permisos de consulta sobre el saldo de vacaciones tienen los roles de Responsable de Equipo y Recursos Humanos respecto a otros empleados? → A: RRHH puede consultar el saldo de cualquier empleado; el Responsable de Equipo únicamente el de las personas que pertenezcan a su equipo directo; y el Empleado solo el suyo propio, denegando con 403 Forbidden cualquier consulta fuera de estos alcances.
++
+ ---
+ 
+ ## 1. User Scenarios & Testing *(mandatory)*
+@@ -46,10 +54,10 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
+    - **When** una de sus solicitudes de 5 días es aprobada (HU-05),
+    - **Then** al volver a consultar su ficha el contador de disfrutados incrementa en 5 y el disponible refleja inmediatamente 10.
+ 
+-4. **Intento de acceso a ficha ajena (Alcance negativo)**:
+-   - **Given** un empleado autenticado con ID `A`,
+-   - **When** intenta consultar la ficha o saldo de otro empleado con ID `B` (ya sea por URL directa o manipulando el parámetro de API),
+-   - **Then** el sistema rechaza la petición con código HTTP `403 Forbidden` (o `404 Not Found`), garantizando la privacidad de los datos personales.
++4. **Control de acceso y privacidad de saldo (Alcance negativo y por rol)**:
++   - **Given** un usuario autenticado en el sistema,
++   - **When** intenta consultar la ficha o saldo de otro empleado,
++   - **Then** el sistema permite el acceso únicamente si el solicitante tiene rol `RRHH` o es el `RESPONSABLE_EQUIPO` directo del empleado consultado; en cualquier otro caso (rol `EMPLEADO` o responsable de equipo ajeno), rechaza la petición con código HTTP `403 Forbidden`.
+ 
+ ### Edge Cases
+ - **Empleado contratado a mitad de año:** El cómputo de días correspondientes aplica la fórmula proporcional a los meses activos restantes del año natural.
+@@ -65,9 +73,11 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
+ - **FR-002**: La ficha personal DEBE presentar el saldo de vacaciones desglosado en: *días correspondientes*, *días disfrutados* y *días disponibles* (Art. 12), con un indicador complementario de *días en trámite*.
+ - **FR-003**: El saldo DEBE ser un valor estrictamente calculado y derivado de la fuente de verdad (días de convenio menos días aprobados), impidiendo contadores editables manualmente.
+ - **FR-004**: Los cambios contractuales de convenio o la aprobación de solicitudes DEBEN reflejarse de forma inmediata en el cálculo del saldo.
+-- **FR-005**: El acceso a la ficha de otro empleado DEBE estar estrictamente denegado para el rol `EMPLEADO`.
++- **FR-005**: El acceso a la ficha y saldo de vacaciones de otro empleado DEBE estar denegado para el rol `EMPLEADO`; el rol `RESPONSABLE_EQUIPO` únicamente puede consultar el saldo de los miembros de su equipo directo; y el rol `RRHH` puede consultar el saldo de cualquier empleado de la plantilla (Art. 10 de la Constitución).
+ - **FR-006**: Para incorporaciones durante el año en curso, el sistema DEBE prorratear los días correspondientes según los meses restantes hasta fin de año.
+ - **FR-007**: La vista DEBE permitir consultar el saldo correspondiente a ejercicios fiscales anteriores en modo solo lectura.
++- **FR-008** (2026-11-19): Un usuario con rol `DIRECCION_GENERAL` NO DEBE poder consultar un saldo propio: `GET /leave/balances/me` y `GET /leave/balances/employee/{su propio id}` responden `403` y se registran como acceso denegado (Art. 10.6); la interfaz oculta el apartado de saldo de su ficha. El resto de roles no cambia.
++- **FR-009** (2026-11-19): El enlace de menú a la ficha se rotula «Mi Ficha y Saldo» para los roles con saldo (`EMPLEADO`, `RESPONSABLE_EQUIPO`, `RRHH`) y «Mi Ficha» para `DIRECCION_GENERAL`.
+ 
+ ### Key Entities
+ - **LeaveBalance (Saldo de Vacaciones - Objeto de Dominio Derivado)**:
+@@ -85,6 +95,7 @@ Como empleado, quiero acceder a mi ficha personal y consultar mi saldo de vacaci
+ - **SC-001**: El empleado visualiza su ficha y saldo actualizado en pantalla en menos de 800ms tras acceder.
+ - **SC-002**: 100% de coherencia matemática: en todo momento `días correspondientes == días disfrutados + días disponibles`.
+ - **SC-003**: 0% de fugas de datos entre empleados (100% de tests negativos de autorización superados).
++- **SC-004** (2026-11-19): El 0% de las consultas de saldo propio de un usuario `DIRECCION_GENERAL` devuelven datos (todas `403`).
+ 
+ ---
+ 

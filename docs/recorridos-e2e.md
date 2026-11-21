@@ -4,6 +4,8 @@
 **Fecha**: 2026-11-21  
 **Propósito**: Validar la integración real entre las historias de usuario de los 4 integrantes del equipo mediante recorridos completos que cruzan múltiples módulos y responsabilidades.
 
+> **Nota de verificación (2026-11-21)**: estos recorridos se ejecutaron contra la API real (49 de 49 pasos conformes en la versión `662da39`). El resultado observado, los datos reales y las diferencias respecto a lo diseñado aquí (saldo con pendientes, `409` frente a `422` por saldo insuficiente, `204` al cancelar, rutas y usuarios semilla) están en [`verificacion-integrada.md`](verificacion-integrada.md) y en [`evidencias/e2e/resultado-recorridos.md`](evidencias/e2e/resultado-recorridos.md). Donde este documento difiere de ese resultado, vale el resultado observado.
+
 ---
 
 ## Recorrido 1 — Ciclo Exitoso Completo: Solicitud de Vacaciones Aprobada

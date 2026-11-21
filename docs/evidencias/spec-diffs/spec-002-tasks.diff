@@ -1,0 +1,23 @@
+diff --git a/specs/spec-002/tasks.md b/specs/spec-002/tasks.md
+index 8d5706d..45ffc0e 100644
+--- a/specs/spec-002/tasks.md
++++ b/specs/spec-002/tasks.md
+@@ -43,7 +43,7 @@
+ ### Implementation for User Story 1
+ 
+ - [x] T012 [US1] Implement LeaveBalanceService and LeaveBalanceServiceImpl.getMyLeaveBalance calculating dynamic balance from contract and LeaveRequestRepository in backend/src/main/java/com/iw/rrhh/leave/service/LeaveBalanceServiceImpl.java
+-- [x] T013 [US1] Implement EmployeeProfileController exposing GET /api/v1/employees/me using SecurityContext authentication in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeProfileController.java
++- [x] T013 [US1] Expose GET /api/v1/employees/me in EmployeeController using SecurityContext authentication in backend/src/main/java/com/iw/rrhh/employee/controller/EmployeeController.java
+ - [x] T014 [US1] Implement LeaveBalanceController exposing GET /api/v1/leave/balances/me and GET /api/v1/leave/requests/me in backend/src/main/java/com/iw/rrhh/leave/controller/LeaveBalanceController.java
+ - [x] T015 [P] [US1] Create TypeScript interfaces LeaveBalanceResponse, LeaveSummaryItem, and EmployeeProfile in frontend/src/app/features/leave/models/leave.models.ts
+ - [x] T016 [US1] Implement LeaveService HTTP client for /balances/me and /requests/me in frontend/src/app/features/leave/services/leave.service.ts
+@@ -139,3 +139,9 @@
+ 2. Añadir **US3**: Reforzar el control de acceso en el servidor con tests negativos de autorización HTTP 403.
+ 3. Añadir **US4**: Incorporar el selector de año y la consulta de ejercicios históricos cerrados.
+ 4. Ejecutar **Phase 7: Polish** y validación final de accesibilidad y tests end-to-end.
++
++---
++
++## Revisión por HU-05 (2026-11-19)
++
++FR-008 y FR-009 se implementan y prueban en `specs/spec-005` (fase 10: T092, T097–T099). No hay tareas nuevas en esta spec.

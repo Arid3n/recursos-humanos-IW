@@ -27,6 +27,9 @@
 
 ---
 
+### Session 2026-11-21 (cierre con el código congelado)
+- Q: ¿Se valida el saldo de cada año natural cuando una solicitud de vacaciones cruza el 31 de diciembre? → A: No. HU-03 valida el saldo disponible del año de inicio; HU-05 reparte los días por año natural al aprobar (`LeaveDayAllocator`) y devuelve `422` si falta saldo en el año siguiente. La solicitud puede crearse y fallar en la aprobación. Con el código congelado se acepta como límite conocido (antes pendiente de decisión, hallazgo N1 de spec-005).
+
 ## 1. User Scenarios & Testing *(mandatory)*
 
 ### User Story Principal (Priority: P1)
@@ -123,3 +126,4 @@ Como empleado, quiero cumplimentar un formulario para solicitar un periodo de va
 ## 4. Assumptions
 - El calendario laboral se parametriza de lunes a viernes con festivos oficiales.
 - Las ausencias de permisos especiales son evaluadas por el responsable de equipo bajo criterios de justificación documental.
+- **Límite conocido (2026-11-21)**: validación de saldo solo del año de inicio en HU-03 (ver Session 2026-11-21 y `specs/spec-005/plan.md`, Complexity Tracking).

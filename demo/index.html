@@ -1,693 +1,305 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Demo · Sistema de Recursos Humanos — SDD G01</title>
-  <style>
-    /* ===== RESET & TOKENS ===== */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e3350;
-      --accent: #6366f1;
-      --accent2: #818cf8;
-      --green: #22c55e;
-      --red: #ef4444;
-      --amber: #f59e0b;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --radius: 10px;
-      --shadow: 0 4px 24px rgba(0,0,0,.45);
-    }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo · Sistema de Recursos Humanos</title>
+<meta name="description" content="Vídeo de demostración del sistema de gestión de recursos humanos: las ocho historias de usuario con sus flujos principales y escenarios de error y permisos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%236366f1'/%3E%3Cpath d='M9 23V9h6a4.5 4.5 0 0 1 1 8.9L21 23h-3.4l-4.1-4.8H12V23z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0f1117; --surface:#1a1d27; --surface2:#222639; --border:#2e3350; --text:#f1f5f9; --muted:#94a3b8;
+    --accent:#6366f1; --accent2:#a5b4fc; --ok:#4ade80; --warn:#fbbf24; --ko:#f87171;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 'Segoe UI',system-ui,-apple-system,Roboto,sans-serif}
+  a{color:var(--accent2)}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,#171a29,var(--bg))}
+  header .wrap{padding:28px 16px 22px}
+  .eyebrow{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:2px 10px;font-size:13px;letter-spacing:.6px;font-weight:600}
+  h1{margin:10px 0 6px;font-size:clamp(26px,4vw,38px);line-height:1.15}
+  header p{margin:0;color:var(--muted);max-width:820px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:14px}
+  .stat b{color:var(--accent2);font-size:18px;margin-right:4px}
 
-    /* ===== HEADER ===== */
-    header {
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #1e1b4b 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 1.5rem 2rem;
-      display: flex; align-items: center; gap: 1.2rem;
-    }
-    header .logo {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: var(--accent); display: grid; place-items: center;
-      font-size: 1.4rem; font-weight: 800; color: #fff; flex-shrink: 0;
-    }
-    header h1 { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
-    header p  { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
-    .badges { margin-left: auto; display: flex; gap: .5rem; }
-    .badge { padding: .3rem .75rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
-    .badge-blue { background: #1e3a8a; color: #93c5fd; }
-    .badge-green { background: #14532d; color: #86efac; }
+  main.wrap{padding-top:22px;padding-bottom:40px}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+  @media (max-width:980px){.layout{grid-template-columns:1fr}}
 
-    /* ===== LAYOUT ===== */
-    .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
-    @media (max-width: 1024px) { .container { grid-template-columns: 1fr; } }
+  .player{background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+  .now{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-top:12px}
+  .now .hu{background:var(--accent);color:#fff;border-radius:6px;padding:2px 10px;font-weight:700;font-size:14px;white-space:nowrap}
+  .now .txt{flex:1;min-width:200px}
+  .now .tools{display:flex;gap:8px;flex-wrap:wrap}
+  button,.btn{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:8px;padding:6px 12px;font-size:14px}
+  button:hover{border-color:var(--accent)}
+  button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+  select{font:inherit;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px}
+  .hint{color:var(--muted);font-size:13px;margin:8px 2px 0}
+  kbd{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-size:12px}
+  #toast{display:none;margin-top:12px;background:#1f2a44;border:1px solid var(--accent);border-radius:10px;padding:10px 14px}
 
-    /* ===== VIDEO PANEL ===== */
-    .video-panel {}
-    .video-wrapper {
-      background: #000; border-radius: var(--radius); overflow: hidden;
-      box-shadow: var(--shadow); border: 1px solid var(--border);
-      aspect-ratio: 16/9; position: relative;
-    }
-    video { width: 100%; height: 100%; display: block; }
-    .video-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      gap: 1rem;
-    }
-    .video-placeholder .play-icon {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: var(--accent); display: grid; place-items: center;
-      font-size: 1.8rem; cursor: pointer;
-      box-shadow: 0 0 0 0 rgba(99,102,241,.6);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%  { box-shadow: 0 0 0 0 rgba(99,102,241,.6); }
-      70% { box-shadow: 0 0 0 20px rgba(99,102,241,0); }
-      100%{ box-shadow: 0 0 0 0 rgba(99,102,241,0); }
-    }
-    .video-placeholder p { font-size: .9rem; color: var(--muted); text-align: center; max-width: 320px; }
-    .video-placeholder .file-hint { font-size: .78rem; color: #4f5a7a; margin-top: .5rem; }
+  aside{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
+  @media (max-width:980px){aside{position:static;max-height:none}}
+  aside h2{margin:0;padding:14px 16px;font-size:16px;border-bottom:1px solid var(--border)}
+  #chapters{overflow:auto}
+  details{border-bottom:1px solid var(--border)}
+  summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:10px 14px;font-weight:600}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'▾';margin-left:auto;color:var(--muted)}
+  details[open] summary::after{content:'▴'}
+  summary .tag{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:1px 8px;font-size:13px;color:var(--accent2);white-space:nowrap}
+  summary .play{margin-left:6px;font-size:12px;padding:3px 9px;white-space:nowrap}
+  ol{list-style:none;margin:0;padding:0 0 8px}
+  li button{display:flex;gap:10px;width:100%;text-align:left;border:0;border-radius:0;background:transparent;padding:6px 14px 6px 18px;font-size:14px;color:var(--muted)}
+  li button:hover{background:var(--surface2);color:var(--text)}
+  li button .ts{font-variant-numeric:tabular-nums;color:var(--accent2);min-width:42px}
+  li.active button{background:#262b4a;color:#fff;box-shadow:inset 3px 0 var(--accent)}
+  li.err .ts::after{content:' ⚠';color:var(--warn)}
 
-    /* progress bar */
-    .progress-bar { margin-top: .75rem; display: flex; gap: .5rem; align-items: center; }
-    .progress-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; cursor: pointer; position: relative; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; width: 0%; transition: width .1s linear; pointer-events: none; }
-    .time-display { font-size: .78rem; color: var(--muted); white-space: nowrap; min-width: 85px; text-align: right; }
+  h2.sec{font-size:24px;margin:34px 0 4px}
+  .sub{color:var(--muted);margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .card h3{margin:6px 0 6px;font-size:17px}
+  .card .tag{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:1px 9px;font-size:13px;font-weight:700}
+  .card p{margin:0 0 10px;color:var(--muted);font-size:14.5px}
+  .card ul{margin:0 0 12px;padding-left:18px;font-size:14px;color:#cbd5e1}
+  .card li{margin:2px 0}
+  .roles{font-size:13px;color:var(--muted)}
+  .roles b{color:var(--text)}
+  .pill{display:inline-block;border:1px solid var(--border);border-radius:99px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0;color:var(--muted)}
+  .pill.ok{color:var(--ok);border-color:#1f5f3a}.pill.ko{color:var(--ko);border-color:#6b2a2a}
 
-    /* now playing */
-    .now-playing {
-      margin-top: .75rem; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: .75rem 1rem; display: flex; gap: .75rem; align-items: center;
-    }
-    .now-playing .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: blink 1.4s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-    .now-playing .info .label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-    .now-playing .info .title { font-size: .9rem; font-weight: 600; }
-    .now-playing .info .author { font-size: .78rem; color: var(--accent2); }
-
-    /* video actions */
-    .video-actions { margin-top: .75rem; display: flex; gap: .6rem; flex-wrap: wrap; }
-    .btn { padding: .5rem 1rem; border-radius: 8px; border: none; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .15s, transform .1s; }
-    .btn:hover { opacity: .85; transform: translateY(-1px); }
-    .btn:active { transform: scale(.97); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background: var(--surface2); }
-    .btn-dl { background: #15803d; color: #fff; }
-
-    /* ===== CHAPTERS PANEL ===== */
-    .chapters-panel {}
-    .panel-header {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0;
-      padding: .9rem 1.1rem; display: flex; align-items: center; justify-content: space-between;
-    }
-    .panel-header h2 { font-size: .95rem; font-weight: 700; }
-    .chapter-count { font-size: .78rem; color: var(--muted); }
-
-    .chapters-list { border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
-    .chapter-group { border-bottom: 1px solid var(--border); }
-    .chapter-group:last-child { border-bottom: none; }
-
-    .chapter-item {
-      background: var(--surface); padding: .75rem 1rem;
-      cursor: pointer; display: flex; gap: .75rem; align-items: flex-start;
-      border-left: 3px solid transparent;
-      transition: background .15s, border-color .15s;
-    }
-    .chapter-item:hover { background: var(--surface2); }
-    .chapter-item.active { border-left-color: var(--accent); background: rgba(99,102,241,.08); }
-    .chapter-item.sub { background: #12151f; padding-left: 1.5rem; border-top: 1px solid #1e2238; }
-    .chapter-item.sub:hover { background: #1a1f35; }
-
-    .chapter-ts {
-      font-family: monospace; font-size: .78rem; color: var(--accent2);
-      white-space: nowrap; padding: .15rem .4rem; background: rgba(99,102,241,.12);
-      border-radius: 4px; flex-shrink: 0; margin-top: .1rem;
-    }
-    .chapter-body { flex: 1; min-width: 0; }
-    .chapter-title { font-size: .85rem; font-weight: 600; line-height: 1.3; }
-    .chapter-meta { font-size: .73rem; color: var(--muted); margin-top: .15rem; }
-    .chapter-scenario { font-size: .72rem; margin-top: .2rem; }
-    .scenario-ok  { color: var(--green); }
-    .scenario-err { color: var(--red); }
-    .scenario-info{ color: var(--amber); }
-
-    .hu-badge {
-      flex-shrink: 0; font-size: .68rem; font-weight: 700; padding: .2rem .45rem;
-      border-radius: 5px; margin-top: .1rem; letter-spacing: .03em;
-    }
-    .hu-01,.hu-02 { background: #1e3a5f; color: #7dd3fc; }
-    .hu-03,.hu-04 { background: #14532d; color: #86efac; }
-    .hu-05,.hu-06 { background: #4a1d96; color: #c4b5fd; }
-    .hu-07,.hu-08 { background: #7c2d12; color: #fdba74; }
-
-    /* ===== GUION SECTION ===== */
-    .guion-section { margin-top: 1.5rem; grid-column: 1 / -1; }
-    .guion-section h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent2); }
-    .guion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
-    .guion-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 1rem 1.1rem;
-    }
-    .guion-card h3 { font-size: .9rem; font-weight: 700; margin-bottom: .5rem; display: flex; gap: .5rem; align-items: center; }
-    .guion-card ul { padding-left: 1.1rem; list-style: none; }
-    .guion-card ul li { font-size: .8rem; color: var(--muted); margin-bottom: .3rem; padding-left: .5rem; border-left: 2px solid var(--border); }
-    .guion-card ul li strong { color: var(--text); }
-
-    /* ===== INFO BAR ===== */
-    .info-bar {
-      grid-column: 1 / -1; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: .9rem 1.2rem;
-      display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;
-      font-size: .8rem;
-    }
-    .info-item { display: flex; flex-direction: column; gap: .15rem; }
-    .info-item .l { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; }
-    .info-item .v { font-weight: 600; }
-
-    footer { text-align: center; padding: 1.5rem; color: var(--muted); font-size: .75rem; border-top: 1px solid var(--border); margin-top: 2rem; }
-  </style>
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.two{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent2);font-weight:600}
+  code,pre{font-family:'JetBrains Mono',Consolas,monospace;font-size:13px}
+  pre{background:#0b1020;border:1px solid var(--border);border-radius:10px;padding:12px 14px;overflow:auto;margin:8px 0}
+  footer{border-top:1px solid var(--border);color:var(--muted);font-size:14px}
+  footer .wrap{padding:18px 16px}
+  #nodata{display:none;background:#3b2a12;border:1px solid var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px}
+</style>
 </head>
 <body>
-
 <header>
-  <div class="logo">RH</div>
-  <div>
-    <h1>Sistema de Gestión de Recursos Humanos</h1>
-    <p>Práctica SDD — Especificación y Diseño Dirigidos por la Especificación</p>
-  </div>
-  <div class="badges">
-    <span class="badge badge-blue">Grupo G01</span>
-    <span class="badge badge-green">8 HU · 4 Integrantes</span>
+  <div class="wrap">
+    <span class="eyebrow">Spec-Driven Development · Ingeniería Web</span>
+    <h1>Demostración del Sistema de Gestión de Recursos Humanos</h1>
+    <p>Recorrido completo sobre la aplicación real (Angular 21 + Spring Boot 3.4 + PostgreSQL 16): las ocho historias de usuario, cada una con su flujo principal, sus escenarios de error y sus restricciones de permisos.</p>
+    <div class="stats" id="stats"></div>
   </div>
 </header>
 
-<div class="container">
-
-  <!-- INFO BAR -->
-  <div class="info-bar">
-    <div class="info-item"><span class="l">Sistema</span><span class="v">RRHH &amp; Gestión de Ausencias</span></div>
-    <div class="info-item"><span class="l">Backend</span><span class="v">Spring Boot 3.4 · Java 21 · PostgreSQL</span></div>
-    <div class="info-item"><span class="l">Frontend</span><span class="v">Angular 21 · Material Design</span></div>
-    <div class="info-item"><span class="l">Duración estimada del vídeo</span><span class="v">≈ 20–25 min</span></div>
-    <div class="info-item"><span class="l">Archivo</span><span class="v">demo/demo-rrhh.mp4</span></div>
-    <div class="info-item"><span class="l">Instrucción: coloca el .mp4 junto a este index.html</span></div>
-  </div>
-
-  <!-- VIDEO PANEL -->
-  <div class="video-panel">
-    <div class="video-wrapper" id="videoWrapper">
-      <video id="mainVideo" controls preload="metadata"
-             style="display:none"
-             onloadedmetadata="onVideoLoaded()">
-        <source src="demo-rrhh.mp4" type="video/mp4" />
-        Tu navegador no soporta vídeo HTML5.
-      </video>
-      <div class="video-placeholder" id="placeholder" onclick="tryPlay()">
-        <div class="play-icon">▶</div>
-        <p>Coloca <code>demo-rrhh.mp4</code> en la misma carpeta que este <code>index.html</code> y pulsa aquí.</p>
-        <span class="file-hint">Si ya está, haz clic para comenzar la reproducción.</span>
+<main class="wrap">
+  <div id="nodata">No se han cargado los capítulos (<code>chapters.js</code>). El vídeo se reproduce igualmente, pero sin índice.</div>
+  <div class="layout">
+    <section aria-label="Reproductor">
+      <div class="player">
+        <video id="v" controls preload="metadata" poster="" playsinline>
+          <source src="demo-rrhh.mp4" type="video/mp4">
+          Tu navegador no puede reproducir el vídeo. Descárgalo desde <a href="demo-rrhh.mp4">demo-rrhh.mp4</a>.
+        </video>
       </div>
-    </div>
-
-    <div class="progress-bar">
-      <div class="progress-track" id="progressTrack" onclick="seekVideo(event)">
-        <div class="progress-fill" id="progressFill"></div>
+      <div class="now" aria-live="polite">
+        <span class="hu" id="nowHu">—</span>
+        <span class="txt" id="nowTxt">Pulsa reproducir o elige un capítulo del índice.</span>
+        <span class="tools">
+          <button id="prev" title="Capítulo anterior (P)">⏮ Anterior</button>
+          <button id="next" title="Capítulo siguiente (N)">Siguiente ⏭</button>
+          <label class="sr" for="rate" style="font-size:14px;color:var(--muted)">Velocidad
+            <select id="rate"><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option><option value="1.5">1,5×</option></select>
+          </label>
+        </span>
       </div>
-      <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-    </div>
+      <div id="toast" role="status"></div>
+      <p class="hint">Atajos: <kbd>Espacio</kbd> pausa · <kbd>←</kbd>/<kbd>→</kbd> ±5 s · <kbd>N</kbd>/<kbd>P</kbd> capítulo siguiente/anterior · <kbd>F</kbd> pantalla completa. El rótulo inferior del vídeo describe cada escenario mientras ocurre.</p>
+    </section>
 
-    <div class="now-playing">
-      <div class="dot"></div>
-      <div class="info">
-        <div class="label">Reproduciendo ahora</div>
-        <div class="title" id="npTitle">Intro · Presentación del sistema</div>
-        <div class="author" id="npAuthor">Grupo G01</div>
-      </div>
-    </div>
+    <aside aria-label="Índice de capítulos">
+      <h2>Índice de escenarios</h2>
+      <div id="chapters"></div>
+    </aside>
+  </div>
 
-    <div class="video-actions">
-      <button class="btn btn-primary" onclick="document.getElementById('mainVideo').play()">▶ Reproducir</button>
-      <button class="btn btn-outline" onclick="document.getElementById('mainVideo').pause()">⏸ Pausa</button>
-      <button class="btn btn-outline" onclick="jumpTo(0)">⏮ Desde el inicio</button>
-      <a class="btn btn-dl" id="dlBtn" href="demo-rrhh.mp4" download="demo-rrhh.mp4">⬇ Descargar MP4</a>
+  <h2 class="sec" id="historias">Las ocho historias de usuario</h2>
+  <p class="sub">Cada tarjeta resume qué resuelve la historia y qué escenarios se ven en el vídeo. «Ver historia» reproduce solo ese tramo.</p>
+  <div class="grid" id="cards"></div>
+
+  <h2 class="sec">Actores y datos de la demo</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Usuarios de la base de datos semilla</h3>
+      <table>
+        <tr><th>Rol</th><th>Usuario</th></tr>
+        <tr><td>RRHH</td><td><code>rrhh@empresa.com</code></td></tr>
+        <tr><td>Dirección General</td><td><code>direccion@empresa.com</code></td></tr>
+        <tr><td>Responsable de equipo</td><td><code>responsable@empresa.com</code></td></tr>
+        <tr><td>Empleado</td><td><code>empleado@empresa.com</code></td></tr>
+      </table>
+      <p class="hint">Todos con la contraseña <code>admin123</code>. Jerarquía: Dirección General → RRHH → Responsable → Empleado.</p>
+    </div>
+    <div class="card">
+      <h3>Cómo se ha grabado</h3>
+      <p>El vídeo se genera automáticamente, sin editar, conduciendo un navegador sobre la aplicación en marcha. Las escenas de «API REST» muestran la petición y la respuesta reales del servidor para lo que no tiene pantalla en la interfaz (trayectoria contractual, baja, permisos cruzados).</p>
+      <pre>docker compose up -d
+(backend) sh ./mvnw spring-boot:run
+(frontend) npm start
+cd demo &amp;&amp; node record-demo.mjs
+python3 -I build-demo.py salida/*.webm salida/chapters.json .</pre>
+      <p class="hint">Requiere una base de datos limpia, <code>playwright</code> y <code>ffmpeg</code>. Detalles en la cabecera de <code>record-demo.mjs</code>.</p>
     </div>
   </div>
 
-  <!-- CHAPTERS PANEL -->
-  <div class="chapters-panel">
-    <div class="panel-header">
-      <h2>📋 Índice de Capítulos</h2>
-      <span class="chapter-count">8 HU · 20 escenarios</span>
-    </div>
-    <div class="chapters-list" id="chaptersList"></div>
+  <h2 class="sec">Documentación relacionada</h2>
+  <div class="card">
+    <ul>
+      <li><a href="../docs/memoria.md">Memoria del proyecto</a> · <a href="../docs/verificacion-integrada.md">Verificación integrada</a> · <a href="../docs/matriz-trazabilidad.md">Matriz de trazabilidad</a></li>
+      <li><a href="../docs/recorridos-e2e.md">Recorridos E2E</a> y su <a href="../docs/evidencias/e2e/resultado-recorridos.md">resultado observado</a> (49 de 49 pasos conformes)</li>
+      <li>Especificaciones de cada historia en <a href="../specs/">specs/</a> · <a href="https://github.com/Arid3n/recursos-humanos-IW">Repositorio en GitHub</a></li>
+    </ul>
   </div>
+</main>
 
-  <!-- GUION DE GRABACION -->
-  <div class="guion-section">
-    <h2>🎬 Guion de Grabación (Instrucciones para el operador)</h2>
-    <div class="guion-grid" id="guionGrid"></div>
-  </div>
+<footer><div class="wrap">Sistema de Gestión de Recursos Humanos · Práctica de Ingeniería Web (SDD) · 224 pruebas de backend y 86 de frontend en verde.</div></footer>
 
-</div>
-
-<footer>
-  SDD · Sistema de Gestión de Recursos Humanos &nbsp;·&nbsp; Grupo G01 &nbsp;·&nbsp; Universitat d'Alacant 2026
-</footer>
-
+<script src="chapters.js" onerror="document.getElementById('nodata').style.display='block'"></script>
 <script>
-// ========================================================
-// DATOS DE CAPÍTULOS — TIMESTAMPS EXACTOS DEL MP4 GENERADO
-// Vídeo: demo-rrhh.mp4 · Duración: 3:43 (223.4 s) · 1280×720 · H.264
-// ========================================================
-const CHAPTERS = [
-  {
-    ts: 0, label: "00:00", id: "intro",
-    hu: "INTRO", huClass: "",
-    title: "Presentación del Sistema y Equipo",
-    author: "Grupo G01",
-    scenario: "Portada",
-    scenarioClass: "scenario-info",
-    desc: "Portada con el equipo de 4 integrantes, stack tecnológico y las 8 HU.",
-    children: []
-  },
-  {
-    ts: 8, label: "00:08", id: "hu01",
-    hu: "HU-01", huClass: "hu-01",
-    title: "Alta de Empleados y Registro Contractual",
-    author: "Joaquín Navarro",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "RRHH crea ficha completa de Ana García con convenio colectivo activo.",
-    children: [
-      { ts: 19, label: "00:19", title: "Solapamiento contractual bloqueado (422)", scenarioClass: "scenario-err",
-        desc: "Contrato con fechas solapadas → HTTP 422 RFC 9457. Bloqueo en servidor." },
-      { ts: 26, label: "00:26", title: "Histórico contractual inmutable", scenarioClass: "scenario-info",
-        desc: "Contratos cerrados muestran botón de edición deshabilitado con badge 'Cerrado'." },
-    ]
-  },
-  {
-    ts: 32, label: "00:32", id: "hu02",
-    hu: "HU-02", huClass: "hu-02",
-    title: "Cálculo Dinámico de Saldo de Vacaciones",
-    author: "Joaquín Navarro",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "Saldo derivado en tiempo real (Art.12): Correspondientes − Disfrutados − Pendientes.",
-    children: [
-      { ts: 36, label: "00:36", title: "Saldo derivado (Art.12 Constitución)", scenarioClass: "scenario-ok",
-        desc: "22 − 10 − 5 = 7 días disponibles. Sin columna mutable en base de datos." },
-      { ts: 43, label: "00:43", title: "Prorrateo por alta tardía (julio)", scenarioClass: "scenario-info",
-        desc: "Alta en julio → 22 × 184/365 = 11 días proporcionales. 14 tests en verde." },
-      { ts: 50, label: "00:50", title: "Acceso cruzado bloqueado (403)", scenarioClass: "scenario-err",
-        desc: "Empleado intenta ver saldo de compañero → HTTP 403 Forbidden." },
-    ]
-  },
-  {
-    ts: 55, label: "00:55", id: "hu03",
-    hu: "HU-03", huClass: "hu-03",
-    title: "Solicitud de Vacaciones y Permisos",
-    author: "Iván Soler",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "Ana solicita 10 días laborables. Validación preventiva de saldo en servidor.",
-    children: [
-      { ts: 59, label: "00:59", title: "Solicitud válida — estado PENDIENTE", scenarioClass: "scenario-ok",
-        desc: "Formulario validado; solicitud registrada; saldo retenido preventivamente." },
-      { ts: 67, label: "01:07", title: "Saldo insuficiente bloqueado (422)", scenarioClass: "scenario-err",
-        desc: "25 días solicitados con 7 disponibles → HTTP 422 con detalle RFC 9457." },
-      { ts: 73, label: "01:13", title: "Solapamiento de fechas (409)", scenarioClass: "scenario-err",
-        desc: "Fechas coinciden con petición previa → HTTP 409 Conflict." },
-      { ts: 79, label: "01:19", title: "Bloqueo para Dirección General (422)", scenarioClass: "scenario-err",
-        desc: "Rol DIRECCION_GENERAL exento de vacaciones → HTTP 422 informativo." },
-    ]
-  },
-  {
-    ts: 85, label: "01:25", id: "hu04",
-    hu: "HU-04", huClass: "hu-03",
-    title: "Seguimiento y Cancelación de Solicitudes",
-    author: "Iván Soler",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "Historial reactivo con filtros por estado y año. Cancelación preventiva.",
-    children: [
-      { ts: 89, label: "01:29", title: "Historial con filtros reactivos", scenarioClass: "scenario-ok",
-        desc: "Tabla con estados diferenciados: APROBADA, PENDIENTE, RECHAZADA, CANCELADA." },
-      { ts: 96, label: "01:36", title: "Cancelación de solicitud PENDIENTE", scenarioClass: "scenario-ok",
-        desc: "Pedro cancela → estado CANCELADA; 10 días liberados al saldo disponible." },
-      { ts: 102, label: "01:42", title: "Cancelación bloqueada en APROBADA (409)", scenarioClass: "scenario-err",
-        desc: "Intento de cancelar solicitud resuelta → HTTP 409 Conflict." },
-    ]
-  },
-  {
-    ts: 108, label: "01:48", id: "hu05",
-    hu: "HU-05", huClass: "hu-05",
-    title: "Aprobación y Rechazo de Solicitudes",
-    author: "Andrei Radu",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "Responsable aprueba solicitud con concurrencia optimista (@Version).",
-    children: [
-      { ts: 112, label: "01:52", title: "Aprobación con notificación automática", scenarioClass: "scenario-ok",
-        desc: "Carlos aprueba; notificación enviada a Ana; saldo descontado definitivamente." },
-      { ts: 119, label: "01:59", title: "Rechazo con motivo obligatorio", scenarioClass: "scenario-err",
-        desc: "Denegación exige motivo ≥ 5 chars. Motivo visible en historial del empleado." },
-      { ts: 126, label: "02:06", title: "Concurrencia optimista bloqueada (409)", scenarioClass: "scenario-err",
-        desc: "Doble resolución simultánea → HTTP 409 OptimisticLockException." },
-      { ts: 131, label: "02:11", title: "RRHH resolutor solo de su equipo (v1.2.0)", scenarioClass: "scenario-info",
-        desc: "Enmienda Constitucional v1.2.0: RRHH limitado a su jerarquía directa." },
-      { ts: 137, label: "02:17", title: "Auto-cancelación por baja de supervisor", scenarioClass: "scenario-err",
-        desc: "Desactivación de Carlos → 4 solicitudes PENDIENTES auto-canceladas sin bloqueo." },
-    ]
-  },
-  {
-    ts: 144, label: "02:24", id: "hu06",
-    hu: "HU-06", huClass: "hu-05",
-    title: "Calendario Interactivo de Equipo",
-    author: "Andrei Radu",
-    scenario: "Flujo Principal + RGPD Art.20",
-    scenarioClass: "scenario-ok",
-    desc: "Cuadrante mensual con ausencias anonimizadas y alerta de cobertura.",
-    children: [
-      { ts: 148, label: "02:28", title: "Calendario agosto 2026 — privacidad RGPD", scenarioClass: "scenario-ok",
-        desc: "Compañeros ven 'Ausente' sin motivo médico ni tipo de permiso (Art.20)." },
-      { ts: 155, label: "02:35", title: "Alerta de solapamiento de cobertura", scenarioClass: "scenario-info",
-        desc: "Día con 3 ausencias → borde rojo + icono de advertencia de cobertura crítica." },
-    ]
-  },
-  {
-    ts: 160, label: "02:40", id: "hu07",
-    hu: "HU-07", huClass: "hu-07",
-    title: "Informes Analíticos de Absentismo",
-    author: "José R. Castells",
-    scenario: "Flujo Principal",
-    scenarioClass: "scenario-ok",
-    desc: "RRHH/DG genera métricas por departamento y exporta en CSV (RFC 4180).",
-    children: [
-      { ts: 164, label: "02:44", title: "Informe departamental 2026", scenarioClass: "scenario-ok",
-        desc: "Tabla agregada con % utilización por departamento. Dirección General exenta." },
-      { ts: 172, label: "02:52", title: "Exportación CSV con paridad (RFC 4180)", scenarioClass: "scenario-ok",
-        desc: "Archivo UTF-8 BOM descargado. Totales idénticos a pantalla — SC-002 verificado." },
-      { ts: 177, label: "02:57", title: "Acceso restringido RBAC (403)", scenarioClass: "scenario-err",
-        desc: "Empleado intenta acceder a /reports → HTTP 403 Forbidden." },
-    ]
-  },
-  {
-    ts: 183, label: "03:03", id: "hu08",
-    hu: "HU-08", huClass: "hu-07",
-    title: "Ciclo de Evaluación de Desempeño",
-    author: "José R. Castells",
-    scenario: "Autoevaluación → Valoración → Cierre",
-    scenarioClass: "scenario-ok",
-    desc: "Ciclo cerrado en 3 fases con acta de doble conformidad inmutable.",
-    children: [
-      { ts: 186, label: "03:06", title: "Autoevaluación del empleado (Fase 1)", scenarioClass: "scenario-ok",
-        desc: "Colaborador valora objetivos y competencias → estado PENDIENTE_EVALUADOR." },
-      { ts: 194, label: "03:14", title: "Ponderación del responsable (Fase 2)", scenarioClass: "scenario-info",
-        desc: "Supervisor califica (4.2/5) y propone objetivos 2027 → PENDIENTE_CONFORMIDAD." },
-      { ts: 201, label: "03:21", title: "Acta de doble conformidad (Fase 3)", scenarioClass: "scenario-ok",
-        desc: "Empleado acepta → estado COMPLETADA. Acta bloqueada e inmutable para auditorías." },
-    ]
-  },
-  {
-    ts: 208, label: "03:28", id: "tests",
-    hu: "TESTS", huClass: "",
-    title: "Suite Automatizada — 93/93 en Verde",
-    author: "Equipo completo",
-    scenario: "BUILD SUCCESS",
-    scenarioClass: "scenario-ok",
-    desc: "Todos los tests unitarios de reglas de negocio pasan al 100%.",
-    children: []
-  },
-  {
-    ts: 215, label: "03:35", id: "cierre",
-    hu: "FIN", huClass: "",
-    title: "Cierre y Resumen del Proyecto",
-    author: "Grupo G01",
-    scenario: "Conclusión",
-    scenarioClass: "scenario-ok",
-    desc: "8 HU · 100% criterios verificados · 11 hallazgos resueltos · Constitución v1.2.0 conforme.",
-    children: []
-  },
-];
+(() => {
+  const HU = {
+    'Inicio': { title: 'Presentación', desc: 'Visión general del sistema y de las ocho historias.', who: '' },
+    'HU-01': { title: 'Alta de empleados y trayectoria contractual', who: 'RRHH',
+      desc: 'RRHH da de alta a una persona con su cuenta de acceso y su primer contrato; la trayectoria contractual es inmutable.',
+      ok: ['Alta completa con clave provisional'], ko: ['Validación de formulario', 'Alta duplicada', 'Responsable obligatorio', 'Fecha de efectos repetida', 'Credenciales incorrectas'],
+      more: ['Variación contractual retroactiva y consulta de la trayectoria (API)', 'Baja lógica que desactiva la cuenta (API)'] },
+    'HU-02': { title: 'Ficha personal y saldo de vacaciones', who: 'Empleado · Responsable',
+      desc: 'El saldo se calcula al consultarlo (correspondientes − disfrutados), con prorrateo por fecha de alta y consulta de años cerrados.',
+      ok: ['Ficha y saldo del año', 'Consulta de años anteriores', 'Prorrateo por fecha de alta'], ko: ['Saldo ajeno denegado (403)'], more: [] },
+    'HU-03': { title: 'Solicitud de vacaciones o permisos', who: 'Empleado',
+      desc: 'El servidor calcula los días laborables y valida fechas, justificación, saldo y solapamientos antes de registrar la solicitud como pendiente.',
+      ok: ['Vacaciones válidas con cómputo de días', 'Permiso con justificación'], ko: ['Fecha pasada', 'Permiso sin justificación', 'Saldo insuficiente (409)', 'Solapamiento (409)'], more: [] },
+    'HU-04': { title: 'Seguimiento y cancelación de solicitudes', who: 'Empleado',
+      desc: 'Historial paginado con filtros por estado, motivo de rechazo visible y cancelación de solicitudes pendientes.',
+      ok: ['Historial y filtros', 'Cancelación con confirmación'], ko: ['Cancelar una solicitud ya resuelta (se ve en HU-05)'], more: [] },
+    'HU-05': { title: 'Aprobación o rechazo de solicitudes', who: 'Responsable · RRHH · Dirección General',
+      desc: 'Bandeja de solicitudes del equipo directo; aprobar con comentario, rechazar con motivo; notificación y saldo en una única transacción.',
+      ok: ['Aprobación con comentario', 'Aprobación de un permiso', 'Notificación al empleado', 'Cadena RRHH y Dirección General'], ko: ['Motivo de rechazo corto', 'Resolución doble (409)', 'Empleado sin permiso (403)', 'Dirección General no solicita'], more: ['Rechazo con motivo visible para el empleado'] },
+    'HU-06': { title: 'Calendario de ausencias del equipo', who: 'Responsable · RRHH · Dirección General',
+      desc: 'Vista mensual con ausencias aprobadas y pendientes; los días con dos o más ausentes se resaltan y nunca se muestran justificaciones.',
+      ok: ['Coincidencias en diciembre', 'Filtro por empleado', 'Detalle sin justificación', 'Vista móvil (lista)'], ko: ['Calendario ajeno denegado (403)'], more: [] },
+    'HU-07': { title: 'Informes de absentismo y uso de vacaciones', who: 'RRHH',
+      desc: 'Informes por departamento con desglose por empleado y exportación a CSV con los mismos datos que la pantalla.',
+      ok: ['Informe de absentismo', 'Uso de vacaciones', 'Exportación a CSV'], ko: ['Periodo sin datos', 'Acceso de un empleado (403)'], more: [] },
+    'HU-08': { title: 'Evaluación del desempeño con conformidad', who: 'Responsable · Empleado',
+      desc: 'El responsable valora de 1 a 5; el empleado da su conformidad y la evaluación queda finalizada e inmutable.',
+      ok: ['Creación de la evaluación', 'Conformidad del empleado'], ko: ['Valoración fuera de rango', 'Segunda conformidad (409)'], more: [] },
+  };
 
-// =========================================================
-// GUION DE GRABACION
-// =========================================================
-const GUION = [
-  {
-    hu: "INTRO (00:00–01:00)", color: "hu-01",
-    pasos: [
-      "<strong>Arranca la app</strong>: docker compose up -d, luego frontend en localhost:4200.",
-      "Muestra la <strong>pantalla de login</strong>, introduce rrhh@empresa.com / admin123.",
-      "Pausa 3 s en el <strong>dashboard inicial</strong>. Resalta el menú lateral.",
-      "Muestra la campana de notificaciones vacía.",
-    ]
-  },
-  {
-    hu: "HU-01 · Alta y Trayectoria (01:00–03:30)", color: "hu-01",
-    pasos: [
-      "Navega a <strong>Empleados › Nuevo Empleado</strong>.",
-      "Rellena todos los campos (nombre, NIF, email, departamento, convenio TIC, responsable = Carlos).",
-      "Pulsa Guardar → muestra el <strong>diálogo con la clave provisional</strong>.",
-      "Abre el <strong>historial contractual</strong> del empleado recién creado.",
-      "Pulsa <strong>Registrar Variación</strong>: cambia puesto con fecha pasada (01/06/2026). Observa el nuevo registro en el historial.",
-      "Cierra sesión. Inicia con el empleado. Intenta crear otro empleado → <strong>403 Forbidden</strong>.",
-      "Vuelve como RRHH. Pulsa <strong>Dar de Baja</strong> (active=false). Verifica que el login del empleado queda bloqueado.",
-    ]
-  },
-  {
-    hu: "HU-02 · Saldo de Vacaciones (03:30–06:00)", color: "hu-01",
-    pasos: [
-      "Inicia sesión como <strong>Ana</strong> (empleada contratada en enero; 23 días convenio TIC).",
-      "Navega a <strong>Mi Ficha y Saldo</strong>. Resalta el widget con los 4 componentes.",
-      "Cambia el año a 2025 → badge <strong>'Año cerrado'</strong>, condiciones al 31/12/2025.",
-      "Abre DevTools Network y muestra la petición GET /leave/balances/me → respuesta JSON.",
-      "Intenta acceder al saldo de otro empleado por URL → <strong>403 Forbidden</strong>.",
-    ]
-  },
-  {
-    hu: "HU-03 · Solicitud (06:00–09:15)", color: "hu-03",
-    pasos: [
-      "Como Ana: navega a <strong>Solicitar Ausencia</strong>.",
-      "Selecciona VACATION, fechas 06/07–17/07. Observa el contador interactivo <strong>10 días laborables</strong>.",
-      "Confirma → solicitud en estado <strong>PENDING</strong>. Captura el ID de la solicitud.",
-      "Intenta una segunda solicitud con las mismas fechas → <strong>409 Solapamiento</strong>.",
-      "Intenta solicitar 50 días → <strong>422 Saldo insuficiente</strong>.",
-      "Como Pedro: solicita PERMIT sin justificación → <strong>400 campo requerido</strong>. Luego con justificación → PENDING.",
-      "Inicia como DIRECCION_GENERAL → menú sin enlace; si accede por URL → <strong>422 mensaje bloqueado</strong>.",
-    ]
-  },
-  {
-    hu: "HU-04 · Seguimiento (09:15–11:10)", color: "hu-03",
-    pasos: [
-      "Como Ana: navega a <strong>Mis Solicitudes</strong>. Muestra la solicitud de 10 días en PENDING.",
-      "Filtra por estado PENDING → solo aparece la de Ana.",
-      "Como Pedro: en 'Mis Solicitudes' ve la solicitud de permiso en PENDING. <strong>Cancela</strong>. Confirma en el diálogo.",
-      "El estado cambia a CANCELLED; los días retenidos desaparecen del saldo preventivo.",
-      "Intenta cancelar una solicitud APPROVED → <strong>409 Conflict</strong>.",
-    ]
-  },
-  {
-    hu: "HU-05 · Aprobación/Rechazo (11:10–14:35)", color: "hu-05",
-    pasos: [
-      "Como Carlos: navega a <strong>Solicitudes Pendientes</strong>. Ve la solicitud de Ana.",
-      "Pulsa Aprobar → escribe comentario 'Disfruta las vacaciones'. Confirma.",
-      "Vuelve a la bandeja → la solicitud ya no aparece (resuelta). Ana recibe notificación.",
-      "Como Laura: rechaza la solicitud de Pedro con motivo de 10 palabras. Confirma.",
-      "Intenta rechazar de nuevo la misma → <strong>409 Conflict</strong>; bandeja recarga.",
-      "Como Marta (RRHH): muestra que solo ve las solicitudes de <strong>sus subordinados directos</strong>.",
-      "RRHH da de baja a Carlos → muestra que las solicitudes PENDING del equipo pasan a <strong>CANCELLED automáticamente</strong> + notificación.",
-    ]
-  },
-  {
-    hu: "HU-06 · Calendario (14:35–16:30)", color: "hu-05",
-    pasos: [
-      "Como Carlos: navega a <strong>Calendario del Equipo</strong>. Mes julio 2026.",
-      "Resalta la ausencia de Ana (APPROVED) con badge verde y la de otro miembro (PENDING) con badge amarillo.",
-      "Muestra día con <strong>2 ausencias solapadas</strong> → borde rojo + icono de alerta + '2 ausencias coincidentes'.",
-      "Pulsa sobre la ausencia de Ana → <strong>panel de detalle</strong> (nombre, tipo, fechas, estado). Sin justificación.",
-      "Navega al mes noviembre. Las solicitudes REJECTED de Pedro NO aparecen.",
-    ]
-  },
-  {
-    hu: "HU-07 · Informes (16:30–18:15)", color: "hu-07",
-    pasos: [
-      "Como Marta (RRHH): navega a <strong>Informes</strong>. Selecciona Uso de Vacaciones, año 2026.",
-      "Muestra la tabla agrupada por departamento. <strong>Expande</strong> el departamento 'Desarrollo' → fila individual de Ana.",
-      "Pulsa <strong>Exportar CSV</strong>. Abre el archivo en un editor → muestra BOM y que los valores coinciden.",
-      "Cierra sesión. Inicia como empleado e intenta acceder a /reports → <strong>403 Forbidden</strong>.",
-    ]
-  },
-  {
-    hu: "HU-08 · Evaluación (18:15–20:45)", color: "hu-07",
-    pasos: [
-      "Como Carlos: navega a <strong>Evaluaciones</strong> → <strong>Nueva Evaluación</strong> para Ana.",
-      "Rellena periodo '2026-ANUAL', objetivos, valoración 4, comentarios. Guarda.",
-      "Como Ana: accede a 'Mis Evaluaciones'. Lee la evaluación. Escribe un comentario. Pulsa <strong>Dar conformidad</strong>.",
-      "Estado → FINALIZED. Se muestra <code>finalizedAt</code>. Los campos quedan en solo lectura.",
-      "Intenta segunda conformidad → <strong>409 Conflict</strong>.",
-      "Carlos intenta ver evaluaciones de otro responsable → <strong>404/403</strong>.",
-    ]
-  },
-  {
-    hu: "Recorridos E2E (20:45–fin)", color: "hu-07",
-    pasos: [
-      "Recorrido 1: Repasa en fast-review (pantalla partida o narración) Alta → Saldo 23 días → Solicitud → Aprobación → Calendario → Informe → Evaluación.",
-      "Recorrido 2: Muestra en 90 s el flujo de error: Permiso rechazado → Cancelación → Saldo restaurado → Informe a 0 días → Evaluación inmutable.",
-      "Cierra con la pantalla de inicio del sistema. Créditos.",
-    ]
-  },
-];
+  const SHORT = { 'HU-01': 'Alta y trayectoria', 'HU-02': 'Ficha y saldo', 'HU-03': 'Solicitar ausencia', 'HU-04': 'Seguimiento', 'HU-05': 'Aprobar / rechazar', 'HU-06': 'Calendario', 'HU-07': 'Informes', 'HU-08': 'Evaluación' };
+  const v = document.getElementById('v');
+  const D = window.DEMO;
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  let limitEnd = null, segs = [], chaps = [];
 
-// =========================================================
-// RENDER CHAPTERS
-// =========================================================
-function renderChapters() {
-  const list = document.getElementById('chaptersList');
-  CHAPTERS.forEach((ch, ci) => {
-    const item = document.createElement('div');
-    item.className = 'chapter-group';
-
-    const main = document.createElement('div');
-    main.className = `chapter-item ${ch.huClass ? '' : ''}`;
-    main.id = `ch-${ch.id}`;
-    main.innerHTML = `
-      <span class="chapter-ts">${ch.label}</span>
-      ${ch.hu ? `<span class="hu-badge ${ch.huClass}">${ch.hu}</span>` : ''}
-      <div class="chapter-body">
-        <div class="chapter-title">${ch.title}</div>
-        <div class="chapter-meta">👤 ${ch.author}</div>
-        <div class="chapter-scenario ${ch.scenarioClass}">▸ ${ch.scenario}</div>
-        <div class="chapter-meta" style="margin-top:.2rem;font-size:.7rem;color:#64748b">${ch.desc}</div>
-      </div>
-    `;
-    main.addEventListener('click', () => jumpTo(ch.ts, ci, -1));
-    item.appendChild(main);
-
-    ch.children.forEach((sub, si) => {
-      const subEl = document.createElement('div');
-      subEl.className = 'chapter-item sub';
-      subEl.innerHTML = `
-        <span class="chapter-ts">${sub.label}</span>
-        <div class="chapter-body">
-          <div class="chapter-title" style="font-size:.8rem">${sub.title}</div>
-          <div class="chapter-scenario ${sub.scenarioClass}" style="font-size:.7rem">▸ ${sub.desc}</div>
-        </div>
-      `;
-      subEl.addEventListener('click', () => jumpTo(sub.ts, ci, si));
-      item.appendChild(subEl);
+  if (D && D.chapters && D.chapters.length) {
+    chaps = D.chapters.map((c, i) => ({ ...c, i }));
+    // tramos = rachas consecutivas de la misma historia
+    chaps.forEach((c) => {
+      const last = segs[segs.length - 1];
+      if (last && last.hu === c.hu) last.items.push(c); else segs.push({ hu: c.hu, items: [c], start: c.t });
     });
+    segs.forEach((s, k) => { s.end = k + 1 < segs.length ? segs[k + 1].start : D.duration; s.epilogue = segs.findIndex((x) => x.hu === s.hu) !== k; });
 
-    list.appendChild(item);
-  });
-}
+    const stats = document.getElementById('stats');
+    const scen = chaps.filter((c) => !c.intro && c.hu !== 'Inicio').length;
+    stats.innerHTML = `<span class="stat"><b>8</b>historias de usuario</span><span class="stat"><b>${scen}</b>escenarios</span><span class="stat"><b>${fmt(D.duration)}</b>de duración</span>`;
 
-// =========================================================
-// RENDER GUION
-// =========================================================
-function renderGuion() {
-  const grid = document.getElementById('guionGrid');
-  GUION.forEach(g => {
-    const card = document.createElement('div');
-    card.className = 'guion-card';
-    const liItems = g.pasos.map(p => `<li>${p}</li>`).join('');
-    card.innerHTML = `
-      <h3><span class="hu-badge ${g.color}" style="font-size:.7rem">${g.hu}</span></h3>
-      <ul>${liItems}</ul>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-// =========================================================
-// VIDEO CONTROLS
-// =========================================================
-const video = document.getElementById('mainVideo');
-const placeholder = document.getElementById('placeholder');
-const progressFill = document.getElementById('progressFill');
-const timeDisplay  = document.getElementById('timeDisplay');
-const npTitle  = document.getElementById('npTitle');
-const npAuthor = document.getElementById('npAuthor');
-
-function fmt(s) {
-  const m = Math.floor(s/60), sec = Math.floor(s%60);
-  return `${m}:${sec.toString().padStart(2,'0')}`;
-}
-
-function tryPlay() {
-  video.style.display = 'block';
-  placeholder.style.display = 'none';
-  video.play().catch(() => {
-    placeholder.style.display = 'flex';
-    video.style.display = 'none';
-    alert("No se encontró demo-rrhh.mp4 junto a index.html. Coloca el archivo MP4 y recarga la página.");
-  });
-}
-
-function onVideoLoaded() {
-  video.style.display = 'block';
-  placeholder.style.display = 'none';
-}
-
-function jumpTo(seconds, chIdx, subIdx) {
-  if (video.style.display === 'none') {
-    video.style.display = 'block';
-    placeholder.style.display = 'none';
+    const box = document.getElementById('chapters');
+    segs.forEach((s, k) => {
+      const meta = HU[s.hu] || { title: s.hu };
+      const d = document.createElement('details');
+      d.open = k < 3;
+      const name = s.epilogue ? `${meta.title} · epílogo` : meta.title;
+      d.innerHTML = `<summary><span class="tag">${s.hu}</span><span>${s.hu === 'Inicio' ? 'Presentación' : (s.epilogue ? 'Baja lógica (epílogo)' : (SHORT[s.hu] || name))}</span>
+        <button class="play" data-seg="${k}" title="Reproducir solo este tramo">▶ Ver</button></summary><ol></ol>`;
+      const ol = d.querySelector('ol');
+      s.items.filter((c) => !c.intro).forEach((c) => {
+        const li = document.createElement('li');
+        li.dataset.i = c.i;
+        li.className = /error|rechaz|insuficiente|solapamiento|duplicad|incorrect|corto|fuera de rango|denegad|restring|sin datos|no se puede|no solicita/i.test(c.title) ? 'err' : '';
+        li.innerHTML = `<button data-i="${c.i}"><span class="ts">${fmt(c.t)}</span><span>${c.title}</span></button>`;
+        ol.appendChild(li);
+      });
+      if (!ol.children.length) { const li = document.createElement('li'); li.innerHTML = `<button data-seg="${k}"><span class="ts">${fmt(s.start)}</span><span>Presentación</span></button>`; ol.appendChild(li); }
+      box.appendChild(d);
+    });
+  } else {
+    document.getElementById('nodata').style.display = 'block';
   }
-  video.currentTime = seconds;
-  video.play().catch(() => {});
 
-  document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
-  const target = document.getElementById(`ch-${CHAPTERS[chIdx >= 0 ? chIdx : 0]?.id}`);
-  if (target) { target.classList.add('active'); target.scrollIntoView({behavior:'smooth', block:'nearest'}); }
-
-  if (chIdx >= 0) {
-    const ch = CHAPTERS[chIdx];
-    const item = subIdx >= 0 ? ch.children[subIdx] : ch;
-    npTitle.textContent  = item ? item.title : ch.title;
-    npAuthor.textContent = ch.author + (ch.hu ? ' · ' + ch.hu : '');
-  }
-}
-
-function seekVideo(e) {
-  if (!video.duration) return;
-  const rect = e.currentTarget.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  video.currentTime = pct * video.duration;
-}
-
-video.addEventListener('timeupdate', () => {
-  if (!video.duration) return;
-  const pct = (video.currentTime / video.duration) * 100;
-  progressFill.style.width = pct + '%';
-  timeDisplay.textContent = fmt(video.currentTime) + ' / ' + fmt(video.duration);
-
-  // auto-highlight chapter
-  let active = 0;
-  CHAPTERS.forEach((ch, i) => { if (video.currentTime >= ch.ts) active = i; });
-  document.querySelectorAll('.chapter-item:not(.sub)').forEach((el, i) => {
-    el.classList.toggle('active', i === active);
+  // tarjetas de historias
+  const cards = document.getElementById('cards');
+  Object.keys(HU).filter((h) => h !== 'Inicio').forEach((h) => {
+    const m = HU[h];
+    const k = segs.findIndex((s) => s.hu === h);
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `<span class="tag">${h}</span><h3>${m.title}</h3><p>${m.desc}</p>
+      <div class="roles">Actor: <b>${m.who}</b></div>
+      <div style="margin:8px 0 6px">${(m.ok || []).map((x) => `<span class="pill ok">✓ ${x}</span>`).join('')}${(m.ko || []).map((x) => `<span class="pill ko">✗ ${x}</span>`).join('')}${(m.more || []).map((x) => `<span class="pill">${x}</span>`).join('')}</div>
+      ${k >= 0 ? `<button data-seg="${k}">▶ Ver historia</button>` : ''}`;
+    cards.appendChild(el);
   });
-  npTitle.textContent  = CHAPTERS[active].title;
-  npAuthor.textContent = CHAPTERS[active].author + ' · ' + CHAPTERS[active].hu;
-});
 
-video.addEventListener('error', () => {
-  placeholder.style.display = 'flex';
-  video.style.display = 'none';
-});
-
-renderChapters();
-renderGuion();
+  // reproducción
+  const toast = document.getElementById('toast');
+  const play = (t, end) => { limitEnd = end ?? null; toast.style.display = 'none'; v.currentTime = Math.max(0, t); v.play(); v.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.i !== undefined) { e.preventDefault(); play(chaps[+b.dataset.i].t, null); }
+    else if (b.dataset.seg !== undefined) { e.preventDefault(); e.stopPropagation(); const s = segs[+b.dataset.seg]; play(s.start, s.end); }
+  });
+  let cur = -1;
+  const setActive = (i) => {
+    if (i === cur) return; cur = i;
+    document.querySelectorAll('#chapters li.active').forEach((x) => x.classList.remove('active'));
+    const c = chaps[i]; if (!c) return;
+    document.getElementById('nowHu').textContent = c.hu;
+    document.getElementById('nowTxt').textContent = c.intro ? `Introducción · ${c.title.replace('Introducción: ', '')}` : c.text;
+    const li = document.querySelector(`#chapters li[data-i="${i}"]`);
+    if (li) { li.classList.add('active'); const d = li.closest('details'); if (d && !d.open) d.open = true; li.scrollIntoView({ block: 'nearest' }); }
+  };
+  v.addEventListener('timeupdate', () => {
+    const t = v.currentTime;
+    if (chaps.length) { let i = 0; for (let k = 0; k < chaps.length; k++) if (chaps[k].t <= t + 0.25) i = k; setActive(i); }
+    if (limitEnd !== null && t >= limitEnd - 0.2) {
+      v.pause(); limitEnd = null;
+      toast.style.display = 'block';
+      const k = segs.findIndex((s) => Math.abs(s.end - t) < 1.5);
+      toast.innerHTML = `Fin del tramo. ${k + 1 < segs.length ? `<button data-seg="${k + 1}">▶ Siguiente: ${segs[k + 1].hu}</button>` : ''} <button id="all">Seguir con la demo completa</button>`;
+      document.getElementById('all').onclick = () => { toast.style.display = 'none'; v.play(); };
+    }
+  });
+  v.addEventListener('seeking', () => { if (limitEnd !== null && (v.currentTime > limitEnd || v.currentTime < 0)) limitEnd = null; });
+  const go = (d) => { if (!chaps.length) return; const i = Math.min(chaps.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + d)); play(chaps[i].t, null); };
+  document.getElementById('prev').onclick = () => go(-1);
+  document.getElementById('next').onclick = () => go(1);
+  document.getElementById('rate').onchange = (e) => { v.playbackRate = +e.target.value; };
+  document.addEventListener('keydown', (e) => {
+    if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === 'n') go(1); else if (e.key === 'p') go(-1);
+    else if (e.key === 'f') { v.requestFullscreen && v.requestFullscreen(); }
+    else if (e.key === 'ArrowRight' && document.activeElement !== v) v.currentTime += 5;
+    else if (e.key === 'ArrowLeft' && document.activeElement !== v) v.currentTime -= 5;
+    else if (e.key === ' ' && document.activeElement === document.body) { e.preventDefault(); v.paused ? v.play() : v.pause(); }
+  });
+})();
 </script>
 </body>
 </html>

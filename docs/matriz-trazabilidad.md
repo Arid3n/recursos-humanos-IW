@@ -68,13 +68,13 @@
 | Historia y Criterio | Decisión Técnica del Plan | Tareas que lo Cubren | Prueba Prevista y Evidencia | Revisor |
 | :--- | :--- | :--- | :--- | :---: |
 | **HU01-FR01** (Alta obligatoria por RRHH) | Formulario reactivo asistido; endpoint `POST /api/v1/employees` con DTO validado con `@Valid`. | T010, T012, T014, T017, T019 | `EmployeeIntegrationTest`: test de creación exitosa con credenciales. | Iván |
-| **HU01-FR02** (Fecha de efectos obligatoria) | Columna `effective_from DATE NOT NULL` en `contract_records`. Campo requerido en DTO. | T011, T021, T022, T025 | `ContractVariationIntegrationTest`: rechazo si `effectiveFrom == null`. | Iván |
-| **HU01-FR03** (Histórico inmutable *append-only*) | Entidad `ContractRecord` sin operaciones de actualización; cada cambio inserta una nueva fila (Art. 11). | T011, T013, T022, T024 | `ContractVariationIntegrationTest`: inserción secuencial preserva registros previos. | Iván |
-| **HU01-FR04** (Condiciones vigentes derivadas) | Consulta nativa SQL `effective_from <= :date ORDER BY effective_from DESC, created_at DESC LIMIT 1`. | T013, T026, T027, T028 | Test unitario de repositorio `findCurrentContractByEmployeeIdAndEffectiveDate`. | Iván |
-| **HU01-FR05** (Errores de validación por campo) | `GlobalExceptionHandler` mapeando a RFC 9457 con array `invalidFields`. | T009, T017, T019 | MockMvc validando respuesta `400 Bad Request` con mapa de errores. | Iván |
-| **HU01-FR06** (Acceso exclusivo RRHH 403) | Anotación `@PreAuthorize("hasRole('RRHH')")` en métodos de controlador. | T016, T023, T033, T034 | Test de seguridad negativa autenticado como `EMPLEADO` devolviendo `403 Forbidden`. | Iván |
+| **HU01-FR02** (Fecha de efectos obligatoria) | Columna `effective_from DATE NOT NULL` en `contract_records`. Campo requerido en DTO. | T011, T021, T022, T025 | `EmployeeIntegrationTest`: «Añadir variación contractual append-only con fecha retroactiva sin alterar contratos previos». | Iván  |
+| **HU01-FR03** (Histórico inmutable *append-only*) | Entidad `ContractRecord` sin operaciones de actualización; cada cambio inserta una nueva fila (Art. 11). | T011, T013, T022, T024 | `EmployeeIntegrationTest`: la misma prueba comprueba que el historial conserva los registros previos y añade el nuevo. | Iván  |
+| **HU01-FR04** (Condiciones vigentes derivadas) | Consulta nativa SQL `effective_from <= :date ORDER BY effective_from DESC, created_at DESC LIMIT 1`. | T013, T026, T027, T028 | `EmployeeIntegrationTest`: la prueba de variación comprueba el orden cronológico del historial; la derivación de condiciones vigentes en la ficha no tiene prueba específica (cubierta por lectura de código y uso en HU-02). | Iván  |
+| **HU01-FR05** (Errores de validación por campo) | `GlobalExceptionHandler` mapeando a RFC 9457 con array `invalidFields`. | T009, T017, T019 | `EmployeeIntegrationTest`: «Alta con campos obligatorios vacíos devuelve 400 Bad Request según RFC 9457». | Iván  |
+| **HU01-FR06** (Acceso exclusivo RRHH 403) | Anotación `@PreAuthorize("hasRole('RRHH')")` en métodos de controlador. | T016, T023, T033, T034 | `EmployeeIntegrationTest`: «Autorización negativa: Rol EMPLEADO recibe 403 Forbidden». | Iván  |
 | **HU01-FR08** (Clave provisional automática) | `PasswordGeneratorService` genera clave de 12 caracteres segura sin servicio SMTP externo. | T004, T005, T008, T015, T020 | Test unitario de generación de claves con entropía y diálogo modal. | Iván |
-| **HU01-FR10** (Baja lógica reversible) | Marcado `active = false` en `employees` y `users`; revocación de login sin borrado físico. | T032, T033, T034 | `EmployeeIntegrationTest:testDeactivateEmployee`: login revocado y datos históricos intactos. | Iván |
+| **HU01-FR10** (Baja lógica reversible) | Marcado `active = false` en `employees` y `users`; revocación de login sin borrado físico. | T032, T033, T034 | `EmployeeDeactivationAtomicityIntegrationTest` y `EmployeeIntegrationTest` (pruebas FR-016 de baja de responsable). | Iván  |
 | **HU01-FR11** (Manager obligatorio salvo Dirección) | Validación en servicio: `manager_id` no nulo excepto cuando se marca explícitamente `withoutManager=true`. | T010, T015, T069, T083 | Test unitario validando alta de CEO sin manager y rechazo para otros puestos. | Iván |
 
 ---
@@ -90,7 +90,7 @@
 | **HU02-FR05** (Control de acceso RBAC estricto) | Servicio valida: empleado solo ve lo suyo; responsable ve subordinados directos; RRHH ve a todos. | T008, T012, T024 | Test negativo: intento de acceso cruzado entre compañeros devuelve `403 Forbidden`. | Andrei |
 | **HU02-FR06** (Prorrateo por alta a mitad de año) | Fórmula: `Math.round((días_restantes / días_año) * días_convenio)`. | T008, T013, T022 | `LeaveProratingUnitTest` (**14/14 tests pasando** en 0.23 s). | Andrei |
 | **HU02-FR07** (Consulta histórica de años cerrados) | Parámetro `year` con condiciones contractuales vigentes al 31 de diciembre de dicho ejercicio. | T008, T011, T014 | `LeaveBalanceServiceTest`: consulta de año pasado en modo solo lectura con badge. | Andrei |
-| **HU02-SC01** (Visualización rápida < 800 ms) | Widget Angular optimizado con carga paralela de perfil y saldo. | T015, T017, T020 | Verificación en navegador y tests unitarios de componente Angular. | Andrei |
+| **HU02-SC01** (Visualización rápida < 800 ms) | Widget Angular optimizado con carga paralela de perfil y saldo. | T015, T017, T020 | Sin prueba de rendimiento: la carga en menos de 800 ms no se ha medido (excepción documentada en `docs/verificacion-integrada.md`). | Andrei  |
 
 ---
 
@@ -151,8 +151,8 @@
 | **HU06-FR04** (Alerta de solapamientos críticos ≥ 2) | Detección en servicio: días con 2 o más ausencias se marcan con borde rojo e icono de alerta. | T006, T008, T013 | `TeamCalendarServiceTest`: cálculo exacto de coincidencias simultáneas. | Iván |
 | **HU06-FR05** (Aislamiento exclusivo al equipo) | Filtro SQL estricto: solo aparecen ausencias de subordinados del usuario en sesión. | T007, T008, T016 | `TeamCalendarIntegrationTest`: ausencia de miembros de otros departamentos. | Iván |
 | **HU06-FR06** (Exclusión de rechazadas y canceladas) | Cláusula `WHERE status IN ('APPROVED', 'PENDING')`; las canceladas no computan. | T006, T008, T010 | `TeamCalendarServiceTest`: verificación de que canceladas no aparecen. | Iván |
-| **HU06-FR07** (Minimización de datos privados) | DTO excluye justificaciones médicas o comentarios personales (Art. 20). | T004, T008 | Inspección de payload JSON comprobando ausencia de campos sensibles. | Iván |
-| **HU06-FR08** (Filtro por empleado individual) | Selector desplegable en cabecera para filtrar la vista por un miembro concreto. | T008, T012, T015 | Test unitario de componente filtrando el calendario por `employeeId`. | Iván |
+| **HU06-FR07** (Minimización de datos privados) | DTO excluye justificaciones médicas o comentarios personales (Art. 20). | T004, T008 | `TeamCalendarIntegrationTest`: «la respuesta no contiene motivos de rechazo ni justificaciones». | Iván  |
+| **HU06-FR08** (Filtro por empleado individual) | Selector desplegable en cabecera para filtrar la vista por un miembro concreto. | T008, T012, T015 | `team-calendar.component.spec.ts`: bloque «employee filter (US2)». | Iván  |
 
 ---
 
@@ -162,7 +162,7 @@
 | :--- | :--- | :--- | :--- | :---: |
 | **HU07-FR01** (Acceso exclusivo rol RRHH) | Anotación `@PreAuthorize("hasRole('RRHH')")` a nivel de clase controladora. | T008, T010 | `DepartmentReportIntegrationTest`: empleados y responsables reciben 403. | Andrei |
 | **HU07-FR02** (Filtro por tipo de informe y fechas) | Parámetros `type` (`VACATION_USAGE`, `ABSENTEEISM`), `startDate` y `endDate`. | T006, T007, T008 | `DepartmentReportIntegrationTest`: consulta con diferentes rangos temporales. | Andrei |
-| **HU07-FR03** (Agregación SQL departamental) | `JOIN LATERAL` eficiente para obtener contrato vigente y agregar ausencias aprobadas. | T006, T007 | Inspección de plan de ejecución SQL y tiempos de respuesta sub-segundo. | Andrei |
+| **HU07-FR03** (Agregación SQL departamental) | `JOIN LATERAL` eficiente para obtener contrato vigente y agregar ausencias aprobadas. | T006, T007 | `DepartmentReportIntegrationTest`: los totales departamentales coinciden con la suma de las filas por empleado. | Andrei  |
 | **HU07-FR04** (Paridad 100% pantalla ↔ CSV) | Ambos canales consumen el mismo método `generateReport()` en la capa de servicio (Art. 17). | T008, T010 | `DepartmentReportIntegrationTest`: aserción fila a fila entre JSON y CSV. | Andrei |
 | **HU07-FR05** (Exportación CSV RFC 4180 UTF-8 BOM) | Inserción de cabecera BOM `\uFEFF`, comillas dobles estándar y `Content-Type: text/csv`. | T007, T010 | Verificación de apertura limpia de tildes en Excel y formato RFC 4180. | Andrei |
 | **HU07-FR06** (Respuesta semántica sin datos) | `hasData: false` en JSON; HTTP `204 No Content` en exportación CSV si no hay registros. | T007, T010 | `DepartmentReportIntegrationTest`: test de periodos sin ausencias. | Andrei |
@@ -180,7 +180,7 @@
 | **HU08-FR04** (Empleado revisa, comenta y formaliza) | Endpoint `POST /{id}/acknowledge` accesible por `EMPLEADO` con comentarios opcionales. | T009, T010, T013 | `PerformanceReviewIntegrationTest`: empleado añade notas y otorga conformidad. | Iván |
 | **HU08-FR05** (Transición a `FINALIZED` con timestamp) | Asignación de `Instant.now(clock)` a `finalized_at` en el servidor y cambio de estado. | T009, T011 | Test de integración con `Clock.fixed` verificando marca temporal exacta. | Iván |
 | **HU08-FR06** (Inmutabilidad absoluta en `FINALIZED`) | Excepción de servicio (409) + trigger en PostgreSQL (V4) que aborta mutaciones (Art. 18). | T007, T009, T011 | `PerformanceReviewIntegrationTest`: test de intento de re-conformidad y test de trigger SQL. | Iván |
-| **HU08-FR07** (Aislamiento y confidencialidad) | Empleado solo ve sus evaluaciones; responsable solo ve las de su equipo actual. | T009, T010, T011 | Test de seguridad negativa comprobando aislamiento estricto entre roles. | Iván |
+| **HU08-FR07** (Aislamiento y confidencialidad) | Empleado solo ve sus evaluaciones; responsable solo ve las de su equipo actual. | T009, T010, T011 | `PerformanceReviewIntegrationTest`: «solo el responsable actual puede crear una evaluación para su equipo» y «restringe las operaciones al rol correspondiente». | Iván  |
 | **HU08-FR08** (Valoración escala 1 a 5 accesible) | Control `<select>` nativo accesible con descriptores y constraint `CHECK` en BD. | T006, T011, T013 | Verificación en interfaz web y validación de constraint en PostgreSQL. | Iván |
 
 ---

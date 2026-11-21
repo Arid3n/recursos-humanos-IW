@@ -1,0 +1,84 @@
+diff --git a/specs/spec-007/tasks.md b/specs/spec-007/tasks.md
+new file mode 100644
+index 0000000..9b2055e
+--- /dev/null
++++ b/specs/spec-007/tasks.md
+@@ -0,0 +1,78 @@
++# Tasks: spec-007 — Informes de Absentismo y Uso de Vacaciones
++
++**Feature**: `spec-007` · HU-07  
++**Input**: [specs/spec-007/plan.md](plan.md), [specs/spec-007/spec.md](spec.md), [specs/spec-007/data-model.md](data-model.md)
++
++---
++
++## Phase 1: Setup
++
++**Purpose**: Sin migraciones ni tablas nuevas. Se reutiliza la infraestructura de Testcontainers existente.
++
++- [x] T001 Verify that `DepartmentReportRepository`, `HolidayCalendarService` and existing `LeaveRequest` / `Employee` / `ContractRecord` tables are accessible from the report module in `backend/src/main/java/com/iw/rrhh/report/`
++
++---
++
++## Phase 2: Foundational (Blocking Prerequisites)
++
++**Purpose**: Tipos base y contrato OpenAPI necesarios para el desarrollo paralelo de backend y frontend.
++
++- [x] T002 [P] Create `ReportType` enum (`ABSENTEEISM`, `VACATION_USAGE`) in `backend/src/main/java/com/iw/rrhh/report/dto/ReportType.java`
++- [x] T003 [P] Create projection interfaces `ReportEmployeeProjection`, `ReportDepartmentAggregateProjection`, `ReportLeaveDaysProjection`, `ReportLeavePeriodProjection` in `backend/src/main/java/com/iw/rrhh/report/repository/`
++- [x] T004 [P] Create DTO records `DepartmentReportResponse`, `DepartmentReportRow`, `EmployeeReportRow` in `backend/src/main/java/com/iw/rrhh/report/dto/`
++- [x] T005 [P] Create TypeScript models `ReportType`, `EmployeeReportRow`, `DepartmentReportRow`, `DepartmentReportResponse` in `frontend/src/app/features/reports/models/department-report.models.ts`
++
++---
++
++## Phase 3: User Story 7 — Generación de Informe por Departamento (Priority: P1) 🎯 MVP
++
++**Goal**: RRHH puede seleccionar tipo de informe y rango de fechas y obtener una tabla agrupada por departamento con métricas de absentismo o uso de vacaciones, con desglose expandible por empleado.
++
++**Independent Test**: Ejecutar `DepartmentReportIntegrationTest` con datos de demo, verificando que los totales departamentales coinciden con la suma de filas individuales y que `GET /api/v1/reports` retorna `403` con rol `EMPLEADO`.
++
++### Backend Implementation
++
++- [x] T006 [P] [US7] Create `DepartmentReportRepository` with four query methods (`findEmployeesForPeriod`, `summarizeDepartments`, `sumApprovedDaysWithinPeriod`, `findApprovedRequestsCrossingPeriodBoundary`) using native SQL and JPQL in `backend/src/main/java/com/iw/rrhh/report/repository/DepartmentReportRepository.java`
++- [x] T007 [P] [US7] Create `DepartmentReportService` interface and `DepartmentReportServiceImpl` with `generateReport(type, startDate, endDate)` and `exportCsv(report)` methods in `backend/src/main/java/com/iw/rrhh/report/service/`; implement vacation proration by hire month and working-day calculation via `HolidayCalendarService`; division-by-zero safe (returns `0.00`)
++- [x] T008 [US7] Create `DepartmentReportController` with `@PreAuthorize("hasRole('RRHH')")` on class level, `GET /reports` returning `DepartmentReportResponse` and `GET /reports/export` returning `byte[]` CSV; both endpoints call the same service method to guarantee parity (FR-004) in `backend/src/main/java/com/iw/rrhh/report/controller/DepartmentReportController.java`
++- [x] T009 [P] [US7] Create `DepartmentReportDemoDataInitializer` (`@Component`, `@Profile("test")`) that inserts demo employees, contracts and leave requests for Testcontainers integration tests in `backend/src/main/java/com/iw/rrhh/report/config/DepartmentReportDemoDataInitializer.java`
++- [x] T010 [US7] Create integration test `DepartmentReportIntegrationTest` (Testcontainers + MockMvc) covering: correct department aggregation; individual employee rows sum equals department total; `hasData: false` for empty period; `403` for `EMPLEADO` and `RESPONSABLE_EQUIPO` roles; `204` from `/export` when no data; CSV BOM and RFC 4180 format; partial-period requests correctly trimmed by `HolidayCalendarService` in `backend/src/test/java/com/iw/rrhh/report/DepartmentReportIntegrationTest.java`
++
++### Frontend Implementation
++
++- [x] T011 [P] [US7] Create `DepartmentReportService.getReport(type, startDate, endDate)` and `exportCsv(type, startDate, endDate)` calling `/api/v1/reports` and `/api/v1/reports/export` in `frontend/src/app/features/reports/services/department-report.service.ts`
++- [x] T012 [US7] Create `DepartmentReportsComponent` with period type selector (Año en curso, Año anterior, Trimestre actual, Rango personalizado), date pickers, generate button, expandable department rows showing headcount / días correspondientes / días disfrutados / saldo / porcentaje, employee sub-rows, empty-state message, and export CSV button in `frontend/src/app/features/reports/components/department-reports/`
++- [x] T013 [P] [US7] Register lazy route `/reports` with `authGuard` in `frontend/src/app/app.routes.ts` and add nav link "Informes" shown only when `authService.isRRHH()` in `frontend/src/app/app.html`
++
++---
++
++## Phase 4: Polish & Cross-Cutting Concerns
++
++**Purpose**: Verificaciones finales, accesibilidad y suite completa.
++
++- [x] T014 [P] Add OpenAPI Swagger `@Operation` and `@Tag` annotations to `DepartmentReportController.java`
++- [x] T015 [P] Verify WCAG 2.1 AA: table with `scope`, keyboard-accessible expand buttons, aria labels on date pickers
++- [x] T016 Execute full backend test suite: `cd backend && ./mvnw test`
++- [x] T017 Run frontend tests and build: `cd frontend && npx ng test --watch=false && npx ng build`
++- [x] T018 Validate manual scenarios defined in `specs/spec-007/quickstart.md`
++
++---
++
++## Dependencies & Execution Order
++
++```mermaid
++graph TD
++    T001 --> T002 & T003
++    T002 --> T004 --> T007
++    T003 --> T006 --> T007
++    T007 --> T008
++    T005 --> T011 --> T012 --> T013
++    T009 --> T010
++    T008 --> T010
++    T008 --> T014
++    T012 --> T015
++    T010 --> T016
++    T013 --> T017
++    T016 --> T018
++    T017 --> T018
++```

@@ -21,6 +21,9 @@
 
 ---
 
+### Session 2026-11-21 (cierre con el código congelado)
+- Q: ¿Pueden crear evaluaciones RRHH y Dirección General respecto de sus subordinados directos, que HU-05 FR-017 y FR-018 reconoce como resolutores? → A: No. La evaluación de desempeño sigue restringida al rol `RESPONSABLE_EQUIPO` (FR-001 y FR-007) y la conformidad al empleado evaluado. Un RRHH o Dirección General con subordinados directos no puede evaluarlos en la versión final. Con el código congelado se acepta como límite conocido y se deja constancia de que la decisión de HU-05 no se propagó a esta historia.
+
 ## 1. User Scenarios & Testing *(mandatory)*
 
 ### User Story Principal (Priority: P1)
@@ -97,3 +100,4 @@ Como responsable de equipo, quiero registrar para cada persona a mi cargo una ev
 ## 4. Assumptions
 - La firma/conformidad es digital dentro de la plataforma autenticada.
 - Las evaluaciones corresponden a ciclos periódicos fijados por la dirección (trimestral o anual).
+- **Límite conocido (2026-11-21)**: solo `RESPONSABLE_EQUIPO` crea evaluaciones; RRHH y Dirección General con subordinados no pueden evaluarlos (ver Session 2026-11-21 y `converge.md` C1).

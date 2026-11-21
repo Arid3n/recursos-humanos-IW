@@ -1,0 +1,403 @@
+Picked up JAVA_TOOL_OPTIONS: -Dapi.version=1.44
+[INFO] Scanning for projects...
+[INFO] Loaded 24569 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] 
+[INFO] ------------------------< com.iw.rrhh:backend >-------------------------
+[INFO] Building recursos-humanos-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] Loaded 64 auto-discovered prefixes for remote repository apache.snapshots (prefixes-apache.snapshots.txt)
+[INFO] Loaded 24569 auto-discovered prefixes for remote repository maven-central (prefixes-maven-central.txt)
+[WARNING] Could not transfer metadata /.meta/prefixes.txt from/to flyway-community-db-support (https://maven.pkg.github.com/flyway/flyway-community-db-support): HTTP Status: 401
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 8 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 106 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] Copying 2 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ backend ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 25 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ backend ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+Picked up JAVA_TOOL_OPTIONS: -Dapi.version=1.44
+[INFO] Running com.iw.rrhh.performance.PerformanceReviewIntegrationTest
+19:09:33.700 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.iw.rrhh.performance.PerformanceReviewIntegrationTest]: PerformanceReviewIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+19:09:33.817 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.performance.PerformanceReviewIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-11-21T19:09:34.189+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.p.PerformanceReviewIntegrationTest : Starting PerformanceReviewIntegrationTest using Java 21.0.13.0.3 with PID 38022 (started by ariden in /home/ariden/Documents/Uni/IW/recursos-humanos-IW/backend)
+2026-11-21T19:09:34.191+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.p.PerformanceReviewIntegrationTest : No active profile set, falling back to 1 default profile: "dev"
+2026-11-21T19:09:35.141+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-21T19:09:35.197+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 48 ms. Found 8 JPA repository interfaces.
+2026-11-21T19:09:35.954+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 0 (http)
+2026-11-21T19:09:35.966+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-21T19:09:35.966+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.36]
+2026-11-21T19:09:36.017+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.a.c.c.C.[.[localhost].[/api/v1]        : Initializing Spring embedded WebApplicationContext
+2026-11-21T19:09:36.018+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1818 ms
+2026-11-21T19:09:36.241+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.images.PullPolicy     : Image pull policy will be performed by: DefaultPullPolicy()
+2026-11-21T19:09:36.244+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.t.utility.ImageNameSubstitutor         : Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+2026-11-21T19:09:36.262+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.DockerClientFactory   : Testcontainers version: 1.20.5
+2026-11-21T19:09:36.397+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.t.d.DockerClientProviderStrategy       : Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+2026-11-21T19:09:36.567+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.t.d.DockerClientProviderStrategy       : Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+2026-11-21T19:09:36.568+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.DockerClientFactory   : Docker host IP address is localhost
+2026-11-21T19:09:36.579+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.DockerClientFactory   : Connected to docker: 
+  Server Version: 29.9.3
+  API Version: 1.56
+  Operating System: Arch Linux
+  Total Memory: 15679 MB
+2026-11-21T19:09:36.638+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.testcontainers/ryuk:0.11.0            : Creating container for image: testcontainers/ryuk:0.11.0
+2026-11-21T19:09:36.738+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.testcontainers/ryuk:0.11.0            : Container testcontainers/ryuk:0.11.0 is starting: a5ac055f09b1d11962ffdc66c6ab5c32e85764785b21461f4ca930e33799b7a8
+2026-11-21T19:09:36.904+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.testcontainers/ryuk:0.11.0            : Container testcontainers/ryuk:0.11.0 started in PT0.265154234S
+2026-11-21T19:09:36.908+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.t.utility.RyukResourceReaper           : Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+2026-11-21T19:09:36.908+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.DockerClientFactory   : Checking the system...
+2026-11-21T19:09:36.909+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.testcontainers.DockerClientFactory   : ✔︎ Docker server version should be at least 1.6.0
+2026-11-21T19:09:36.910+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Creating container for image: postgres:16-alpine
+2026-11-21T19:09:36.939+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine is starting: 949fc1172b1a084a7fb6c6a058f596bb5b33ac3468e6c4aee0fecdfcd99448dc
+2026-11-21T19:09:37.914+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine started in PT1.004530189S
+2026-11-21T19:09:37.915+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container is started (JDBC URL: jdbc:postgresql://localhost:32769/test?loggerLevel=OFF)
+2026-11-21T19:09:38.243+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:32769/test?loggerLevel=OFF (PostgreSQL 16.15)
+2026-11-21T19:09:38.281+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-11-21T19:09:38.284+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 7 migrations (execution time 00:00.016s)
+2026-11-21T19:09:38.294+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-11-21T19:09:38.336+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-11-21T19:09:38.351+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - init shared schema"
+2026-11-21T19:09:38.401+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - seed initial data"
+2026-11-21T19:09:38.411+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - leave resolution constraints"
+2026-11-21T19:09:38.426+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - immutable finalized performance reviews"
+2026-11-21T19:09:38.433+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - add cancelled status and justification to leave requests"
+2026-11-21T19:09:38.440+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - leave resolution reason max length"
+2026-11-21T19:09:38.446+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - direccion general role"
+2026-11-21T19:09:38.454+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 7 migrations to schema "public", now at version v7 (execution time 00:00.059s)
+2026-11-21T19:09:38.546+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-21T19:09:38.589+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.8.Final
+2026-11-21T19:09:38.616+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-21T19:09:38.792+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-21T19:09:38.811+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-21T19:09:38.824+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5397d41e
+2026-11-21T19:09:38.825+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-21T19:09:38.874+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.15
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-21T19:09:39.513+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-21T19:09:39.540+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-21T19:09:39.816+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-11-21T19:09:40.921+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-11-21T19:09:41.331+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-11-21T19:09:41.814+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.a.c.c.C.[.[localhost].[/api/v1]        : Initializing Spring TestDispatcherServlet ''
+2026-11-21T19:09:41.815+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-21T19:09:41.816+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-11-21T19:09:41.985+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 39023 (http) with context path '/api/v1'
+2026-11-21T19:09:41.997+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.p.PerformanceReviewIntegrationTest : Started PerformanceReviewIntegrationTest in 8.063 seconds (process running for 8.963)
+2026-11-21T19:09:42.267+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado para rrhh@empresa.com
+2026-11-21T19:09:42.344+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de responsable de equipo para responsable@empresa.com
+2026-11-21T19:09:42.421+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado regular para empleado@empresa.com
+2026-11-21T19:09:42.426+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado responsable de equipo a empleado@empresa.com
+2026-11-21T19:09:42.512+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de Dirección General para direccion@empresa.com
+2026-11-21T19:09:42.519+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignada Dirección General como responsable de rrhh@empresa.com
+2026-11-21T19:09:42.523+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado RRHH como responsable de responsable@empresa.com
+2026-11-21T19:09:42.692+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /performance-reviews/team
+2026-11-21T19:09:42.725+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /performance-reviews/me
+2026-11-21T19:09:42.963+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /performance-reviews/24e4607a-9a09-4d67-b70b-c0cc84f4ced0/acknowledge
+2026-11-21T19:09:43.069+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /performance-reviews/team/c74df529-9952-48fb-a42c-b03db959134c
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.535 s -- in com.iw.rrhh.performance.PerformanceReviewIntegrationTest
+[INFO] Running com.iw.rrhh.common.HolidayCalendarServiceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.049 s -- in com.iw.rrhh.common.HolidayCalendarServiceTest
+[INFO] Running com.iw.rrhh.leave.TeamCalendarIntegrationTest
+2026-11-21T19:09:43.148+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.TeamCalendarIntegrationTest]: TeamCalendarIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:43.163+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.TeamCalendarIntegrationTest
+2026-11-21T19:09:43.948+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /leave/team-calendar
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.848 s -- in com.iw.rrhh.leave.TeamCalendarIntegrationTest
+[INFO] Running com.iw.rrhh.leave.LeaveResolutionServiceTest
+2026-11-21T19:09:44.173+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud bd0c8c72-ea7a-4063-8f0e-96cd090b53f9 resuelta como REJECTED por el empleado 5e8c9b3b-4989-4b0c-8604-7e6c4cea7e43
+2026-11-21T19:09:44.184+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 60643d18-38fd-4481-9b9c-8ffcd987ec34 intentó resolver la solicitud e6fb1da0-727a-44cf-ba2f-069bfefc5002 fuera de su equipo
+2026-11-21T19:09:44.188+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud a01a1455-034a-4b9a-81a5-7dc9938204b8 resuelta como APPROVED por el empleado 9509a5a2-4eca-4a18-a535-49a60c54725a
+2026-11-21T19:09:44.202+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 6ad89b14-109c-41bb-84b0-e25c2c26983b resuelta como APPROVED por el empleado b62c1bf8-f5a3-479e-bbfb-38804bcc915f
+2026-11-21T19:09:44.210+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 3ad40739-f5e4-4921-9b0e-8238b6900e10 resuelta como REJECTED por el empleado 0c5abcfe-0e92-4941-97f6-e28445c2e80c
+2026-11-21T19:09:44.210+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 0c5abcfe-0e92-4941-97f6-e28445c2e80c intentó resolver la solicitud 3ad40739-f5e4-4921-9b0e-8238b6900e10 fuera de su equipo
+2026-11-21T19:09:44.211+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 0c5abcfe-0e92-4941-97f6-e28445c2e80c intentó resolver su propia solicitud 3ad40739-f5e4-4921-9b0e-8238b6900e10
+2026-11-21T19:09:44.225+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado ba717472-c5d8-4cd3-9036-c0177a340530 intentó resolver su propia solicitud 060a8501-0b87-49af-977f-dc38a3dc4b29
+2026-11-21T19:09:44.226+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado ba717472-c5d8-4cd3-9036-c0177a340530 intentó resolver su propia solicitud 060a8501-0b87-49af-977f-dc38a3dc4b29
+2026-11-21T19:09:44.228+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud e88e3001-c378-4f8d-9ab6-85439f7e30be resuelta como APPROVED por el empleado 22d5793d-ed62-466b-a442-04ddcc766b3c
+2026-11-21T19:09:44.233+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 571ec318-7d27-4a47-970d-4dae56c45fd1 resuelta como REJECTED por el empleado 7448f0d1-5fae-42d8-8365-34f133c4e09e
+2026-11-21T19:09:44.235+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 036047fa-2ba7-4f08-a404-57f68b84071e resuelta como APPROVED por el empleado 72e0231f-7d3f-47f5-a835-6a8e142335d2
+2026-11-21T19:09:44.240+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 7746e5f4-2a1d-48e1-9cf5-1a7910af36c7 intentó resolver la solicitud ab243076-8f2e-4ee2-9477-a6685439f9ca fuera de su equipo
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.243 s -- in com.iw.rrhh.leave.LeaveResolutionServiceTest
+[INFO] Running com.iw.rrhh.leave.LeaveResolutionIntegrationTest
+2026-11-21T19:09:44.244+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.LeaveResolutionIntegrationTest]: LeaveResolutionIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:44.249+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.LeaveResolutionIntegrationTest
+2026-11-21T19:09:44.316+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 1be17422-3c0a-42bc-b874-efd2b79a7938 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:44.336+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud fb8c554b-69ba-4341-abcc-b878ce2ba019 resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:44.420+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 8c9a3365-b0ca-4674-9b82-69d355cd1d62 intentó resolver la solicitud e1f40a78-58bd-4342-a76b-bc49d3d3f41a fuera de su equipo
+2026-11-21T19:09:44.421+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/e1f40a78-58bd-4342-a76b-bc49d3d3f41a/approve
+2026-11-21T19:09:44.461+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 8c9a3365-b0ca-4674-9b82-69d355cd1d62 intentó resolver la solicitud b8e1e484-1c7f-4ba3-ac5b-8dfe66a73a55 fuera de su equipo
+2026-11-21T19:09:44.462+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/b8e1e484-1c7f-4ba3-ac5b-8dfe66a73a55/reject
+2026-11-21T19:09:44.497+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 2a30b6db-70c1-4463-a861-46499aa1467a resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:44.553+01:00  INFO 38022 --- [recursos-humanos-backend] [pool-3-thread-1] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 9d0a014c-fc74-4c96-bb1a-29bec29326a0 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:44.619+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e intentó resolver la solicitud c0c38d74-d725-4d0f-84bc-3ecd01ce40e1 fuera de su equipo
+2026-11-21T19:09:44.620+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/c0c38d74-d725-4d0f-84bc-3ecd01ce40e1/approve
+2026-11-21T19:09:44.635+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud c0c38d74-d725-4d0f-84bc-3ecd01ce40e1 resuelta como APPROVED por el empleado 8c9a3365-b0ca-4674-9b82-69d355cd1d62
+2026-11-21T19:09:44.669+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 492897e2-ec7a-45b8-8444-ce984a3d83e4 intentó resolver la solicitud 8480638c-dd26-4eab-8434-375fca0d1d89 fuera de su equipo
+2026-11-21T19:09:44.670+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/8480638c-dd26-4eab-8434-375fca0d1d89/approve
+2026-11-21T19:09:44.704+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e intentó resolver su propia solicitud 6ff43408-6f3d-427e-a137-a6a1a66f84b5
+2026-11-21T19:09:44.704+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/6ff43408-6f3d-427e-a137-a6a1a66f84b5/approve
+2026-11-21T19:09:44.711+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e intentó resolver su propia solicitud 6ff43408-6f3d-427e-a137-a6a1a66f84b5
+2026-11-21T19:09:44.712+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/6ff43408-6f3d-427e-a137-a6a1a66f84b5/reject
+2026-11-21T19:09:44.751+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 6ff43408-6f3d-427e-a137-a6a1a66f84b5 resuelta como APPROVED por el empleado 8c9a3365-b0ca-4674-9b82-69d355cd1d62
+2026-11-21T19:09:44.836+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 39ff5ff9-c2c2-495a-bc8d-c1202452fef5 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:44.938+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 5d407b7f-8740-44ee-a439-38cbca00ed46 resuelta como APPROVED por el empleado 492897e2-ec7a-45b8-8444-ce984a3d83e4
+2026-11-21T19:09:45.046+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e intentó resolver su propia solicitud b997c66d-b6e3-400d-8b2f-e21cda5ba1ac
+2026-11-21T19:09:45.047+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/b997c66d-b6e3-400d-8b2f-e21cda5ba1ac/approve
+2026-11-21T19:09:45.053+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 8c9a3365-b0ca-4674-9b82-69d355cd1d62 intentó resolver la solicitud b997c66d-b6e3-400d-8b2f-e21cda5ba1ac fuera de su equipo
+2026-11-21T19:09:45.054+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/b997c66d-b6e3-400d-8b2f-e21cda5ba1ac/approve
+2026-11-21T19:09:45.059+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/b997c66d-b6e3-400d-8b2f-e21cda5ba1ac/approve
+2026-11-21T19:09:45.152+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 7daaf02d-7a16-440a-ac46-5b6202980395 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.194+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /leave/team-requests
+2026-11-21T19:09:45.196+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/e25f0ac5-5ed5-4f9b-801f-3edd3c079616/approve
+2026-11-21T19:09:45.232+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 08fcf751-13f4-4a01-b7ab-50b458664e67 resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.267+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 26a3e579-898d-4213-bc1f-bb9bbaa1e791 resuelta como APPROVED por el empleado ad2632b8-f9e5-413d-91a5-653c958e6d6a
+2026-11-21T19:09:45.327+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 862c6fb7-358e-4bf0-9962-8661216694f4 resuelta como REJECTED por el empleado ad2632b8-f9e5-413d-91a5-653c958e6d6a
+2026-11-21T19:09:45.359+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 82012bac-be98-4264-ac02-92632b4605f0 resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.421+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud e2d863f0-6986-41d8-8dc2-e794b43bebb6 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.467+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 0ffdec42-2102-47ff-9cce-cbfa4d52b95c resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.495+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 39276ccb-e843-42ab-bfe2-6b6fd399d351 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.527+01:00  INFO 38022 --- [recursos-humanos-backend] [pool-4-thread-1] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 9b83bd4d-6b0d-4bf5-acbb-49418db6a45a resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.570+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 3c5a72b1-c2d5-43ff-8f28-7a8fe4191a05 resuelta como REJECTED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.612+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado ad2632b8-f9e5-413d-91a5-653c958e6d6a intentó resolver la solicitud e326aa64-90bf-48d0-b1b6-25b728463cac fuera de su equipo
+2026-11-21T19:09:45.613+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/e326aa64-90bf-48d0-b1b6-25b728463cac/approve
+2026-11-21T19:09:45.645+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 1aae99b9-2140-472c-8fca-faaa7c0084f1 resuelta como APPROVED por el empleado 76c6de63-78ff-47b3-aa9c-d37d5911b65e
+2026-11-21T19:09:45.687+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Auditoría: solicitud 0bdc6da4-a3d9-45d7-9e98-2688175f65a2 resuelta como REJECTED por el empleado 492897e2-ec7a-45b8-8444-ce984a3d83e4
+2026-11-21T19:09:45.717+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado 492897e2-ec7a-45b8-8444-ce984a3d83e4 intentó resolver su propia solicitud ed4d4393-718b-4625-80fc-df3edef46f55
+2026-11-21T19:09:45.718+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/ed4d4393-718b-4625-80fc-df3edef46f55/approve
+2026-11-21T19:09:45.748+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveResolutionServiceImpl     : Acceso denegado: el empleado ad2632b8-f9e5-413d-91a5-653c958e6d6a intentó resolver su propia solicitud 6ea103b1-a848-4646-98e9-c6f07b1c1960
+2026-11-21T19:09:45.749+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/6ea103b1-a848-4646-98e9-c6f07b1c1960/approve
+[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.509 s -- in com.iw.rrhh.leave.LeaveResolutionIntegrationTest
+[INFO] Running com.iw.rrhh.leave.LeaveResolverPolicyTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.iw.rrhh.leave.LeaveResolverPolicyTest
+[INFO] Running com.iw.rrhh.leave.LeaveResolutionAtomicityIntegrationTest
+2026-11-21T19:09:45.761+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.LeaveResolutionAtomicityIntegrationTest]: LeaveResolutionAtomicityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:45.767+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.LeaveResolutionAtomicityIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-11-21T19:09:45.791+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .LeaveResolutionAtomicityIntegrationTest : Starting LeaveResolutionAtomicityIntegrationTest using Java 21.0.13.0.3 with PID 38022 (started by ariden in /home/ariden/Documents/Uni/IW/recursos-humanos-IW/backend)
+2026-11-21T19:09:45.791+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .LeaveResolutionAtomicityIntegrationTest : No active profile set, falling back to 1 default profile: "dev"
+2026-11-21T19:09:46.011+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-21T19:09:46.021+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 9 ms. Found 8 JPA repository interfaces.
+2026-11-21T19:09:46.117+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 0 (http)
+2026-11-21T19:09:46.118+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-21T19:09:46.118+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.36]
+2026-11-21T19:09:46.125+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.a.c.c.C.[.[localhost].[/api/v1]        : Initializing Spring embedded WebApplicationContext
+2026-11-21T19:09:46.125+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 333 ms
+2026-11-21T19:09:46.197+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Creating container for image: postgres:16-alpine
+2026-11-21T19:09:46.245+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine is starting: d2159bf600be0d469f1958f406708df19c63af08967a7398caced2c993aaf781
+2026-11-21T19:09:47.158+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine started in PT0.961122098S
+2026-11-21T19:09:47.159+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container is started (JDBC URL: jdbc:postgresql://localhost:32770/test?loggerLevel=OFF)
+2026-11-21T19:09:47.222+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:32770/test?loggerLevel=OFF (PostgreSQL 16.15)
+2026-11-21T19:09:47.231+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-11-21T19:09:47.232+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 7 migrations (execution time 00:00.003s)
+2026-11-21T19:09:47.236+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-11-21T19:09:47.250+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-11-21T19:09:47.253+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - init shared schema"
+2026-11-21T19:09:47.281+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - seed initial data"
+2026-11-21T19:09:47.287+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - leave resolution constraints"
+2026-11-21T19:09:47.292+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - immutable finalized performance reviews"
+2026-11-21T19:09:47.297+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - add cancelled status and justification to leave requests"
+2026-11-21T19:09:47.301+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - leave resolution reason max length"
+2026-11-21T19:09:47.305+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - direccion general role"
+2026-11-21T19:09:47.308+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 7 migrations to schema "public", now at version v7 (execution time 00:00.033s)
+2026-11-21T19:09:47.325+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-21T19:09:47.326+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-21T19:09:47.331+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-21T19:09:47.332+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-21T19:09:47.338+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection org.postgresql.jdbc.PgConnection@13c4c036
+2026-11-21T19:09:47.338+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-21T19:09:47.341+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+	Database driver: undefined/unknown
+	Database version: 16.15
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-21T19:09:47.415+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-21T19:09:47.427+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-21T19:09:47.610+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-11-21T19:09:47.790+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-11-21T19:09:47.976+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.a.c.c.C.[.[localhost].[/api/v1]        : Initializing Spring TestDispatcherServlet ''
+2026-11-21T19:09:47.976+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-21T19:09:47.977+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-11-21T19:09:48.002+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 37571 (http) with context path '/api/v1'
+2026-11-21T19:09:48.007+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .LeaveResolutionAtomicityIntegrationTest : Started LeaveResolutionAtomicityIntegrationTest in 2.237 seconds (process running for 14.973)
+2026-11-21T19:09:48.088+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado para rrhh@empresa.com
+2026-11-21T19:09:48.160+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de responsable de equipo para responsable@empresa.com
+2026-11-21T19:09:48.232+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado regular para empleado@empresa.com
+2026-11-21T19:09:48.235+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado responsable de equipo a empleado@empresa.com
+2026-11-21T19:09:48.308+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de Dirección General para direccion@empresa.com
+2026-11-21T19:09:48.310+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignada Dirección General como responsable de rrhh@empresa.com
+2026-11-21T19:09:48.313+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado RRHH como responsable de responsable@empresa.com
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.602 s -- in com.iw.rrhh.leave.LeaveResolutionAtomicityIntegrationTest
+[INFO] Running com.iw.rrhh.leave.LeaveRequestServiceTest
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.052 s -- in com.iw.rrhh.leave.LeaveRequestServiceTest
+[INFO] Running com.iw.rrhh.leave.LeaveRequestTrackingServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in com.iw.rrhh.leave.LeaveRequestTrackingServiceTest
+[INFO] Running com.iw.rrhh.leave.LeaveRequestTrackingIntegrationTest
+2026-11-21T19:09:48.433+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.LeaveRequestTrackingIntegrationTest]: LeaveRequestTrackingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:48.438+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.LeaveRequestTrackingIntegrationTest
+2026-11-21T19:09:48.523+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /leave/requests/d8252ccf-9c10-4533-97cf-8bcca1478a99/cancel
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.107 s -- in com.iw.rrhh.leave.LeaveRequestTrackingIntegrationTest
+[INFO] Running com.iw.rrhh.leave.LeaveRequestAutoCancelServiceTest
+2026-11-21T19:09:48.542+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=637cc1f5-5aac-4bd0-9426-9bb7a370a995, canceladas=2
+2026-11-21T19:09:48.545+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=855eedb8-7679-4319-a93b-8554ca340260, canceladas=2
+2026-11-21T19:09:48.546+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=1038e384-8610-487a-9f1c-9a2a4a910ffa, canceladas=3
+2026-11-21T19:09:48.548+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=e4f9c5f8-e0d7-442e-bfcd-537b0e27dfcf, canceladas=1
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.iw.rrhh.leave.LeaveRequestAutoCancelServiceTest
+[INFO] Running com.iw.rrhh.leave.LeaveRequestIntegrationTest
+2026-11-21T19:09:48.552+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.LeaveRequestIntegrationTest]: LeaveRequestIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:48.555+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.LeaveRequestIntegrationTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.486 s -- in com.iw.rrhh.leave.LeaveRequestIntegrationTest
+[INFO] Running com.iw.rrhh.leave.LeaveProratingUnitTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s -- in com.iw.rrhh.leave.LeaveProratingUnitTest
+[INFO] Running com.iw.rrhh.leave.LeaveBalanceServiceTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.iw.rrhh.leave.LeaveBalanceServiceTest
+[INFO] Running com.iw.rrhh.leave.TeamCalendarServiceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s -- in com.iw.rrhh.leave.TeamCalendarServiceTest
+[INFO] Running com.iw.rrhh.leave.LeaveDayAllocatorTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.iw.rrhh.leave.LeaveDayAllocatorTest
+[INFO] Running com.iw.rrhh.leave.LeaveBalanceIntegrationTest
+2026-11-21T19:09:49.143+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.leave.LeaveBalanceIntegrationTest]: LeaveBalanceIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:49.147+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.leave.LeaveBalanceIntegrationTest
+2026-11-21T19:09:49.305+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /leave/balances/employee/552958ff-1a70-4109-b5d2-2d864f74457b
+2026-11-21T19:09:49.329+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /leave/balances/employee/bd3303f8-b7e7-4638-9985-85d17d65c35b
+2026-11-21T19:09:49.351+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /leave/balances/me
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 s -- in com.iw.rrhh.leave.LeaveBalanceIntegrationTest
+[INFO] Running com.iw.rrhh.report.DepartmentReportIntegrationTest
+2026-11-21T19:09:49.399+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.report.DepartmentReportIntegrationTest]: DepartmentReportIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:49.404+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.report.DepartmentReportIntegrationTest
+2026-11-21T19:09:49.410+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /reports
+2026-11-21T19:09:49.412+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /reports/export
+2026-11-21T19:09:49.415+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /reports
+2026-11-21T19:09:49.417+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: GET /reports/export
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.159 s -- in com.iw.rrhh.report.DepartmentReportIntegrationTest
+[INFO] Running com.iw.rrhh.employee.EmployeeDeactivationAtomicityIntegrationTest
+2026-11-21T19:09:49.559+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.employee.EmployeeDeactivationAtomicityIntegrationTest]: EmployeeDeactivationAtomicityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:49.565+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.employee.EmployeeDeactivationAtomicityIntegrationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s -- in com.iw.rrhh.employee.EmployeeDeactivationAtomicityIntegrationTest
+[INFO] Running com.iw.rrhh.employee.EmployeeIntegrationTest
+2026-11-21T19:09:49.605+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.employee.EmployeeIntegrationTest]: EmployeeIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:49.609+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.employee.EmployeeIntegrationTest
+2026-11-21T19:09:49.772+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=9b3f2d37-ecbc-42d3-8f97-4ef3907c4129, canceladas=2
+2026-11-21T19:09:49.775+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=0bf79d4d-a225-46a2-8132-c15b4b23a1ff, canceladas=1
+2026-11-21T19:09:49.795+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.l.s.LeaveRequestAutoCancelService  : Cancelación automática de solicitudes pendientes: empleado=3a9bc376-3525-4871-a075-00f161ef13fc, canceladas=2
+2026-11-21T19:09:49.933+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /employees
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.513 s -- in com.iw.rrhh.employee.EmployeeIntegrationTest
+[INFO] Running com.iw.rrhh.notification.NotificationIntegrationTest
+2026-11-21T19:09:50.120+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.notification.NotificationIntegrationTest]: NotificationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:50.124+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.notification.NotificationIntegrationTest
+2026-11-21T19:09:50.210+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.n.service.NotificationServiceImpl  : Acceso denegado: el empleado 0a1b4a9c-4694-4bda-96a0-22533b9c52c1 intentó marcar la notificación 58202d78-ecdf-4d77-9bed-2a8fe86581aa ajena
+2026-11-21T19:09:50.211+01:00  WARN 38022 --- [recursos-humanos-backend] [           main] c.i.r.c.e.GlobalExceptionHandler         : Acceso denegado: POST /notifications/58202d78-ecdf-4d77-9bed-2a8fe86581aa/read
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in com.iw.rrhh.notification.NotificationIntegrationTest
+[INFO] Running com.iw.rrhh.RecursosHumanosBackendApplicationTests
+2026-11-21T19:09:50.215+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.iw.rrhh.RecursosHumanosBackendApplicationTests]: RecursosHumanosBackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-21T19:09:50.219+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.iw.rrhh.RecursosHumanosBackendApplication for test class com.iw.rrhh.RecursosHumanosBackendApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-11-21T19:09:50.232+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r.RecursosHumanosBackendApplicationTests : Starting RecursosHumanosBackendApplicationTests using Java 21.0.13.0.3 with PID 38022 (started by ariden in /home/ariden/Documents/Uni/IW/recursos-humanos-IW/backend)
+2026-11-21T19:09:50.232+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r.RecursosHumanosBackendApplicationTests : No active profile set, falling back to 1 default profile: "dev"
+2026-11-21T19:09:50.371+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-21T19:09:50.379+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8 ms. Found 8 JPA repository interfaces.
+2026-11-21T19:09:50.427+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Creating container for image: postgres:16-alpine
+2026-11-21T19:09:50.474+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine is starting: 5ee32c37a03b7c2bbfc456cd6bc95b7c641c3d99096758ce47f481192a764fb9
+2026-11-21T19:09:51.375+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container postgres:16-alpine started in PT0.948265277S
+2026-11-21T19:09:51.375+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] tc.postgres:16-alpine                    : Container is started (JDBC URL: jdbc:postgresql://localhost:32771/test?loggerLevel=OFF)
+2026-11-21T19:09:51.469+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:32771/test?loggerLevel=OFF (PostgreSQL 16.15)
+2026-11-21T19:09:51.478+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-11-21T19:09:51.478+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 7 migrations (execution time 00:00.003s)
+2026-11-21T19:09:51.483+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-11-21T19:09:51.498+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-11-21T19:09:51.501+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - init shared schema"
+2026-11-21T19:09:51.529+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - seed initial data"
+2026-11-21T19:09:51.534+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - leave resolution constraints"
+2026-11-21T19:09:51.539+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - immutable finalized performance reviews"
+2026-11-21T19:09:51.543+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - add cancelled status and justification to leave requests"
+2026-11-21T19:09:51.547+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - leave resolution reason max length"
+2026-11-21T19:09:51.551+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - direccion general role"
+2026-11-21T19:09:51.554+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 7 migrations to schema "public", now at version v7 (execution time 00:00.033s)
+2026-11-21T19:09:51.570+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-21T19:09:51.571+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-21T19:09:51.576+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-21T19:09:51.577+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-11-21T19:09:51.583+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection org.postgresql.jdbc.PgConnection@7bdd00a3
+2026-11-21T19:09:51.583+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-11-21T19:09:51.585+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-3)']
+	Database driver: undefined/unknown
+	Database version: 16.15
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-21T19:09:51.658+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-21T19:09:51.671+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-21T19:09:51.866+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-11-21T19:09:52.020+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-11-21T19:09:52.188+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] r.RecursosHumanosBackendApplicationTests : Started RecursosHumanosBackendApplicationTests in 1.966 seconds (process running for 19.153)
+2026-11-21T19:09:52.271+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado para rrhh@empresa.com
+2026-11-21T19:09:52.347+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de responsable de equipo para responsable@empresa.com
+2026-11-21T19:09:52.422+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de empleado regular para empleado@empresa.com
+2026-11-21T19:09:52.425+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado responsable de equipo a empleado@empresa.com
+2026-11-21T19:09:52.501+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Inicializada ficha de Dirección General para direccion@empresa.com
+2026-11-21T19:09:52.504+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignada Dirección General como responsable de rrhh@empresa.com
+2026-11-21T19:09:52.506+01:00  INFO 38022 --- [recursos-humanos-backend] [           main] c.i.r.s.config.SecurityDataInitializer   : Asignado RRHH como responsable de responsable@empresa.com
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s -- in com.iw.rrhh.RecursosHumanosBackendApplicationTests
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 224, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  26.825 s
+[INFO] Finished at: 2026-11-21T19:09:53+01:00
+[INFO] ------------------------------------------------------------------------
+exit=0

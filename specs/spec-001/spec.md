@@ -18,6 +18,9 @@
 
 ---
 
+### Session 2026-11-21 (cierre con el código congelado)
+- Q: ¿Qué alcance de interfaz tienen las variaciones contractuales, la consulta de la trayectoria y la baja de empleados en la versión final? → A: Se entregan como API con pruebas de integración (`POST` y `GET /employees/{id}/contracts`, `DELETE /employees/{id}`, `PUT /employees/{id}/personal-data`); los componentes `contract-variation` y `contract-history` existen y tienen pruebas unitarias, pero no están enlazados en la navegación de la aplicación y la baja no tiene acción en la interfaz. Como el código no puede cambiar, FR-002, FR-007, FR-009 y FR-010 se consideran cumplidos a nivel de servidor y se acepta como límite conocido la ausencia de acceso desde la interfaz. FR-011 se refiere solo al alta: las variaciones contractuales no cambian el responsable en la interfaz. Es una reducción del alcance de interfaz que requiere validación del docente.
+
 ## 1. User Scenarios & Testing *(mandatory)*
 
 ### User Story Principal (Priority: P1)
@@ -104,3 +107,4 @@ Como miembro del departamento de Recursos Humanos (RRHH), quiero dar de alta a n
 ## 4. Assumptions
 - La autenticación ya provee la identidad y rol del usuario logueado en la sesión/token.
 - Cada empleado tiene asignado un único responsable de equipo en un momento determinado.
+- **Límite conocido (2026-11-21)**: variación contractual, trayectoria y baja se operan por API; la interfaz solo ofrece el alta de empleado. Ver `converge.md` (C1 a C3).

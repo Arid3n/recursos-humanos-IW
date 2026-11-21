@@ -1,0 +1,32 @@
+diff --git a/specs/spec-002/plan.md b/specs/spec-002/plan.md
+index b29c0c7..e8449c6 100644
+--- a/specs/spec-002/plan.md
++++ b/specs/spec-002/plan.md
+@@ -1,7 +1,7 @@
+ # Implementation Plan: spec-002 — Consulta de Ficha y Saldo de Vacaciones
+ 
+ **Branch**: `spec-002` | **Date**: 2026-10-29 | **Spec**: [specs/spec-002/spec.md](spec.md)  
+-**Input**: Especificación HU-02 (clarificada con 4 decisiones cerradas)  
++**Input**: Especificación HU-02 (clarificada con 5 decisiones cerradas)  
+ 
+ ---
+ 
+@@ -68,7 +68,7 @@ specs/spec-002/
+ backend/src/main/java/com/iw/rrhh/
+ ├── employee/
+ │   ├── controller/
+-│   │   └── EmployeeProfileController.java     # Endpoint GET /api/v1/employees/me
++│   │   └── EmployeeController.java            # Endpoint GET /api/v1/employees/me (consolidado)
+ │   └── dto/
+ │       └── EmployeeProfileResponse.java
+ ├── leave/
+@@ -112,3 +112,9 @@ frontend/src/app/
+ ## 5. Complexity Tracking
+ 
+ > **Sin violaciones**: El diseño respeta íntegramente los principios del Art. 23 (solución directa y simple mediante cálculo en memoria y consultas agregadas JPA/SQL, sin caches distribuidas ni estructuras de datos redundantes).
++
++---
++
++## Revisión por HU-05 (2026-11-19)
++
++FR-008 y FR-009: sin saldo propio para `DIRECCION_GENERAL` (`403` en servidor, apartado oculto en la interfaz, rótulo «Mi Ficha»). Diseño e implementación en `specs/spec-005` (`research.md` §1.23, tareas T092, T097–T099); no cambia el cálculo del saldo.

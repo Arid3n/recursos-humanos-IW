@@ -1,0 +1,13 @@
+diff --git a/specs/spec-001/plan.md b/specs/spec-001/plan.md
+index f33a8fb..ac373bc 100644
+--- a/specs/spec-001/plan.md
++++ b/specs/spec-001/plan.md
+@@ -91,7 +91,7 @@ backend/src/test/java/com/iw/rrhh/employee/
+ └── EmployeeServiceTest.java           # Unit test de reglas de negocio
+ 
+ frontend/src/app/
+-├── features/employees/
++├── employees/
+ │   ├── components/
+ │   │   ├── employee-create/           # Formulario reactivo de alta
+ │   │   ├── employee-detail/           # Detalle y variación contractual

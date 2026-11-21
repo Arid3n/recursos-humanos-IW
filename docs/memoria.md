@@ -1,638 +1,524 @@
-# Memoria del Proyecto: Sistema de Gestión de Recursos Humanos (HRMS)
-## Desarrollo de Sistemas Software mediante *Spec-Driven Development* (SDD)
+# Memoria del Proyecto: Sistema de Gestión de Recursos Humanos y Vacaciones
+## Desarrollo de un sistema de información mediante *Spec-Driven Development* (SDD)
 
 ---
 
 ### Portada y Datos del Proyecto
 
 * **Asignatura:** Ingeniería Web (IW)
-* **Titulación:** Grado en Ingeniería Informática / Dobles Grados — Universidad de Alicante
-* **Curso Académico:** 2025/2026
-* **Sistema Desarrollado:** Sistema de Información para la Gestión Integral de Recursos Humanos, Absentismo, Vacaciones y Evaluación de Desempeño
-* **Metodología:** *Spec-Driven Development* (SDD) con GitHub Spec Kit
-* **Fecha de Entrega:** Noviembre de 2026
+* **Sistema desarrollado:** Sistema de información para la gestión de empleados y contratos, vacaciones y permisos, calendario de equipo, informes de absentismo y evaluación de desempeño (SI-09)
+* **Metodología:** *Spec-Driven Development* (SDD) con GitHub Spec Kit 1.0.6 (integración `agy`, ver `.specify/init-options.json`)
+* **Versión del código de esta memoria:** rama `memoria-y-entregables`, sobre el commit `662da39`; commit de referencia previo al refinamiento: tag `ref-refinamiento` (`afed4c4`, 2026-11-10)
+* **Fecha de entrega:** noviembre de 2026
 
-#### Equipo de Desarrollo y Reparto de Responsabilidades
+#### Equipo de desarrollo y reparto de responsabilidades
 
-| Integrante | Correo Institucional / Contacto | Rol Principal | Historias de Usuario Asignadas |
-| :--- | :--- | :--- | :--- |
-| **Joaquín Navarro Belmonte** | `jnb18@alu.ua.es` | Backend & Data Core Lead | **HU-01:** Gestión de empleados y contratos<br>**HU-02:** Cálculo dinámico de saldo de vacaciones |
-| **Iván Soler Fuentes** | `ivansoler33@gmail.com` | Frontend Employee Experience | **HU-03:** Solicitud de vacaciones y permisos<br>**HU-04:** Historial y seguimiento de solicitudes |
-| **Andrei Radu** | `andresradoo@gmail.com` | Backend Services & Team Lead | **HU-05:** Resolución de solicitudes de ausencia<br>**HU-06:** Calendario interactivo de equipo |
-| **José Ramón Castells** | `jrcb3@alu.ua.es` | Analytics & Talent Lead | **HU-07:** Informes de absentismo y exportación<br>**HU-08:** Ciclo de evaluación de desempeño |
+Cada integrante se responsabiliza de dos historias de usuario, desde su especificación hasta su verificación. El reparto está documentado en [`docs/AGRUPAMIENTO.md`](AGRUPAMIENTO.md) y en el `README.md`.
+
+| Integrante | Historias asignadas | Especificaciones | Revisor de sus criterios |
+| :--- | :--- | :--- | :---: |
+| **Joaquín Navarro Belmonte** | HU-01 Alta de empleados y trayectoria contractual · HU-02 Ficha personal y saldo de vacaciones | `spec-001`, `spec-002` | Iván / Andrei |
+| **Iván Soler Fuentes** | HU-03 Solicitud de vacaciones o permisos · HU-04 Seguimiento y cancelación de solicitudes | `spec-003`, `spec-004` | Joaquín / José |
+| **Andrei Radu** | HU-05 Aprobación o rechazo de solicitudes · HU-06 Calendario de ausencias del equipo | `spec-005`, `spec-006` | Joaquín / Iván |
+| **José Ramón Castells** | HU-07 Informes de absentismo y uso de vacaciones · HU-08 Evaluación de desempeño con conformidad | `spec-007`, `spec-008` | Andrei / Iván |
 
 ---
 
 ### Resumen Ejecutivo
 
-El **Sistema de Gestión de Recursos Humanos (HRMS)** es una solución web empresarial full-stack desarrollada para modernizar, auditar y agilizar la operativa laboral en medianas y grandes organizaciones. El sistema centraliza el ciclo de vida del empleado, desde su contratación con vigencia histórica y adscripción a convenios colectivos, pasando por la gestión transaccional de ausencias y permisos con deducción dinámica de saldos y calendario de equipo con respeto estricto a la privacidad (RGPD), hasta el análisis corporativo de absentismo y la evaluación de desempeño con doble conformidad. El proyecto ha sido construido íntegramente bajo la disciplina de **Spec-Driven Development (SDD)**, donde los artefactos de especificación formal (`spec.md`), los contratos API OpenAPI, los planes técnicos (`plan.md`) y la constitución de invariantes de diseño (`constitution.md`) han guiado cada ciclo de codificación e iteración (*loop engineering*). El resultado es un monorepo robusto, compuesto por un backend en Spring Boot 3.4.3 con Java 21 y PostgreSQL, y un frontend SPA en Angular 21 con Angular Material, cubierto al 100% en sus criterios de aceptación con suites automatizadas y dos recorridos E2E cruzados verificados.
+El sistema es una aplicación web para el departamento de Recursos Humanos de una empresa y para los empleados y responsables de equipo que interactúan con él. Permite dar de alta empleados con su trayectoria contractual y convenio colectivo, consultar el saldo de vacaciones (un valor derivado, nunca almacenado), solicitar vacaciones y permisos, que el responsable los apruebe o rechace con notificación al empleado, ver el calendario de ausencias del equipo con las coincidencias resaltadas, generar informes de absentismo por departamento con exportación a CSV, y formalizar evaluaciones de desempeño con doble conformidad.
+
+Se construyó siguiendo el ciclo *specify → clarify → plan → tasks → analyze → implement → converge* sobre ocho historias de usuario, con una constitución del proyecto que fija los principios no negociables. El resultado es un monorepo con un backend Spring Boot 3.4.3 (Java 21, PostgreSQL 16, Flyway) y una SPA Angular 21 con Angular Material. En la versión final, las suites automatizadas ejecutan **224 pruebas de backend y 86 de frontend sin fallos**, y dos recorridos E2E que cruzan las ocho historias se ejecutaron contra la API real con **49 de 49 pasos conformes**. De los 66 criterios de la matriz de trazabilidad, 65 están verificados por una prueba nombrada o por un recorrido. Quedan cuatro límites de alcance aceptados y documentados (apartado 9.3).
 
 ---
 
 ## 1. URL del Repositorio GitHub
 
-El código fuente completo, el histórico trazable de commits, los pull requests revisados y todos los artefactos generados por Spec Kit se encuentran disponibles en:
-
-* **Repositorio Oficial:** [https://github.com/Arid3n/recursos-humanos-IW](https://github.com/Arid3n/recursos-humanos-IW)
-* **Rama Principal:** `main`
-* **Ramas de Refinamiento e Integración:** `refinamiento-HU5-HU6`, `refinamiento-hu7-hu8`, `feature/spec-001`, `feature/spec-002`.
+* **Repositorio:** [https://github.com/Arid3n/recursos-humanos-IW](https://github.com/Arid3n/recursos-humanos-IW)
+* **Rama principal:** `main`
+* **Ramas de trabajo (integradas mediante pull request):** `spec-001`, `spec-002`, `spec-004`, `rama-Andrei`, `hu-7`, `hu-8`, `refinamiento-HU5-HU6`, `refinamiento-hu7-hu8`
+* **Rama de esta entrega:** `memoria-y-entregables`
+* **Etiqueta de referencia previa al refinamiento:** `ref-refinamiento`
 
 ---
 
 ## 2. Introducción
 
-### 2.1 Contexto Organizacional y Problema que Resuelve
-En la gestión empresarial contemporánea, los departamentos de Recursos Humanos enfrentan ineficiencias críticas derivadas de la dispersión de datos: contratos y antigüedades registrados en hojas de cálculo, solicitudes de vacaciones cursadas por correos electrónicos informales y evaluaciones de desempeño realizadas en documentos sin trazabilidad jurídica ni sincronización con las jerarquías operativas.
+### 2.1 Contexto y problema que resuelve
 
-Esta fragmentación provoca problemas de alto impacto:
-1. **Errores en el cómputo de saldos de vacaciones:** Desajustes entre convenios colectivos con cómputos en días laborables vs. naturales, errores de prorrateo por altas y bajas a mitad de año natural, o saldos duplicados por falta de sincronización transaccional.
-2. **Falta de visibilidad y descubiertos en los turnos:** Los responsables de equipo aprueban ausencias sin una perspectiva unificada del calendario departamental, provocando solapamientos críticos de personal.
-3. **Vulneración de la privacidad del trabajador:** Revelación indebida de motivos médicos o personales a compañeros de equipo en calendarios compartidos, infringiendo el Reglamento General de Protección de Datos (RGPD).
-4. **Desconexión entre absentismo y evaluación:** Inexistencia de métricas agregadas fiables que permitan a la Dirección General identificar departamentos con tasas anormales de bajas o planificar refuerzos de plantilla.
+Los departamentos de Recursos Humanos de empresas medianas suelen trabajar con datos dispersos: contratos en hojas de cálculo, solicitudes de vacaciones por correo y evaluaciones en documentos sin trazabilidad. Eso provoca cuatro problemas que el sistema ataca de forma específica:
 
-### 2.2 Objetivos del Sistema
-El presente sistema proporciona una plataforma integral y modular que:
-* **Estandariza los contratos laborales:** Mantiene una cronología inmutable de periodos contractuales, jornadas (parciales/completas) y convenios de referencia.
-* **Automatiza el balance de días disponibles:** Trata el saldo de vacaciones como un **valor derivado en tiempo real**, eliminando contadores persistentes mutables propensos a inconsistencias.
-* **Agiliza el flujo de aprobación:** Permite a los empleados registrar solicitudes con validación preventiva de saldo y a los responsables resolverlas en un clic con bloqueo de concurrencia y notificaciones instantáneas.
-* **Garantiza la protección de datos:** Presenta calendarios corporativos anonimizados para la visualización de ausencias entre pares (sin exponer tipologías ni justificaciones privadas).
-* **Potencia el talento organizativo:** Instrumenta un proceso estructurado de evaluación con autoevaluación del empleado, ponderación del evaluador y acta final de doble conformidad.
+1. **Saldos de vacaciones erróneos.** Los convenios colectivos fijan días distintos (en el sistema, el convenio General da 22 días y el TIC 23), hay altas a mitad de año que exigen prorrateo, y los contadores mutables se desincronizan. El sistema trata el saldo como un dato **derivado** que se calcula al consultarlo.
+2. **Falta de visibilidad al aprobar.** Un responsable que aprueba sin ver el calendario del equipo provoca solapamientos. El sistema ofrece un calendario mensual que resalta los días con dos o más ausencias.
+3. **Privacidad.** El calendario nunca expone motivos, justificaciones ni causas de rechazo (Art. 16 y 20 de la constitución).
+4. **Trazabilidad de las decisiones.** Cada resolución queda registrada con quién la tomó y cuándo, es inmutable, y se notifica al empleado dentro de la misma transacción.
+
+### 2.2 Objetivos del sistema
+
+* Mantener una **trayectoria contractual inmutable** (append-only) por empleado, con fecha de efectos, también retroactiva (Art. 11).
+* Calcular el **saldo de vacaciones en tiempo real** a partir del convenio y de las solicitudes aprobadas y pendientes, con prorrateo por fecha de alta (Art. 12).
+* Cubrir el **ciclo de vida completo de una solicitud**: creación con validación preventiva, seguimiento, cancelación, aprobación o rechazo (Art. 13).
+* Mostrar el **calendario del equipo** con coincidencias, respetando el alcance jerárquico.
+* Ofrecer **informes agregados** de absentismo y uso de vacaciones con paridad entre pantalla y CSV (Art. 17).
+* Formalizar **evaluaciones de desempeño** con conformidad del empleado e inmutabilidad posterior (Art. 18).
+* Respetar el enunciado de la práctica: ocho historias, ciclo SDD con *loop engineering*, y refinamiento con clarify, analyze y converge.
 
 ### 2.3 Metodología Spec-Driven Development (SDD)
-A diferencia del desarrollo tradicional centrado en el código (donde la documentación queda obsoleta de forma inmediata), el equipo ha adoptado el ciclo de vida riguroso de Spec-Driven Development mediante el toolset GitHub Spec Kit:
+
+La especificación funcional dirige el proceso y el código es un producto derivado. Cada historia recorre el ciclo siguiente, y cualquier fase puede reabrir la anterior (*loop engineering*):
+
 ```
-  [ Elicitación / Necesidad de Negocio ]
-                    │
-                    ▼
-          ┌──────────────────┐
-          │     SPEC.MD      │ <── Reglas de Negocio, Criterios Gherkin
-          └─────────┬────────┘
-                    │  (clarify)
-                    ▼
-          ┌──────────────────┐
-          │     PLAN.MD      │ <── Arquitectura, Endpoints OpenAPI, Modelo ER
-          └─────────┬────────┘
-                    │  (analyze)
-                    ▼
-          ┌──────────────────┐
-          │     TASKS.MD     │ <── Tareas TDD atómicas dependientes
-          └─────────┬────────┘
-                    │  (implement)
-                    ▼
-          ┌──────────────────┐
-          │ CÓDIGO Y PRUEBAS │ <── Spring Boot, Angular, JUnit, Mockito
-          └─────────┬────────┘
-                    │  (converge)
-                    ▼
-          ┌──────────────────┐
-          │ INFORME Y CIERRE │ <── Matriz de Trazabilidad y Checklists
-          └──────────────────┘
+ specify ─► clarify ─► plan ─► tasks ─► analyze ─► implement ─► converge
+    ▲          │         │        │         │            │            │
+    └──────────┴─────────┴────────┴─────────┴────────────┴────────────┘
+              (volver a la fase que corresponda cuando falla algo)
 ```
+
+| Fase | Artefacto en `specs/spec-00N/` | Qué contiene |
+| :-- | :-- | :-- |
+| Specify | `spec.md` | Historia, escenarios de aceptación, requisitos (FR), criterios de éxito (SC), supuestos |
+| Clarify | sección «Clarifications» de `spec.md`, `clarify.md` | Preguntas, respuestas y decisiones, con la sesión en que se tomaron |
+| Plan | `plan.md`, `research.md`, `data-model.md`, `contracts/*.yaml`, `quickstart.md` | Diseño técnico, modelo de datos, contrato OpenAPI y escenarios de validación |
+| Tasks | `tasks.md` | Tareas pequeñas, trazables a la historia y al criterio |
+| Analyze | `analysis.md` | Coherencia y cobertura entre spec, plan y tareas |
+| Implement | código en `backend/` y `frontend/`, `implementation-report.md` | Implementación test-first |
+| Converge | `converge.md`, fases «Convergence» de `tasks.md` | Obligaciones aún no cumplidas por el código |
+
+Además existe una **constitución** (`.specify/memory/constitution.md`, versión 1.2.0) con 28 artículos y tres anexos. Es la norma superior: ante un conflicto, se enmienda la constitución antes que el código (Art. 1 y 27).
 
 ---
 
 ## 3. Análisis
 
-### 3.1 Actores y Control de Acceso Basado en Roles (RBAC)
-El sistema define cuatro roles canónicos formalizados en la base de datos y validados en el backend mediante Spring Security y anotaciones `@PreAuthorize`:
+### 3.1 Actores y control de acceso por roles
 
-| Rol Canónico | Identificador | Descripción y Ámbito de Operación |
-| :--- | :--- | :--- |
-| **Administrador de RR. HH.** | `ROLE_RRHH` | Gestión integral de empleados, contratos y convenios colectivos. Visualización de informes globales de absentismo y resolución de ausencias exclusivamente para sus subordinados directos. |
-| **Responsable de Equipo** | `ROLE_RESPONSABLE` | Supervisión de los miembros de su departamento o jerarquía directa. Aprobación y denegación de solicitudes de vacaciones/permisos, visualización de solapamientos en calendario de equipo y evaluación de desempeño de sus colaboradores directos. |
-| **Empleado** | `ROLE_EMPLEADO` | Trabajador de la organización. Consulta de su perfil contractual, visualización de saldo derivado, solicitud de permisos, seguimiento de historial y realización de su autoevaluación anual. |
-| **Dirección General** | `ROLE_DIRECCION_GENERAL` | Alta dirección corporativa. Acceso irrestricto a los informes analíticos y métricas agregadas de todos los departamentos. Capacidad de resolución para sus subordinados directos. Exento de balance de vacaciones ordinarias. |
+El sistema tiene cuatro roles, guardados en `users.role` y aplicados en el servidor con `@PreAuthorize` (Art. 10). La interfaz oculta opciones, pero nunca es la barrera de seguridad.
 
-### 3.2 Catálogo de Historias de Usuario (HU-01 a HU-08)
+| Rol | Alcance real en la versión final |
+| :--- | :--- |
+| `EMPLEADO` | Ver su ficha y su saldo, solicitar ausencias, seguir y cancelar sus solicitudes, ver sus notificaciones y dar conformidad a sus evaluaciones. |
+| `RESPONSABLE_EQUIPO` | Todo lo del empleado, más: bandeja de solicitudes pendientes de su equipo directo, aprobar y rechazar, calendario del equipo, saldo de las personas de su equipo y crear evaluaciones. |
+| `RRHH` | Alta de empleados, trayectoria contractual y baja (por API), saldo de cualquier empleado, informes y exportación CSV. Desde FR-018 resuelve solicitudes y ve el calendario **solo de las personas que lo tienen como superior directo**; el Art. 13.8 no se enmendó. |
+| `DIRECCION_GENERAL` | No solicita ausencias (`422`) y no tiene saldo propio (`403`). Resuelve solicitudes y ve el calendario de sus subordinados directos. No accede a los informes (solo `RRHH`) ni crea evaluaciones. |
 
-El alcance del sistema quedó estructurado en 8 Historias de Usuario formalizadas en sus respectivos directorios `specs/spec-001` a `specs/spec-008`:
+Jerarquía de los datos semilla: `direccion@` → `rrhh@` → `responsable@` → `empleado@`.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        MAPA DE HISTORIAS DE USUARIO                    │
-├──────────────────────────┬─────────────────────────────────────────────┤
-│ Joaquín Navarro (Semana 1)│ HU-01: Alta de empleados y contratos        │
-│                          │ HU-02: Consulta y cálculo de saldo          │
-├──────────────────────────┼─────────────────────────────────────────────┤
-│ Iván Soler (Semana 2)    │ HU-03: Solicitud de vacaciones y permisos   │
-│                          │ HU-04: Seguimiento e historial de solicitud │
-├──────────────────────────┼─────────────────────────────────────────────┤
-│ Andrei Radu (Semana 3)   │ HU-05: Aprobación / Rechazo de solicitudes  │
-│                          │ HU-06: Calendario interactivo de equipo     │
-├──────────────────────────┼─────────────────────────────────────────────┤
-│ José R. Castells(Semana 4)│ HU-07: Informes analíticos de absentismo    │
-│                          │ HU-08: Ciclo de evaluación de desempeño     │
-└──────────────────────────┴─────────────────────────────────────────────┘
-```
+### 3.2 Catálogo de historias de usuario
 
-#### HU-01: Gestión de Empleados y Registro Contractual
-* **Responsable:** Joaquín Navarro Belmonte (`spec-001`)
-* **Propósito:** Permitir al rol `RRHH` crear, editar y consultar la ficha laboral completa de los empleados, vinculándolos a departamentos, supervisores, convenios y a un histórico cronológico de contratos.
-* **Criterios Clave:**
-  * No se permiten fechas de contrato solapadas para un mismo empleado.
-  * Todo contrato debe pertenecer a un convenio colectivo activo.
-  * Modificaciones en contratos pasados quedan bloqueadas; solo se permite añadir variaciones contractuales futuras o con fecha fin.
+La descripción funcional del sistema no traía historias; se identificaron ocho a partir del texto. Cada una tiene su carpeta en `specs/`. Las cifras de requisitos son las de la versión final.
 
-#### HU-02: Consulta Dinámica de Saldo de Vacaciones
-* **Responsable:** Joaquín Navarro Belmonte (`spec-002`)
-* **Propósito:** Exponer el balance de días de vacaciones y permisos retribuidos para un año natural concreto de forma transparente para el empleado y su supervisor.
-* **Criterios Clave (Decisión Constitucional Art. 12):**
-  * El saldo no es una columna fija en base de datos. Se calcula dinámicamente mediante la fórmula:
-    $$\text{Días Disponibles} = \text{Días Correspondientes (Prorrateados)} - \text{Días Disfrutados (Aprobados)} - \text{Días Pendientes}$$
-  * Altas posteriores al 1 de enero generan prorrateo proporcional exacto a los días naturales restantes del ejercicio.
-  * Distinción entre días hábiles laborables y días naturales según el convenio colectivo aplicable.
+| HU | Spec | Responsable | Qué resuelve | FR | Tareas |
+| :-: | :-- | :-- | :-- | :-: | :-: |
+| HU-01 | [spec-001](../specs/spec-001/spec.md) | Joaquín | Alta de empleados, cuenta de acceso con clave provisional, trayectoria contractual append-only, baja lógica | 13 | 38 |
+| HU-02 | [spec-002](../specs/spec-002/spec.md) | Joaquín | Ficha personal y saldo desglosado (correspondientes, disfrutados, pendientes, disponibles) con prorrateo y consulta de años cerrados | 9 | 33 |
+| HU-03 | [spec-003](../specs/spec-003/spec.md) | Iván | Formulario de solicitud con cómputo de días en servidor, validación de saldo y solapamientos | 11 | 25 |
+| HU-04 | [spec-004](../specs/spec-004/spec.md) | Iván | Listado paginado con filtros, motivo de rechazo visible y cancelación de solicitudes pendientes | 6 | 22 |
+| HU-05 | [spec-005](../specs/spec-005/spec.md) | Andrei | Bandeja del responsable, aprobación con comentario, rechazo con motivo, notificación y revalidación atómica del saldo | 18 | 103 |
+| HU-06 | [spec-006](../specs/spec-006/spec.md) | Andrei | Calendario mensual del equipo con coincidencias, vista de lista en pantallas estrechas y filtro por empleado | 11 | 32 |
+| HU-07 | [spec-007](../specs/spec-007/spec.md) | José | Informes por departamento y rango de fechas, desglose por empleado, exportación CSV | 7 | 18 |
+| HU-08 | [spec-008](../specs/spec-008/spec.md) | José | Evaluación 1-5 del responsable y conformidad del empleado, con inmutabilidad posterior | 8 | 19 |
 
-#### HU-03: Solicitud de Vacaciones y Permisos Retribuidos
-* **Responsable:** Iván Soler Fuentes (`spec-003`)
-* **Propósito:** Permitir a cualquier empleado solicitar periodos de ausencia indicando fechas de inicio y fin, tipo de permiso (vacaciones, asuntos propios, baja médica justificable) y justificación opcional.
-* **Criterios Clave:**
-  * Validación preventiva: el sistema bloquea solicitudes que excedan el saldo disponible en la fecha prevista.
-  * Solicitudes que abarcan el cambio de año (ej. 24 de diciembre al 6 de enero) se imputan automáticamente con partición por ejercicio fiscal (`LeaveDayAllocator`).
-  * Bloqueo de peticiones solapadas con ausencias ya solicitadas o aprobadas.
+Reglas de negocio clave por historia (todas verificadas contra el código, ver apartado 6):
 
-#### HU-04: Historial y Seguimiento de Solicitudes
-* **Responsable:** Iván Soler Fuentes (`spec-004`)
-* **Propósito:** Proporcionar al trabajador una vista tabular reactiva donde consultar el estado de sus trámites (`PENDIENTE`, `APROBADA`, `RECHAZADA`, `CANCELADA`) con motivo de rechazo en su caso y capacidad de cancelación preventiva.
-* **Criterios Clave:**
-  * El empleado solo puede cancelar solicitudes en estado `PENDIENTE`.
-  * Filtros por año, estado y tipología con actualización sin recarga de página.
+* **HU-01.** El alta crea el empleado, su cuenta de usuario con clave provisional y su primer registro contractual. El responsable es obligatorio salvo que RRHH elija «Sin responsable (solo Dirección General)» (`withoutManager=true`), que crea el rol `DIRECCION_GENERAL`; sin esa indicación o con ambas cosas, el alta devuelve `400`. Dar de baja a un responsable cancela en la misma transacción las solicitudes `PENDING` de sus subordinados (FR-012).
+* **HU-02.** `disponibles = correspondientes − disfrutados`; los pendientes se informan aparte. El saldo se calcula en `LeaveBalanceServiceImpl`; las solicitudes que cruzan el 31 de diciembre se reparten por año natural.
+* **HU-03.** La solicitud nace `PENDING`, asignada al responsable actual. Se rechazan fechas pasadas y rangos invertidos (`400`), el saldo insuficiente y los solapamientos (`409`) y la creación sin resolutor válido o desde Dirección General (`422`). Los permisos no descuentan vacaciones y exigen justificación.
+* **HU-04.** Solo se cancelan solicitudes `PENDING`; pasan a `CANCELLED` (`204`), liberan fechas y saldo, y siguen visibles en el historial.
+* **HU-05.** Solo se resuelve una solicitud `PENDING` de un subordinado directo. El motivo de rechazo exige de 5 a 500 caracteres tras recortar espacios. Códigos: `409` ya resuelta o resolución simultánea, `404` retirada, `403` fuera de alcance o solicitud propia, `422` año cerrado o saldo insuficiente. Estado, saldo y notificación se registran en una única transacción.
+* **HU-06.** Se ven solicitudes aprobadas y pendientes; las rechazadas y las retiradas no aparecen ni cuentan. Hay coincidencia cuando dos o más personas están ausentes un día laborable. Nunca se devuelve justificación ni motivo de rechazo. Por debajo de 600 px se muestra una lista vertical.
+* **HU-07.** Solo `RRHH`. Informe y CSV salen del mismo método de servicio, lo que garantiza la paridad; el CSV es UTF-8 con BOM y respeta RFC 4180. Periodo sin datos: `hasData=false` y `204` en la exportación.
+* **HU-08.** El responsable crea la evaluación (`PENDING_ACKNOWLEDGMENT`), el empleado da su conformidad (`FINALIZED` con `finalizedAt`). Después no puede modificarse: lo impiden el servicio (`409`) y un disparador de base de datos. La conformidad usa bloqueo pesimista para evitar condiciones de carrera.
 
-#### HU-05: Aprobación y Rechazo de Solicitudes de Ausencia
-* **Responsable:** Andrei Radu (`spec-005`)
-* **Propósito:** Dotar al responsable de equipo (o a RR. HH. para sus subordinados) de un panel unificado para tramitar las peticiones pendientes con justificación obligatoria en caso de denegación.
-* **Criterios Clave:**
-  * Control de concurrencia optimista (`@Version` en entidad) para evitar resoluciones dobles sobre la misma solicitud.
-  * Generación automática de notificación en el buzón del empleado solicitante tras la resolución.
-  * Al desactivarse o darse de baja un supervisor, sus solicitudes pendientes se gestionan de forma segura sin quedar en limbo operativo (`LeaveRequestAutoCancelService`).
+### 3.3 Requisitos no funcionales
 
-#### HU-06: Calendario Interactivo de Equipo
-* **Responsable:** Andrei Radu (`spec-006`)
-* **Propósito:** Ofrecer una vista en cuadrícula mensual que proyecte las ausencias de todos los miembros del mismo departamento para prevenir descubiertos de plantilla.
-* **Criterios Clave (Decisión Constitucional Art. 20):**
-  * **Minimización de Datos (RGPD):** Los compañeros de equipo solo ven que el empleado "Está ausente" sin revelar si se trata de una baja médica, permiso por fallecimiento o vacaciones.
-  * Marcado visual preventivo de umbral de solapamiento cuando más del 30% del equipo coincide en las mismas fechas.
+Los requisitos transversales salen de la constitución (Títulos II y IV) y de los criterios de éxito (SC) de cada spec.
 
-#### HU-07: Informes Analíticos de Absentismo y Vacaciones
-* **Responsable:** José Ramón Castells (`spec-007`)
-* **Propósito:** Permitir a RR. HH. y Dirección General generar métricas agregadas por departamento, ratios de absentismo justificado e injustificado y exportar reportes tabulares en formato CSV y hoja de cálculo.
-* **Criterios Clave:**
-  * Consolidación temporal por rangos de fechas personalizados.
-  * Prohibición de exportar datos clínicos protegidos; solo cómputos agregados de jornadas y porcentajes de utilización.
+| Área | Requisito | Dónde se verifica |
+| :-- | :-- | :-- |
+| Seguridad | Autorización siempre en el servidor (Art. 10); contraseñas con BCrypt; sesión sin estado con HTTP Basic; acceso denegado y operaciones sensibles registrados sin datos personales (Art. 20) | Pruebas de integración con `403` por rol; recorrido 2 |
+| Errores | Respuestas `ProblemDetail` RFC 9457 con `type`, `title`, `status`, `detail`, `instance` (Art. 19) | `GlobalExceptionHandler`; todos los recorridos |
+| Fechas | Cómputo de días y festivos solo en el backend, zona `Europe/Madrid` (Art. 14) | `HolidayCalendarServiceTest` |
+| Datos | Saldo derivado, nunca persistido (Art. 12); trayectoria contractual inmutable (Art. 11); migraciones Flyway versionadas V1 a V7 | `LeaveBalanceServiceTest`, `EmployeeIntegrationTest` |
+| Concurrencia | `@Version` en solicitudes y evaluaciones; bloqueo pesimista en la conformidad | `LeaveResolutionAtomicityIntegrationTest`, `PerformanceReviewIntegrationTest` |
+| Accesibilidad | WCAG 2.1 AA: estados no transmitidos solo por color, `aria-*`, etiquetas visibles (Art. 21) | Pruebas de componentes; verificación manual |
+| Calidad | Desarrollo test-first y trazabilidad HU → criterio → prueba (Art. 2 y 22) | Matriz de trazabilidad |
+| Rendimiento | Objetivos por spec (p. ej. calendario y saldo en menos de 800 ms, informes en menos de 1,5 s) | **No medidos**: excepción documentada en `docs/verificacion-integrada.md` |
 
-#### HU-08: Ciclo Integral de Evaluación de Desempeño
-* **Responsable:** José Ramón Castells (`spec-008`)
-* **Propósito:** Conducir las rondas periódicas de evaluación de competencias y objetivos entre el responsable de equipo y el colaborador directo.
-* **Criterios Clave:**
-  * Flujo en tres fases: Autoevaluación del empleado $\rightarrow$ Evaluación y comentarios del responsable $\rightarrow$ Cierre con doble conformidad y aceptación de metas para el siguiente ciclo.
-  * Almacenamiento seguro del registro histórico para consultas en promociones internas.
+### 3.4 Refinamiento y *loop engineering*
 
-### 3.3 Requisitos No Funcionales (NFRs)
-1. **NFR-01 (Seguridad y Privacidad):** Autenticación mediante tokens JWT sin estado, cifrado de credenciales con BCrypt y aplicación de autorización obligatoria en el backend (`@PreAuthorize`). Cumplimiento de RGPD en la segregación de información médica o sensible.
-2. **NFR-02 (Rendimiento):** Tiempo de respuesta de endpoints transaccionales inferior a 250 ms bajo cargas estándar. Consultas de calendario y saldos optimizadas mediante índices en PostgreSQL.
-3. **NFR-03 (Tolerancia a Fallos y Concurrencia):** Aislamiento transaccional `READ_COMMITTED` en operaciones de saldo y resolución.
-4. **NFR-04 (Estándar de Errores RFC 9457):** Todas las respuestas de excepción HTTP (400, 403, 404, 409, 422) siguen la estructura unificada `ProblemDetail`.
-5. **NFR-05 (Accesibilidad y Usabilidad):** Cumplimiento de WCAG 2.1 nivel AA en el frontend Angular Material, garantizando contraste adecuado, navegación accesible por teclado y etiquetas `aria-*`.
+El refinamiento parte de la versión funcional de `ref-refinamiento` y aplica clarify, analyze y converge según el enunciado. Resultado: de 29 a 83 preguntas de clarify respondidas, de 72 a 83 requisitos funcionales y de 160 a 290 tareas. Ejemplos de iteraciones reales, con el motivo del cambio de rumbo:
 
-### 3.4 Refinamiento y Loop Engineering (`clarify`)
-Durante las fases de especificación, se detectaron lagunas funcionales iniciales que fueron corregidas mediante iteraciones de refinamiento:
-* **Ambigüedad en el cómputo de saldo:** La especificación inicial no contemplaba si un empleado dado de alta en julio recibía el saldo íntegro de 22 días laborables o la parte proporcional. Se formalizó la regla de prorrateo exacto por días naturales restantes.
-* **Conflicto de roles en resolución:** En la versión inicial de HU-05, RR. HH. podía resolver cualquier solicitud de la empresa. En la Enmienda Constitucional v1.2.0 se aclaró que RR. HH. solo actúa como resolutor directo de su propio equipo, protegiendo la jerarquía organizativa.
-* **Partición interanual:** Las solicitudes que abarcaban navidades y año nuevo no descontaban días de los ejercicios correctos. Se diseñó el componente desacoplado `LeaveDayAllocator`.
+* **HU-05 fase 6 (2026-11-16).** Tras clarify, se decidió que nadie resuelve su propia solicitud, que los días de una vacación interanual se reparten por año natural (`LeaveDayAllocator`) y que el motivo de rechazo se valida tras recortar espacios.
+* **HU-05 fases 9 y 10 (2026-11-18 y 2026-11-19).** Una pregunta del propietario sobre quién resuelve la solicitud de un responsable produjo cuatro reglas nuevas: bloqueo de la solicitud sin resolutor válido (FR-015), cancelación automática de pendientes al dejar de ser válido el superior (FR-016), el rol `DIRECCION_GENERAL` (FR-017) y RRHH como resolutor de sus subordinados directos con Dirección General sin saldo propio (FR-018). La respuesta a una pregunta se revirtió una vez registrada («permanecen pendientes» pasó a «se cancelan»), lo que obligó a añadir FR-016. Un solo cambio tocó cuatro specs y la constitución (1.1.0 y 1.2.0), por lo que se tramitó con commits separados.
+* **HU-06 fase 6 (2026-11-18).** Se decidió ocultar las solicitudes retiradas, excluir las ausencias propias del responsable, fijar el mes inicial en `Europe/Madrid` y presentar una lista vertical por debajo de 600 px.
+* **HU-03 (2026-11-17).** Converge detectó que faltaban la justificación, el rechazo de fechas pasadas y la reserva preventiva de saldo; se añadieron T020 a T025.
+* **HU-01 (2026-11-19).** FR-011 pasó de «excepción por puesto» a «excepción explícita con `withoutManager`».
+
+La evidencia de cada actividad está en `specs/spec-00N/clarify.md`, `analysis.md` y `converge.md`, en [`docs/registro-hallazgos.md`](registro-hallazgos.md), en [`docs/matriz-trazabilidad.md`](matriz-trazabilidad.md) y en [`docs/verificacion-integrada.md`](verificacion-integrada.md).
 
 ---
 
 ## 4. Diseño
 
-### 4.1 Arquitectura del Sistema
-El sistema implementa una arquitectura desacoplada en monorepo, compuesta por dos capas principales coordinadas a través de una API RESTful:
+### 4.1 Arquitectura
+
+Monorepo con cuatro capas desacopladas (Art. 5): presentación (SPA Angular), contrato de API (REST más OpenAPI), aplicación y dominio (Spring Boot: controlador → servicio → repositorio) y persistencia (PostgreSQL). El frontend solo conoce el contrato, nunca el esquema.
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Frontend SPA (Angular 21 + Material Design)"]
-        UI[Componentes Standalone / Vistas]
-        Services[Servicios Reactivos e Inyección inject]
-        Guards[Auth Guards & HTTP Interceptors]
+    subgraph Front["Frontend (Angular 21 + Material)"]
+        UI[Componentes standalone y vistas]
+        Svc[Servicios con HttpClient]
+        Int[Interceptor de autenticación]
     end
-
-    subgraph Backend["Backend API (Spring Boot 3.4.3 / Java 21)"]
-        Security[Spring Security + JWT Filter]
-        Controllers[Controladores REST / RFC 9457 Handlers]
-        AppServices[Capa de Servicios de Negocio Transaccionales]
-        Policies[Políticas de Dominio: LeaveResolver, Allocator]
-        Repos[Spring Data JPA Repositories]
+    subgraph Back["Backend (Spring Boot 3.4.3, Java 21)"]
+        Sec[Spring Security: HTTP Basic sin estado, CORS]
+        Ctl[Controladores REST y GlobalExceptionHandler RFC 9457]
+        Srv[Servicios transaccionales]
+        Pol[Políticas de dominio: LeaveResolverPolicy, LeaveDayAllocator]
+        Rep[Repositorios Spring Data JPA]
     end
-
-    subgraph Database["Persistencia Relacional (PostgreSQL 16)"]
-        DB[(PostgreSQL + Migraciones Flyway V1-V7)]
-    end
-
-    UI --> Services
-    Services --> Guards
-    Guards -- "HTTP REST (JSON / Bearer JWT)" --> Security
-    Security --> Controllers
-    Controllers --> AppServices
-    AppServices --> Policies
-    AppServices --> Repos
-    Repos -- "JDBC / Hibernate" --> DB
+    DB[(PostgreSQL 16 + Flyway V1-V7)]
+    UI --> Svc --> Int
+    Int -- "HTTP /api/v1 (JSON, Authorization: Basic)" --> Sec
+    Sec --> Ctl --> Srv --> Pol
+    Srv --> Rep -- "JPA / JDBC" --> DB
 ```
 
-### 4.2 Modelo de Datos Relacional
-La base de datos relacional consta de 7 entidades principales gestionadas mediante migraciones versionadas de Flyway (`V1__...` a `V7__...`):
+* La API cuelga de `/api/v1` (`server.servlet.context-path`). El login (`POST /auth/login`) devuelve el `token` que el frontend envía como `Authorization: Basic`.
+* En desarrollo, `proxy.conf.json` reenvía `/api` desde `4200` hacia `8080`; el CORS del backend admite el origen `http://localhost:4200`.
+* Los contratos OpenAPI de cada historia están en `specs/spec-00N/contracts/`; springdoc publica además la documentación generada.
 
-```mermaid
-erDiagram
-    USERS ||--o{ EMPLOYEES : "identifica"
-    COLLECTIVE_AGREEMENTS ||--o{ CONTRACT_RECORDS : "rige"
-    EMPLOYEES ||--o{ CONTRACT_RECORDS : "posee historial"
-    EMPLOYEES ||--o{ LEAVE_REQUESTS : "solicita"
-    EMPLOYEES ||--o{ LEAVE_REQUESTS : "resuelve (supervisor)"
-    EMPLOYEES ||--o{ NOTIFICATIONS : "recibe"
-    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "es evaluado"
-    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "evalua (responsable)"
+### 4.2 Modelo de datos
 
-    USERS {
-        uuid id PK
-        string username UK
-        string password_hash
-        string role
-        boolean active
-    }
+Siete tablas, creadas por `V1__init_shared_schema.sql` y modificadas por `V3` a `V7` (`V2` carga los datos semilla):
 
-    COLLECTIVE_AGREEMENTS {
-        uuid id PK
-        string name UK
-        int vacation_days
-        string day_computation_type
-        int personal_days
-    }
+| Tabla | Contenido y claves |
+| :-- | :-- |
+| `users` | `username` (único), `password_hash` (BCrypt), `role`, `active`. Restricción `chk_user_role` con los cuatro roles (V7). |
+| `collective_agreements` | `code`, `name`, `vacation_days_per_year`. Semilla: GENERAL (22 días) y TIC (23). |
+| `employees` | Datos personales, `user_id` único, `manager_id` autorreferencia, `hire_date`, `active`, `version`. |
+| `contract_records` | Historial append-only: `employee_id`, `effective_from`, puesto, departamento, salario, convenio y responsable de cada variación. |
+| `leave_requests` | Tipo (`VACATION`, `PERMIT`), fechas, `calculated_days`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`), `rejection_reason`, `justification`, `resolved_by`, `resolved_at`, `version`. |
+| `notifications` | `recipient_id`, título, mensaje, `is_read`. |
+| `performance_reviews` | Empleado, evaluador, periodo, objetivos, `rating` 1-5, comentarios, `status`, `employee_acknowledged_at`, `finalized_at`, `version`. Disparador de inmutabilidad en V4. |
 
-    EMPLOYEES {
-        uuid id PK
-        uuid user_id FK
-        string first_name
-        string last_name
-        string email UK
-        string department
-        uuid supervisor_id FK
-        date hire_date
-    }
+El modelo unificado y su diagrama ER están en [`specs/data-model.md`](../specs/data-model.md), y el de cada historia en su `data-model.md`. No existe ninguna columna de saldo: se calcula (Art. 12).
 
-    CONTRACT_RECORDS {
-        uuid id PK
-        uuid employee_id FK
-        uuid collective_agreement_id FK
-        date start_date
-        date end_date
-        string contract_type
-        decimal weekly_hours
-    }
+### 4.3 Decisiones técnicas y por qué se tomaron
 
-    LEAVE_REQUESTS {
-        uuid id PK
-        uuid employee_id FK
-        date start_date
-        date end_date
-        string leave_type
-        string status
-        uuid resolved_by FK
-        timestamp resolved_at
-        string rejection_reason
-        int computed_days
-    }
+| Decisión | Motivo | Origen |
+| :-- | :-- | :-- |
+| Saldo derivado, no persistido | Evita contadores desincronizados y carreras entre aprobaciones | Art. 12, `spec-002` |
+| Trayectoria contractual append-only con fecha de efectos | Permite cambios retroactivos sin perder el historial | Art. 11, `spec-001` |
+| `disponibles` no resta los pendientes; la reserva se aplica al validar la solicitud nueva | Mantiene el invariante `correspondientes = disfrutados + disponibles` y evita doble descuento | `spec-002` y `spec-003` FR-004 |
+| `LeaveDayAllocator` único para repartir días entre años | Un solo componente de cómputo (Art. 14.3) para resolución y saldo | `spec-005`, aclaración C4 |
+| `LeaveResolverPolicy` única para decidir quién puede resolver | Una sola regla para crear solicitudes, bandeja y cancelación automática | `spec-005` FR-015 a FR-018 |
+| Estado `CANCELLED` en lugar de borrar | Conserva la auditoría y libera fechas y saldo | `spec-004`, migración V5 |
+| Estado, saldo y notificación en una transacción | Si falla una parte, no se registra nada | `spec-005` FR-010 |
+| Informe y CSV desde el mismo método | Paridad imposible de romper | Art. 17, `spec-007` FR-004 |
+| Disparador de BD más control en servicio para evaluaciones finalizadas | Inmutabilidad también ante SQL directo | Art. 18, migración V4 |
+| HTTP Basic sin estado en lugar de tokens firmados | Simplicidad y proporcionalidad para el alcance de la práctica (Art. 23) | `plan.md` compartido |
+| No editar jamás una migración Flyway aplicada | Un cambio rompe la suma de verificación; el rollback se documenta en `tasks.md` | Incidencia 2026-11-19 |
 
-    NOTIFICATIONS {
-        uuid id PK
-        uuid recipient_id FK
-        string message
-        boolean is_read
-        timestamp created_at
-    }
+### 4.4 Principios de la constitución
 
-    PERFORMANCE_REVIEWS {
-        uuid id PK
-        uuid employee_id FK
-        uuid reviewer_id FK
-        int review_year
-        string employee_self_review
-        string manager_evaluation
-        int score
-        string status
-    }
-```
-
-### 4.3 Principios de la Constitución del Proyecto (`.specify/memory/constitution.md`)
-La arquitectura técnica está blindada por un conjunto de artículos constitucionales inmutables:
-* **Art. 10 (Seguridad en el Servidor):** Los roles y permisos nunca se delegan a validaciones visuales del frontend. Todo endpoint exige comprobación estricta de identidad y jerarquía en Spring Security.
-* **Art. 12 (Saldo Derivado No Persistido):** Queda prohibida la existencia de columnas numéricas mutables tipo `saldo_restante` en la tabla de empleados. El saldo se computa al vuelo evaluando contratos y ausencias concedidas, eliminando carreras críticas.
-* **Art. 14 (Fechas y Días Hábiles en Backend):** Todos los cálculos de días de convenio, festivos y cómputos de fechas se realizan exclusivamente en el servidor bajo la zona horaria `Europe/Madrid`.
-* **Art. 19 (Formato Estándar de Error RFC 9457):** Los fallos de validación y de regla de negocio devuelven payloads JSON estructurados con `type`, `title`, `status`, `detail` e `instance`.
-* **Art. 20 (Minimización de Datos en Calendarios):** Se prohíbe exponer tipologías personales o motivos de ausencia a usuarios que compartan departamento pero no sean supervisores jerárquicos.
+La constitución (`.specify/memory/constitution.md`, v1.2.0) ordena sus 28 artículos en cinco títulos: principios SDD (Art. 1 a 4), arquitectura (5 a 9), reglas de dominio inviolables (10 a 18), calidad transversal (19 a 25) y gobernanza (26 a 28). Las más determinantes: Art. 1 (la especificación es la fuente de verdad), Art. 2 (trazabilidad HU → criterio → prueba), Art. 10 (autorización en servidor), Art. 12 (saldo derivado), Art. 19 (RFC 9457), Art. 22 (test-first) y Art. 27 (toda enmienda exige revisar specs, planes y tareas afectados). Registro de enmiendas: v1.1.0 añadió el rol `DIRECCION_GENERAL`; v1.2.0, RRHH como resolutor de sus subordinados y el saldo de Dirección General.
 
 ---
 
 ## 5. Implementación
 
-### 5.1 Pila Tecnológica
-* **Backend:** Java 21 LTS, Spring Boot 3.4.3, Spring Data JPA / Hibernate, Spring Security 6, Flyway 10, PostgreSQL Driver, Lombok, MapStruct.
-* **Frontend:** Angular 21, TypeScript 5.4, RxJS 7, Angular Material UI, CSS3 / Flexbox / Grid.
-* **Herramientas de Construcción y Calidad:** Apache Maven 3.9, Node.js 20, npm 10, Docker & Docker Compose.
-* **Metodología y Gobierno:** GitHub Spec Kit, TDD (*Test-Driven Development*), GitFlow.
+### 5.1 Pila tecnológica
 
-### 5.2 Estructura del Repositorio Monorepo
-El proyecto organiza sus artefactos siguiendo la estructura estándar requerida:
+* **Backend:** Java 21, Spring Boot 3.4.3 (Web, Security, Validation, Data JPA, Actuator), Flyway, driver PostgreSQL, springdoc-openapi, Maven con `mvnw`.
+* **Frontend:** Angular 21, Angular Material y CDK 21, RxJS 7.8, TypeScript 5.9, Vitest 4.
+* **Base de datos:** PostgreSQL 16 (imagen `postgres:16-alpine`) con Docker Compose.
+* **Pruebas:** JUnit 5, Mockito, Spring Security Test y Testcontainers con PostgreSQL real.
+* **Metodología:** GitHub Spec Kit 1.0.6, desarrollo test-first.
+
+### 5.2 Estructura del repositorio
+
 ```
 recursos-humanos-IW/
-├── .specify/                         # Configuración Spec Kit
-│   ├── feature.json                  # Especificación activa
-│   └── memory/
-│       └── constitution.md           # Invariantes de diseño y gobernanza (v1.2.0)
-├── backend/                          # Aplicación Spring Boot 3.4.3
-│   ├── src/main/java/com/iw/hrms/
-│   │   ├── config/                   # Configuración Security, Web, Swagger
-│   │   ├── domain/                   # Entidades JPA y Enums de dominio
-│   │   ├── repository/               # Repositorios Spring Data
-│   │   ├── service/                  # Lógica de negocio transaccional
-│   │   │   ├── allocation/           # Partición interanual de ausencias
-│   │   │   ├── balance/              # Cálculo derivado de saldos
-│   │   │   └── policy/               # Políticas de resolución de permisos
-│   │   └── web/                      # Controladores REST y DTOs
-│   ├── src/main/resources/
-│   │   ├── db/migration/             # Scripts Flyway V1__... a V7__...
-│   │   └── application.yml           # Parámetros y conexiones
-│   └── src/test/java/                # Suites unitarias y de integración
-├── frontend/                         # SPA Angular 21
-│   ├── src/app/
-│   │   ├── core/                     # Servicios singleton, interceptores y auth
-│   │   ├── employees/                # Módulo HU-01 y HU-02
-│   │   ├── leave-requests/           # Módulo HU-03 y HU-04
-│   │   ├── management/               # Módulo HU-05 y HU-06
-│   │   ├── analytics/                # Módulo HU-07
-│   │   └── performance/              # Módulo HU-08
-│   └── angular.json
-├── docs/                             # Documentación de entrega
-│   ├── agrupamiento.md               # Reparto de historias por integrante (y AGRUPAMIENTO.md)
-│   ├── memoria.md                    # Memoria oficial técnica del proyecto
-│   ├── matriz-trazabilidad.md        # Matriz global de trazabilidad y hallazgos
-│   └── recorridos-e2e.md             # Especificación detallada de 2 flujos E2E
-├── demo/                             # Paquete de demostración técnica
-│   ├── index.html                    # Reproductor web interactivo con marcas de tiempo
-│   └── demo-rrhh.mp4                 # Grabación completa de la aplicación
-├── specs/                            # Ciclos completos de Spec Kit
-│   ├── spec-001/ a spec-008/         # spec, plan, tasks, analysis, converge, checklists
-│   └── plan.md                       # Plan arquitectural consolidado
-└── docker-compose.yml                # Despliegue orquestado de base de datos
+├── .specify/            # Spec Kit: constitución (memory/constitution.md), plantillas, configuración
+├── backend/             # Spring Boot (paquete com.iw.rrhh)
+│   └── src/main/java/com/iw/rrhh/
+│       ├── common/      # Configuración, excepciones, calendario de festivos
+│       ├── security/    # Usuarios, roles, autenticación
+│       ├── employee/    # HU-01 y HU-02 (ficha)
+│       ├── leave/       # HU-02 a HU-06: saldo, solicitudes, resolución, calendario
+│       ├── notification/# Notificaciones del empleado
+│       ├── report/      # HU-07
+│       └── performance/ # HU-08
+│   └── src/main/resources/db/migration/   # V1 a V7
+├── frontend/src/app/    # core, employees, features/{employees,leave,performance,reports,team-calendar}
+├── specs/               # spec-001 a spec-008, plan.md y data-model.md compartidos
+├── docs/                # memoria, agrupamiento, matriz, recorridos, verificación, registro, evidencias
+├── demo/                # Material de demostración
+└── docker-compose.yml   # PostgreSQL
 ```
 
-### 5.3 Núcleos de Implementación Relevantes
+### 5.3 Partes más relevantes del código
 
-#### 1. Invariante del Saldo Derivado (`LeaveBalanceService.java`)
-Para evitar desincronizaciones entre el saldo persistido y las ausencias reales, el método central calcula dinámicamente:
-```java
-public LeaveBalanceDTO calculateBalance(UUID employeeId, int year) {
-    Employee emp = employeeRepository.findById(employeeId).orElseThrow();
-    if (emp.getUser().getRole() == Role.DIRECCION_GENERAL) {
-        return LeaveBalanceDTO.builder().vacationDaysAvailable(0).isExempt(true).build();
-    }
-    int totalEntitlement = proratingUtil.calculateEntitlement(emp, year);
-    int approvedDays = leaveRequestRepository.sumApprovedDays(employeeId, year);
-    int pendingDays = leaveRequestRepository.sumPendingDays(employeeId, year);
-    int availableDays = totalEntitlement - approvedDays - pendingDays;
+* **`LeaveBalanceServiceImpl`.** Calcula el saldo al vuelo con un `Clock` inyectado: correspondientes por convenio y fecha de alta, disfrutados (`APPROVED`) y pendientes (`PENDING`) por año natural. Niega con `403` el saldo propio a Dirección General.
+* **`LeaveDayAllocator`.** Reparte los días de una solicitud entre los años naturales que abarca; el total siempre es `calculatedDays`. Lo usan el saldo y la aprobación.
+* **`LeaveRequestServiceImpl`.** Validaciones de creación: fechas, justificación en permisos, solapamiento, saldo con reserva de pendientes y resolutor válido (`LeaveResolverPolicy`).
+* **`LeaveResolutionServiceImpl`.** Aprobar y rechazar con alcance por jerarquía, revalidación atómica del saldo, `@Version`, notificación y registro de auditoría sin datos personales.
+* **`LeaveRequestAutoCancelService`.** Cancela las solicitudes pendientes de los subordinados cuando el superior deja de ser válido; se invoca dentro de la transacción de la baja (HU-01).
+* **`TeamCalendarServiceImpl`.** Proyecta ausencias por día con festivos y fines de semana, y calcula las coincidencias; el DTO no contiene motivos.
+* **`DepartmentReportServiceImpl`.** Agrega por departamento con SQL nativo y genera el CSV con BOM a partir del mismo `DepartmentReportResponse`.
+* **`PerformanceReviewService` y `V4__immutable_finalized_performance_reviews.sql`.** Creación por el responsable, conformidad con `PESSIMISTIC_WRITE` e inmutabilidad en servicio y en base de datos.
+* **Frontend.** Componentes standalone con carga diferida por ruta (`app.routes.ts`), `auth.interceptor.ts` y guardas por rol; el calendario cambia a lista con `BreakpointObserver` (CDK).
 
-    return LeaveBalanceDTO.builder()
-            .year(year)
-            .totalEntitlement(totalEntitlement)
-            .usedDays(approvedDays)
-            .pendingDays(pendingDays)
-            .vacationDaysAvailable(availableDays)
-            .build();
-}
-```
+### 5.4 Decisiones tomadas sobre la marcha
 
-#### 2. Asignador Interanual de Ausencias (`LeaveDayAllocator.java`)
-Cuando un empleado solicita un permiso que cruza el 31 de diciembre, este servicio descompone la solicitud en dos periodos de imputación contable para descontar los días del ejercicio correspondiente sin errores de balance.
-
-#### 3. Política de Resolución y Concurrencia (`LeaveResolutionService.java`)
-Aplica comprobación de jerarquía y bloqueo optimista:
-```java
-@Transactional
-public LeaveRequestDTO resolveRequest(UUID requestId, ResolutionCommand cmd, UserDetails currentUser) {
-    LeaveRequest req = leaveRequestRepository.findByIdWithLock(requestId)
-            .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
-    
-    leaveResolverPolicy.assertCanResolve(currentUser, req);
-    
-    if (cmd.isApproved()) {
-        req.setStatus(LeaveStatus.APROBADA);
-    } else {
-        req.setStatus(LeaveStatus.RECHAZADA);
-        req.setRejectionReason(cmd.getReason());
-    }
-    notificationService.notifyEmployee(req.getEmployee(), req.getStatus());
-    return mapper.toDto(req);
-}
-```
-
-#### 4. Frontend Reactivo en Angular 21
-Se implementó el patrón moderno de Angular 21, utilizando funciones `inject()` a nivel de campo (sin decoradores obsoletos en constructor), componentes *standalone*, control flow `@if` / `@for` y `ChangeDetectionStrategy.OnPush` para maximizar el rendimiento de la interfaz.
+* El saldo `disponible` no descuenta los pendientes (el primer diseño de los recorridos asumía lo contrario; se corrigió el documento, no el código).
+* El saldo insuficiente se devuelve como `409` y la cancelación como `204`, según los contratos de HU-03 y HU-04.
+* Un hallazgo de HU-05 (el tamaño del motivo no se medía tras recortar espacios) se corrigió moviendo el recorte al DTO.
+* Se descubrió y corrigió en HU-05 un fallo previo: `LeaveRequestServiceImpl` tenía dos constructores sin `@Autowired` y la aplicación no arrancaba.
+* Una migración Flyway ya aplicada se editó por error (añadir un comentario a `V7`): el backend dejó de arrancar por la suma de verificación. Se restauró y el plan de reversión se documentó en `tasks.md`.
+* Testcontainers 1.20 con Docker 29 necesita `JAVA_TOOL_OPTIONS="-Dapi.version=1.44"`.
 
 ---
 
 ## 6. Pruebas y Validación
 
-### 6.1 Estrategia de Pruebas
-La verificación del sistema combina tres niveles:
-1. **Tests Unitarios:** Verificación exhaustiva de reglas de dominio (prorrateo de vacaciones, cálculo de días hábiles, políticas de resolución) mediante JUnit 5 y Mockito.
-2. **Tests de Integración:** Verificación de repositorios JPA, controladores REST y migraciones Flyway contra contenedores de PostgreSQL gestionados con Testcontainers.
-3. **Pruebas de Extremo a Extremo (E2E):** Ejecución de recorridos completos entre historias dependientes de distintos desarrolladores.
+### 6.1 Estrategia
 
-### 6.2 Resultados de la Suite Automatizada
-Todas las suites unitarias del backend se ejecutan satisfactoriamente al 100%:
+1. **Unitarias** (JUnit 5 y Mockito en backend; Vitest en frontend) para reglas de dominio y componentes.
+2. **Integración** (MockMvc y Testcontainers con PostgreSQL real) para controladores, seguridad, migraciones y transaccionalidad.
+3. **Recorridos E2E** que cruzan historias de distintos integrantes, ejecutados contra la API real.
+4. **Validación manual** en navegador real de las historias HU-05 y HU-06 y, por API, de los escenarios de `quickstart.md`.
 
-| Clase de Prueba | Objetivo | Pruebas Ejecutadas | Estado |
-| :--- | :--- | :---: | :---: |
-| `LeaveBalanceServiceTest` | Derivación de saldos y exclusión de Dirección | 14 / 14 | **PASS** (100%) |
-| `LeaveProratingUnitTest` | Lógica matemática de prorrateos en altas | 14 / 14 | **PASS** (100%) |
-| `LeaveRequestServiceTest` | Creación y validación preventiva de solicitudes | 19 / 19 | **PASS** (100%) |
-| `LeaveResolutionServiceTest` | Aprobación, rechazo y control de excepciones | 16 / 16 | **PASS** (100%) |
-| `LeaveResolverPolicyTest` | Control jerárquico de permisos de resolución | 9 / 9 | **PASS** (100%) |
-| `LeaveRequestTrackingServiceTest` | Filtros reactivos y consulta histórica | 6 / 6 | **PASS** (100%) |
-| `LeaveRequestAutoCancelServiceTest` | Auto-cancelación ante desactivación de manager | 5 / 5 | **PASS** (100%) |
-| `TeamCalendarServiceTest` | Proyección de ausencias y privacidad RGPD | 10 / 10 | **PASS** (100%) |
-| **TOTAL SUITE UNITARIA** | **Validación de Reglas de Negocio** | **93 / 93** | **PASS** (100%) |
+Las pruebas siguen el criterio test-first (Art. 22) y se etiquetan, en las historias más refinadas, con `HU-0N.CA-M`.
 
-### 6.3 Recorridos Completos Integrados (E2E)
-Se formalizaron y ejecutaron dos recorridos cruzados completos que enlazan historias desarrolladas por distintos miembros del equipo (documentados en detalle en [recorridos-e2e.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/recorridos-e2e.md)):
+### 6.2 Resultados de la regresión (commit `662da39`)
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      RECORRIDOS E2E CRUZADOS                           │
-├────────────────────────────────────────────────────────────────────────┤
-│ RECORRIDO 1: Flujo Cruzado Satisfactorio (17 Pasos)                   │
-│ HU-01 (Joaquín) ─► HU-02 (Joaquín) ─► HU-03 (Iván) ─► HU-04 (Iván)     │
-│       ─► HU-05 (Andrei) ─► HU-06 (Andrei) ─► HU-07 (José)             │
-│ Resultado: El empleado se crea, solicita días, el responsable aprueba, │
-│            se visualiza en el calendario y se consolida en el informe. │
-├────────────────────────────────────────────────────────────────────────┤
-│ RECORRIDO 2: Flujo de Excepción, Permisos y Desactivación (18 Pasos)  │
-│ Intento de sobrepasar saldo (422) ─► Intento de aprobación ajena (403) │
-│       ─► Desactivación de responsable ─► Auto-cancelación de solicitudes│
-│ Resultado: El sistema rechaza operaciones ilegítimas con RFC 9457 y    │
-│            garantiza que ninguna solicitud quede huérfana de gestión.  │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Suite | Comando | Resultado | Evidencia |
+| :-- | :-- | :-- | :-- |
+| Backend | `cd backend && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test` | **224 pruebas, 0 fallos, 0 errores, 0 omitidas** | [`docs/evidencias/backend-tests.txt`](evidencias/backend-tests.txt) |
+| Frontend | `cd frontend && npx ng test --watch=false` | **86 pruebas en 16 ficheros, todas en verde** | [`docs/evidencias/frontend-tests.txt`](evidencias/frontend-tests.txt) |
 
-### 6.4 Balance de la Iteración y Refinamiento
-En aplicación del ciclo *loop engineering* de Spec Kit, se contrastó el estado inicial frente al final del proyecto:
-* **Ambigüedades de especificación resueltas:** 8 (todas cerradas en los documentos `analysis.md`).
-* **Incidencias documentales detectadas y resueltas:** 11 hallazgos críticos cerrados (H-01 a H-11 documentados en [matriz-trazabilidad.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/matriz-trazabilidad.md)).
-* **Brechas de implementación pendientes:** 0 (100% de tareas completadas en `tasks.md` de las 8 specs).
-* **Criterios verificados sobre el total revisado:** 142 / 142 criterios de aceptación validados.
-* **Checklists de calidad superados:** 28/28 en `spec-001`, 27/27 en `spec-002`, 16/16 en `spec-003` a `spec-008`.
+Desglose del backend por clase: `LeaveResolutionIntegrationTest` 37, `LeaveRequestServiceTest` 19, `LeaveRequestIntegrationTest` 18, `LeaveResolutionServiceTest` 16, `TeamCalendarIntegrationTest` 15, `LeaveBalanceServiceTest` 14, `LeaveProratingUnitTest` 14, `EmployeeIntegrationTest` 12, `LeaveBalanceIntegrationTest` 10, `HolidayCalendarServiceTest` 10, `TeamCalendarServiceTest` 10, `LeaveResolverPolicyTest` 9, `LeaveDayAllocatorTest` 6, `LeaveRequestTrackingServiceTest` 6, `LeaveRequestTrackingIntegrationTest` 6, `LeaveRequestAutoCancelServiceTest` 5, `NotificationIntegrationTest` 5, `DepartmentReportIntegrationTest` 5, `PerformanceReviewIntegrationTest` 4, `EmployeeDeactivationAtomicityIntegrationTest` 1, `LeaveResolutionAtomicityIntegrationTest` 1 y `RecursosHumanosBackendApplicationTests` 1.
+
+### 6.3 Recorridos completos integrados (E2E)
+
+Dos recorridos que cruzan las ocho historias y los módulos de los cuatro integrantes, ejecutados contra la API real (backend sobre PostgreSQL limpio, migraciones V1 a V7 y datos semilla) con [`docs/evidencias/e2e/run_recorridos.py`](evidencias/e2e/run_recorridos.py).
+
+| Recorrido | Tipo | Pasos conformes |
+| :-- | :-- | :-: |
+| 1 | Satisfactorio: solicitud de vacaciones, aprobación con comentario, notificación, saldo, calendario, informe, CSV con BOM y evaluación | 17 de 17 |
+| 2 | Errores, permisos y estados: alta rechazada sin responsable, fecha pasada, justificación ausente, saldo insuficiente, solapamiento, `403` cruzados, rechazo con motivo corto, doble resolución (`409`), cancelación, Dirección General sin solicitudes, informe prohibido, evaluación inmutable | 32 de 32 |
+
+El resultado paso a paso (precondiciones, datos, esperado, observado y versión) está en [`docs/evidencias/e2e/resultado-recorridos.md`](evidencias/e2e/resultado-recorridos.md), y el diseño en [`docs/recorridos-e2e.md`](recorridos-e2e.md). Limitación: se ejecutaron por API, no por la interfaz gráfica. Los valores esperados de la primera redacción se corrigieron donde no coincidían con los contratos (saldo con pendientes, `409` por saldo insuficiente, `204` al cancelar); véase `docs/verificacion-integrada.md`.
+
+### 6.4 Validación manual
+
+HU-05 y HU-06 se validaron en un navegador Chrome real con backend y frontend locales (escenarios de `quickstart.md`), y los escenarios restantes por API: detalle en `specs/spec-005/converge.md` y `specs/spec-006/converge.md`. No se emularon escalas de grises ni se midieron tiempos de carga.
+
+### 6.5 Balance de la iteración (versión inicial `ref-refinamiento` frente a la final)
+
+| Indicador | Inicial | Final | Evidencia |
+| :-- | :-: | :-: | :-- |
+| Preguntas de clarify respondidas | 29 | 83 de 83 | `specs/spec-00N/clarify.md` |
+| Requisitos funcionales | 72 | 83 | `docs/evidencias/spec-diffs/` |
+| Tareas en `tasks.md` | 160 | 290 (0 abiertas) | `specs/spec-00N/tasks.md` |
+| Hallazgos documentales de analyze | — | 27 registrados, 25 con remediación marcada | `docs/registro-hallazgos.md` |
+| Hallazgos de analyze de spec-005 | 21 | 12 cerrados, 4 aceptados, 5 menores abiertos | `docs/evidencias/analyze/estado-spec-005-2026-11-21.md` |
+| Brechas de implementación detectadas | — | 9 cerradas; 4 aceptadas como límite conocido; 0 accionables abiertas | `specs/spec-00N/converge.md` |
+| Criterios de la matriz verificados | — | 65 de 66 | `docs/matriz-trazabilidad.md` y `docs/verificacion-integrada.md` |
+
+Los denominadores y la tabla de registro mínimo (historia y criterio, hallazgo, comando, documentos afectados, tarea y commit, prueba, responsable, revisor y estado) están en [`docs/verificacion-integrada.md`](verificacion-integrada.md). El único criterio sin evidencia directa es el tiempo de carga de HU-02 (SC-001), que no se ha medido.
 
 ---
 
 ## 7. Despliegue y Manual de Uso
 
-### 7.1 Requisitos Previos
-* **Java Development Kit (JDK):** Versión 21 o superior.
-* **Node.js & npm:** Node.js v20 LTS y npm v10.
-* **Docker & Docker Compose:** Para la ejecución del motor de base de datos PostgreSQL.
-* **Git:** Para clonar el repositorio y gestionar ramas.
+### 7.1 Requisitos previos
 
-### 7.2 Instrucciones de Despliegue en Local
+* JDK 21, Node.js 20 o superior con npm, Docker con Docker Compose (también necesario para las pruebas de integración) y Git.
 
-#### 1. Clonar el repositorio
+### 7.2 Instalación y ejecución en local
+
 ```bash
 git clone https://github.com/Arid3n/recursos-humanos-IW.git
 cd recursos-humanos-IW
-```
 
-#### 2. Levantar la Base de Datos PostgreSQL
-```bash
+# 1. Base de datos (PostgreSQL 16 en el puerto 5433 del anfitrión)
 docker compose up -d
-```
-*Esto iniciará una instancia de PostgreSQL 16 en el puerto `5432` con usuario `postgres` y base de datos `hrms_db`.*
 
-#### 3. Compilar y Ejecutar el Backend (Spring Boot)
-```bash
+# 2. Backend (puerto 8080, contexto /api/v1). Flyway aplica V1 a V7 y los datos semilla
 cd backend
-./mvnw clean spring-boot:run
-```
-*El backend compilará, ejecutará las migraciones de Flyway (V1 a V7) e iniciará la API REST en `http://localhost:8080`.*
+sh ./mvnw spring-boot:run
 
-#### 4. Compilar y Ejecutar el Frontend (Angular)
-En una nueva terminal:
-```bash
+# 3. Frontend (otra terminal; puerto 4200 con proxy hacia el backend)
 cd frontend
 npm install
 npm start
 ```
-*La aplicación SPA estará disponible en `http://localhost:4200`, con reenvío de peticiones `/api` al backend mediante `proxy.conf.json`.*
 
-### 7.3 Credenciales Preconfiguradas para Pruebas
+**Configuración.** No hay `.env.example`: el backend lee variables de entorno con valores por defecto adecuados para el entorno local (`DB_URL`, `DB_PORT` = 5433, `DB_USERNAME` = `rrhh_user`, `DB_PASSWORD` = `rrhh_password`, y `SERVER_PORT` para cambiar el puerto), y `docker-compose.yml` fija `rrhh_db`, `rrhh_user`, `rrhh_password` y `DB_PORT` (por defecto 5433). El script `mvnw` no tiene bit de ejecución, de ahí `sh ./mvnw`.
 
-| Rol | Usuario | Contraseña | Finalidad de Prueba |
-| :--- | :--- | :--- | :--- |
-| **RR. HH.** | `admin` | `admin123` | Alta de empleados, contratos, convenios e informes globales. |
-| **Responsable** | `marta.supervisor` | `password123` | Aprobación de solicitudes de equipo, calendario y evaluaciones. |
-| **Empleado** | `carlos.empleado` | `password123` | Solicitud de vacaciones, historial y consulta de saldo. |
-| **Dirección General**| `direccion` | `admin123` | Visualización de informes globales y supervisión ejecutiva. |
+**Ejecutar las pruebas.**
 
-### 7.4 Guía Rápida de Uso por Rol
-* **Como Empleado:** Inicia sesión con `carlos.empleado`. En el panel principal observa tu saldo disponible de vacaciones. Dirígete a "Nueva Solicitud", selecciona un rango de fechas y confirma. Comprueba en "Mis Solicitudes" que el estado es `PENDIENTE`.
-* **Como Responsable:** Inicia sesión con `marta.supervisor`. Accede a "Gestión de Solicitudes", revisa la petición de Carlos y pulsa "Aprobar". Entra en "Calendario de Equipo" para comprobar cómo las fechas aprobadas aparecen marcadas en el cuadrante mensual del equipo.
-* **Como RR. HH.:** Inicia sesión con `admin`. Navega a "Empleados" para gestionar contratos o a "Informes" para analizar la tasa de absentismo por departamento y descargar el reporte en CSV.
+```bash
+cd backend  && JAVA_TOOL_OPTIONS="-Dapi.version=1.44" sh ./mvnw test
+cd frontend && npx ng test --watch=false
+```
+
+### 7.2 bis Demostración en vídeo
+
+`demo/index.html` reproduce `demo/demo-rrhh.mp4` (14 min 7 s) con un índice de 46 escenarios navegable y un botón «Ver historia» por cada historia. El vídeo se graba sobre la aplicación real con `demo/record-demo.mjs` (Playwright) y se monta con `demo/build-demo.py` (ffmpeg); incluye flujos principales, errores y restricciones de permisos de las ocho historias, y tarjetas «API REST» con petición y respuesta reales para lo que no tiene pantalla (trayectoria contractual, baja, permisos cruzados).
+
+### 7.3 Credenciales de los datos semilla
+
+Todas con la contraseña `admin123`:
+
+| Rol | Usuario | Persona semilla |
+| :--- | :--- | :--- |
+| RRHH | `rrhh@empresa.com` | Administración de RR. HH. |
+| Dirección General | `direccion@empresa.com` | Sin responsable; superior de `rrhh@` |
+| Responsable de equipo | `responsable@empresa.com` | Carlos Ruiz Navarro |
+| Empleado | `empleado@empresa.com` | Laura Martínez Gómez, con Carlos como responsable |
+
+### 7.4 Manual de usuario breve
+
+La barra superior muestra solo las opciones del rol: **Inicio**, **Mi Ficha y Saldo** (**Mi Ficha** para Dirección General), **Solicitar Ausencia**, **Mis Solicitudes**, **Evaluaciones**, **Solicitudes del Equipo**, **Calendario del Equipo**, **Alta de Empleado** e **Informes**.
+
+* **Empleado.** En «Mi Ficha y Saldo» consulta sus datos y el saldo del año (con selector de ejercicios anteriores). En «Solicitar Ausencia» elige el tipo, las fechas y la justificación (obligatoria en permisos), ve el cómputo de días laborables y envía. En «Mis Solicitudes» filtra por estado, lee el motivo de un rechazo y cancela las pendientes. La campana muestra las notificaciones. En «Evaluaciones» revisa las suyas y da su conformidad.
+* **Responsable de equipo.** En «Solicitudes del Equipo» ve las pendientes de su equipo y las aprueba (comentario opcional) o rechaza (motivo de 5 a 500 caracteres). En «Calendario del Equipo» navega por meses, filtra por empleado y ve resaltadas las coincidencias. En «Evaluaciones» crea la de cada persona a su cargo.
+* **RRHH.** En «Alta de Empleado» registra a una persona: la aplicación crea su cuenta y muestra la clave provisional en un diálogo. En «Informes» elige tipo (absentismo o uso de vacaciones) y rango, expande el desglose por empleado y descarga el CSV. Además resuelve y ve el calendario de sus subordinados directos.
+* **Dirección General.** Resuelve y ve el calendario de sus subordinados directos; no solicita ausencias ni tiene saldo.
+
+La variación contractual, la consulta de la trayectoria y la baja de empleados se operan por API (`POST` y `GET /api/v1/employees/{id}/contracts`, `DELETE /api/v1/employees/{id}`); no tienen pantalla enlazada en esta versión (apartado 9.3).
 
 ---
 
 ## 8. Planificación, Seguimiento y Gobernanza
 
-### 8.1 Cronograma y Reparto del Trabajo
-El proyecto se organizó en 4 fases semanales claramente delimitadas con responsabilidades individuales (reflejado en detalle en [AGRUPAMIENTO.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/AGRUPAMIENTO.md)):
+### 8.1 Iteraciones y cronograma real
 
-```mermaid
-gantt
-    title Planificación del Proyecto (4 Semanas x 4 Integrantes)
-    dateFormat  YYYY-MM-DD
-    section Semana 1: Cimientos de Datos
-    HU-01 Alta de Empleados y Contratos (Joaquín)     :done, 2026-10-01, 7d
-    HU-02 Saldo de Vacaciones Dinámico (Joaquín)       :done, 2026-10-04, 5d
-    section Semana 2: Flujo del Empleado
-    HU-03 Solicitud de Vacaciones (Iván)               :done, 2026-10-08, 7d
-    HU-04 Seguimiento e Historial (Iván)               :done, 2026-10-11, 5d
-    section Semana 3: Gestión y Supervisión
-    HU-05 Aprobación/Rechazo de Solicitudes (Andrei)   :done, 2026-10-15, 7d
-    HU-06 Calendario de Equipo y Privacidad (Andrei)   :done, 2026-10-18, 5d
-    section Semana 4: Analítica y Talento
-    HU-07 Informes de Absentismo y Métricas (José)     :done, 2026-10-22, 7d
-    HU-08 Evaluación de Desempeño (José)               :done, 2026-10-25, 6d
-    section Cierre y Refinamiento
-    Refinamiento Loop Engineering, E2E y Memoria (Todos):done, 2026-10-28, 5d
-```
+El repositorio tiene 56 commits entre el 2026-10-20 y el 2026-11-21. Los pull requests integrados en `main` marcan las entregas:
 
-### 8.2 Trazabilidad de Decisiones y Registro de Hallazgos
-Para garantizar que cada decisión técnica y ajuste de especificación quedara plenamente justificado, se elaboró la **Matriz Global de Trazabilidad** (accesible íntegramente en [matriz-trazabilidad.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/matriz-trazabilidad.md)).
+| Fecha | Hito | Pull request |
+| :-- | :-- | :-- |
+| 2026-10-20 | Inicialización: backend, frontend, Docker y Spec Kit | — |
+| 2026-10-27 | Base común (plan, modelo de datos, specs), clarify de todas las historias y HU-01 | #1 `spec-001` |
+| 2026-10-29 | HU-02: ficha y saldo | #2 `spec-002` |
+| 2026-11-01 | HU-03: solicitud de ausencias | commit `1b3d99b` |
+| 2026-11-02 | HU-04: seguimiento y cancelación | #3 `spec-004` |
+| 2026-11-03 | HU-05 y HU-06 | #4 `rama-Andrei` |
+| 2026-11-10 | HU-07 y HU-08; **se fija el commit de referencia** (`ref-refinamiento`) | #6 `hu-7`, #8 `hu-8` |
+| 2026-11-16 a 2026-11-19 | Refinamiento de HU-05 y HU-06 (fases 6, 9 y 10; Constitución 1.1.0 y 1.2.0) | #9 `refinamiento-HU5-HU6` |
+| 2026-11-17 | Clarify, analyze y converge de HU-03 y HU-04 | — |
+| 2026-11-20 a 2026-11-21 | Refinamiento de HU-07 y HU-08 | #11 `refinamiento-hu7-hu8` |
+| 2026-11-21 | Verificación integrada, registros de clarify, analyze y converge, memoria | rama `memoria-y-entregables` |
 
-A continuación se resume el registro de los 11 hallazgos principales corregidos durante el ciclo de vida del proyecto:
+Los *issues* del repositorio (#5, #7 y #10) siguen el trabajo de HU-07, HU-08 y el refinamiento de ambas, y están cerrados.
 
-| ID | Historia | Hallazgo / Decisión Crítica | Documento / Código Afectado | Responsable | Estado |
-| :---: | :---: | :--- | :--- | :---: | :---: |
-| **H-01** | HU-01 | Invariante de contratos solapados bloqueados en DB | `contract-history.component.ts`, `V1__init.sql` | Joaquín | **Cerrado** |
-| **H-02** | HU-02 | Saldo como valor derivado en tiempo real (Art. 12) | `LeaveBalanceService.java`, `constitution.md` | Joaquín | **Cerrado** |
-| **H-03** | HU-02 | Prorrateo exacto por días naturales en altas tardías | `LeaveProratingUtil.java` | Joaquín | **Cerrado** |
-| **H-04** | HU-03 | Partición automática de peticiones interanuales | `LeaveDayAllocator.java`, `spec.md` | Iván | **Cerrado** |
-| **H-05** | HU-04 | Cancelación preventiva restringida a estado PENDIENTE | `LeaveRequestTrackingService.java` | Iván | **Cerrado** |
-| **H-06** | HU-05 | Concurrencia optimista en aprobación de ausencias | `LeaveRequest.java` (`@Version`) | Andrei | **Cerrado** |
-| **H-07** | HU-05 | Auto-cancelación ante desactivación de responsable | `LeaveRequestAutoCancelService.java` | Andrei | **Cerrado** |
-| **H-08** | HU-05 | Delimitación de RRHH como resolutor solo de su equipo | `constitution.md` v1.2.0, `V7__role.sql` | Andrei | **Cerrado** |
-| **H-09** | HU-06 | Minimización de datos sensibles en calendario (RGPD) | `TeamCalendarService.java` (Art. 20) | Andrei | **Cerrado** |
-| **H-10** | HU-07 | Exportación tabular de absentismo en streaming | `AbsenteeismReportService.java` | José | **Cerrado** |
-| **H-11** | HU-08 | Doble conformidad obligatoria en evaluaciones | `PerformanceReviewService.java` | José | **Cerrado** |
+### 8.2 Fases de la práctica y su evidencia
+
+| Fase del enunciado | Evidencia |
+| :-- | :-- |
+| 1. Análisis y especificación | `specs/spec-00N/spec.md`, `docs/AGRUPAMIENTO.md` |
+| 2. Planificación técnica | `plan.md`, `research.md`, `data-model.md`, `contracts/`, `specs/plan.md` |
+| 3. Desglose e implementación | `tasks.md` (290 de 290 tareas), `implementation-report.md`, PR #1 a #8 |
+| 4. Refinamiento y verificación (clarify, analyze, converge) | `clarify.md`, `analysis.md`, `converge.md`, `docs/matriz-trazabilidad.md`, `docs/registro-hallazgos.md` |
+| 4. Verificación integrada (5.4) | `docs/verificacion-integrada.md`, `docs/recorridos-e2e.md`, `docs/evidencias/` |
+| 5. Cierre y entrega | Esta memoria, [`demo/index.html`](../demo/index.html) (vídeo `demo/demo-rrhh.mp4`, 14 min, con índice de escenarios) |
+
+### 8.3 Trazabilidad de decisiones y hallazgos
+
+La matriz global (`docs/matriz-trazabilidad.md`) relaciona, para las ocho historias, cada criterio con la decisión del plan, las tareas que lo cubren, la prueba prevista y el revisor. El registro consolidado (`docs/registro-hallazgos.md`) recoge los 27 hallazgos de analyze con gravedad, evidencia, remediación, responsable y revisor. Los hallazgos de implementación con tarea y commit están en cada `converge.md` y en la tabla de registro mínimo de `docs/verificacion-integrada.md`. Algunos de los más relevantes:
+
+| Historia | Hallazgo o decisión | Tarea y commit | Estado |
+| :-- | :-- | :-- | :-- |
+| HU-05 | El motivo de rechazo no se medía tras recortar espacios | T054, `49fad56` | Cerrado |
+| HU-03 | Faltaban justificación, fechas pasadas y reserva de saldo | T020 a T025, `9e00b69` | Cerrado |
+| HU-05 | Resolutor válido, cancelación automática, Dirección General, RRHH resolutor | T057 a T103, `caa1590` a `cc06571` | Cerrado |
+| HU-06 | Lista en pantallas estrechas, retiradas ocultas, acceso de DG y RRHH | T023 a T032, `7867b7b`, `f83640f` | Cerrado |
+| HU-01 | Variación, trayectoria y baja sin pantalla enlazada | Notas en `tasks.md` | Aceptado como límite conocido |
+| HU-08 | RRHH y Dirección General no pueden evaluar a sus subordinados | `spec.md`, Session 2026-11-21 | Aceptado como límite conocido |
+| HU-03 | Saldo validado solo para el año de inicio | `spec.md`, Session 2026-11-21 | Aceptado como límite conocido |
 
 ---
 
 ## 9. Conclusiones y Lecciones Aprendidas
 
-### 9.1 Logros Alcanzados
-1. **Alineación total entre Especificación y Código:** La adopción del enfoque Spec-Driven Development demostró que invertir tiempo en la especificación rigurosa (Gherkin, contratos OpenAPI, invariantes constitucionales) reduce drásticamente las horas de depuración y reescritura de código en fases posteriores.
-2. **Coordinación eficaz en equipo de 4 desarrolladores:** La clara división de contratos funcionales y de datos permitió que los integrantes trabajaran en paralelo sin bloqueos ni conflictos graves de integración en Git.
-3. **Calidad y robustez empresarial:** La eliminación de contadores de saldo mutables, la adopción del estándar RFC 9457 y el respeto a la privacidad RGPD elevan el sistema a estándares de calidad de software de producción.
+### 9.1 Logros
 
-### 9.2 Dificultades Encontradas y Soluciones Aplicadas
-* **Sincronización de Contratos OpenAPI:** Al inicio de la Semana 2 se detectaron discrepancias entre los DTOs de TypeScript y las clases Java. Se solucionó centralizando los esquemas YAML en `specs/contracts/` y validándolos antes de implementar los controladores.
-* **Manejo de Concurrencia en Aprobaciones:** Durante pruebas manuales simultáneas se produjeron resoluciones inconsistentes. Se resolvió incorporando bloqueo optimista con `@Version` en la entidad `LeaveRequest`.
-* **Cálculo de Festivos y Convenios:** La distinción entre convenios en días hábiles frente a días naturales se encapsuló en un servicio extensible en el backend, evitando duplicar lógica en el cliente.
+1. **Sistema funcional de extremo a extremo.** Las ocho historias están implementadas, con 224 pruebas de backend y 86 de frontend en verde y dos recorridos E2E conformes.
+2. **Especificación y código alineados.** El 100 % de las tareas está marcado, y los criterios se verifican por prueba nombrada o por recorrido en 65 de 66 casos. Las decisiones tomadas después de implementar quedaron en la spec antes de tocar el código.
+3. **Refinamiento documentado.** De 29 a 83 aclaraciones, de 72 a 83 requisitos y 290 tareas, con registros de clarify, analyze y converge por historia, matriz de trazabilidad y revisión cruzada.
+4. **Reglas de dominio críticas.** Saldo derivado, trayectoria inmutable, resolución atómica con concurrencia controlada, privacidad en el calendario y evaluaciones inmutables protegidas también en base de datos.
 
-### 9.3 Líneas de Trabajo Futuro
-* **Integración con Calendarios Externos:** Sincronización bidireccional mediante protocolo CalDAV o APIs de Google Calendar y Microsoft 365.
-* **Firma Biométrica / Electrónica:** Incorporación de firma digital avanzada para los contratos laborales y las actas de evaluación de desempeño.
-* **Módulo de Gestión de Nóminas:** Cálculo automático de deducciones por absentismo no remunerado enlazado directamente con los periodos validados en la HU-05 y HU-07.
+### 9.2 Dificultades encontradas
+
+* **Una decisión de producto toca muchas specs.** Quién resuelve la solicitud de un responsable afectó a HU-01, HU-02, HU-03, HU-05 y HU-06 y a la constitución. Conviene fijar el significado de «borrar» (aquí, `CANCELLED`) antes de registrar una respuesta.
+* **Cambio de respuesta tras registrarla.** Revertir una aclaración ya anotada obligó a añadir FR-016 y una dependencia entre módulos.
+* **Migración editada.** Modificar `V7` ya aplicada rompió el arranque; las pruebas no lo detectaron porque cada ejecución usa una base nueva.
+* **Entorno.** Con el demonio de Docker parado no pueden ejecutarse las pruebas de integración ni arrancar el backend con una base de datos.
+* **Documentación frente a código.** Los primeros recorridos E2E contenían valores esperados incorrectos y la matriz citaba una prueba inexistente; se corrigieron al ejecutarlos y contrastarlos.
+* **Pruebas dependientes de la máquina.** Las pruebas del mes inicial en `Europe/Madrid` no pueden fallar en un equipo configurado en CET.
+
+### 9.3 Límites conocidos del alcance (aceptados y documentados)
+
+Cuatro puntos se aceptaron al congelar el código. Reducen el alcance de interfaz o de funcionalidad y, según el enunciado, requieren validación del docente:
+
+1. **HU-01.** La variación contractual, la trayectoria y la baja de empleados funcionan por API y tienen pruebas, pero sus pantallas no están enlazadas en la navegación.
+2. **HU-03.** El saldo se valida solo para el año de inicio; una solicitud interanual puede crearse y fallar al aprobarse con `422`.
+3. **HU-08.** Solo `RESPONSABLE_EQUIPO` crea evaluaciones; RRHH y Dirección General con subordinados no pueden evaluarlos.
+4. **Rendimiento.** Los objetivos de tiempo de respuesta no se han medido.
+
+### 9.4 Trabajo futuro
+
+* Enlazar en la interfaz las pantallas de variación contractual, trayectoria y baja (y validar el rol del responsable al asignarlo, FR-013 de HU-01).
+* Validar el saldo año a año en HU-03 con `LeaveDayAllocator`.
+* Permitir evaluar a RRHH y Dirección General con subordinados directos.
+* Pruebas E2E de interfaz y de contrato, y medición de los criterios de rendimiento.
+* Ejecutar `/speckit-converge` sobre cada spec tras los últimos cambios y conservar su salida.
+* Integración con calendarios externos y proceso de aprobación para las ausencias de Dirección General.
 
 ---
 
 ## 10. Anexos y Referencias
 
-### 10.1 Enlaces a Especificaciones Detalladas
-Cada historia de usuario cuenta con su ciclo documental completo accesible en:
-* **HU-01:** [specs/spec-001/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-001/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-001/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-001/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-001/analysis.md)
-* **HU-02:** [specs/spec-002/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-002/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-002/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-002/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-002/analysis.md)
-* **HU-03:** [specs/spec-003/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-003/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-003/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-003/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-003/analysis.md)
-* **HU-04:** [specs/spec-004/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-004/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-004/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-004/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-004/analysis.md)
-* **HU-05:** [specs/spec-005/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-005/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-005/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-005/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-005/analysis.md)
-* **HU-06:** [specs/spec-006/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-006/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-006/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-006/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-006/analysis.md)
-* **HU-07:** [specs/spec-007/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-007/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-007/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-007/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-007/analysis.md)
-* **HU-08:** [specs/spec-008/spec.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-008/spec.md) | [Plan](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-008/plan.md) | [Tasks](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-008/tasks.md) | [Analysis](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/specs/spec-008/analysis.md)
+### 10.1 Especificaciones completas
 
-### 10.2 Documentos Complementarios de Entrega
-* **Reparto de Responsabilidades:** [docs/agrupamiento.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/agrupamiento.md) (y [docs/AGRUPAMIENTO.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/AGRUPAMIENTO.md))
-* **Recorridos E2E Cruzados:** [docs/recorridos-e2e.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/recorridos-e2e.md)
-* **Matriz Global de Trazabilidad y Registro de Hallazgos:** [docs/matriz-trazabilidad.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/docs/matriz-trazabilidad.md)
-* **Plataforma Web de Reproducción de la Demo Técnica:** [demo/index.html](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/demo/index.html)
-* **Constitución Inmutable de Diseño:** [.specify/memory/constitution.md](file:///c:/Users/jotan/Desktop/IW/recursos-humanos-IW/.specify/memory/constitution.md)
+Cada historia tiene su ciclo en `specs/spec-00N/`: `spec.md`, `clarify.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, `tasks.md`, `analysis.md`, `converge.md` e `implementation-report.md`.
 
-### 10.3 Glosario de Términos
-* **SDD (*Spec-Driven Development*):** Metodología donde los requerimientos, contratos de API e invariantes formales dirigen la implementación del software, siendo el código un producto derivado de la especificación.
-* **Saldo Derivado:** Valor numérico de días de vacaciones calculado en tiempo real mediante la diferencia entre derechos reconocidos por contrato y solicitudes consumidas/comprometidas, sin persistirse en base de datos.
-* **RFC 9457 (*Problem Details for HTTP APIs*):** Estándar de IETF para representar detalles de errores en respuestas HTTP de manera legible por humanos y procesable por máquinas.
-* **Loop Engineering:** Proceso iterativo de Spec Kit mediante el cual las discrepancias en pruebas o análisis revierten en correcciones de la especificación antes de ajustar el código.
-* **Testcontainers:** Biblioteca de pruebas para Java que levanta instancias efímeras de servicios reales (en este caso PostgreSQL) en contenedores Docker para pruebas de integración fieles a producción.
+| HU | Especificación | Plan | Tareas | Análisis | Clarify | Converge |
+| :-: | :-- | :-- | :-- | :-- | :-- | :-- |
+| HU-01 | [spec](../specs/spec-001/spec.md) | [plan](../specs/spec-001/plan.md) | [tasks](../specs/spec-001/tasks.md) | [analysis](../specs/spec-001/analysis.md) | [clarify](../specs/spec-001/clarify.md) | [converge](../specs/spec-001/converge.md) |
+| HU-02 | [spec](../specs/spec-002/spec.md) | [plan](../specs/spec-002/plan.md) | [tasks](../specs/spec-002/tasks.md) | [analysis](../specs/spec-002/analysis.md) | [clarify](../specs/spec-002/clarify.md) | [converge](../specs/spec-002/converge.md) |
+| HU-03 | [spec](../specs/spec-003/spec.md) | [plan](../specs/spec-003/plan.md) | [tasks](../specs/spec-003/tasks.md) | [analysis](../specs/spec-003/analysis.md) | [clarify](../specs/spec-003/clarify.md) | [converge](../specs/spec-003/converge.md) |
+| HU-04 | [spec](../specs/spec-004/spec.md) | [plan](../specs/spec-004/plan.md) | [tasks](../specs/spec-004/tasks.md) | [analysis](../specs/spec-004/analysis.md) | [clarify](../specs/spec-004/clarify.md) | [converge](../specs/spec-004/converge.md) |
+| HU-05 | [spec](../specs/spec-005/spec.md) | [plan](../specs/spec-005/plan.md) | [tasks](../specs/spec-005/tasks.md) | [analysis](../specs/spec-005/analysis.md) | [clarify](../specs/spec-005/clarify.md) | [converge](../specs/spec-005/converge.md) |
+| HU-06 | [spec](../specs/spec-006/spec.md) | [plan](../specs/spec-006/plan.md) | [tasks](../specs/spec-006/tasks.md) | [analysis](../specs/spec-006/analysis.md) | [clarify](../specs/spec-006/clarify.md) | [converge](../specs/spec-006/converge.md) |
+| HU-07 | [spec](../specs/spec-007/spec.md) | [plan](../specs/spec-007/plan.md) | [tasks](../specs/spec-007/tasks.md) | [analysis](../specs/spec-007/analysis.md) | [clarify](../specs/spec-007/clarify.md) | [converge](../specs/spec-007/converge.md) |
+| HU-08 | [spec](../specs/spec-008/spec.md) | [plan](../specs/spec-008/plan.md) | [tasks](../specs/spec-008/tasks.md) | [analysis](../specs/spec-008/analysis.md) | [clarify](../specs/spec-008/clarify.md) | [converge](../specs/spec-008/converge.md) |
+
+### 10.2 Documentos complementarios
+
+* [Reparto de historias entre integrantes](AGRUPAMIENTO.md)
+* [Constitución del proyecto](../.specify/memory/constitution.md), [plan compartido](../specs/plan.md) y [modelo de datos unificado](../specs/data-model.md)
+* [Matriz de trazabilidad global](matriz-trazabilidad.md)
+* [Registro consolidado de hallazgos de analyze](registro-hallazgos.md)
+* [Recorridos E2E](recorridos-e2e.md) y su [resultado observado](evidencias/e2e/resultado-recorridos.md)
+* [Verificación integrada y balance de la iteración](verificacion-integrada.md)
+* Evidencias: [`docs/evidencias/`](evidencias/) (suites de pruebas, diffs de specs, informes de analyze)
+
+### 10.3 Glosario
+
+* **SDD (*Spec-Driven Development*).** Metodología donde la especificación funcional dirige la implementación.
+* **Spec Kit.** Conjunto de comandos (`specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`, `converge`) que producen los artefactos de cada spec.
+* **Loop engineering.** Iterar entre especificación, plan, tareas y código cuando el resultado no es satisfactorio.
+* **Constitución.** Norma superior del proyecto, con principios no negociables y un registro de enmiendas.
+* **Saldo derivado.** Días de vacaciones calculados al consultar, sin columna persistida.
+* **Trayectoria contractual (append-only).** Historial de contratos que solo admite altas nuevas, con fecha de efectos.
+* **Resolutor válido.** Superior activo, distinto del empleado, con rol `RESPONSABLE_EQUIPO`, `RRHH` o `DIRECCION_GENERAL`.
+* **`PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`.** Estados de una solicitud; `CANCELLED` es la retirada por el empleado o la cancelación automática.
+* **RFC 9457 (*Problem Details*).** Formato estándar de errores HTTP usado por la API.
+* **Testcontainers.** Biblioteca que levanta un PostgreSQL real en Docker para las pruebas de integración.
+* **Flyway.** Herramienta de migraciones versionadas de la base de datos (V1 a V7).

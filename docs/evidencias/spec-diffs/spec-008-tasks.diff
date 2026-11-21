@@ -1,0 +1,86 @@
+diff --git a/specs/spec-008/tasks.md b/specs/spec-008/tasks.md
+new file mode 100644
+index 0000000..7357f49
+--- /dev/null
++++ b/specs/spec-008/tasks.md
+@@ -0,0 +1,80 @@
++# Tasks: spec-008 — Evaluación de Desempeño con Conformidad
++
++**Feature**: `spec-008` · HU-08  
++**Input**: [specs/spec-008/plan.md](plan.md), [specs/spec-008/spec.md](spec.md), [specs/spec-008/data-model.md](data-model.md)
++
++---
++
++## Phase 1: Setup
++
++**Purpose**: Verificación de la tabla `performance_reviews` en la migración V1 y del trigger de inmutabilidad en V4.
++
++- [x] T001 Verify `performance_reviews` table, indexes and trigger `trg_performance_reviews_immutable_finalized` are present in Flyway migrations `V1__init_shared_schema.sql` and `V4__immutable_finalized_performance_reviews.sql`
++- [x] T002 [P] Verify `Clock` bean is configured as `Clock.systemUTC()` in the Spring application context (needed for deterministic tests)
++
++---
++
++## Phase 2: Foundational (Blocking Prerequisites)
++
++**Purpose**: Entidad de dominio, repositorio y DTOs que bloquean el desarrollo del servicio.
++
++- [x] T003 [P] Create `PerformanceReviewStatus` enum (`PENDING_ACKNOWLEDGMENT`, `FINALIZED`) in `backend/src/main/java/com/iw/rrhh/performance/domain/PerformanceReviewStatus.java`
++- [x] T004 [P] Create `PerformanceReview` JPA entity with `@Version` for optimistic locking, `acknowledge(comments, acknowledgedAt)` domain method, and JPA constructor in `backend/src/main/java/com/iw/rrhh/performance/domain/PerformanceReview.java`
++- [x] T005 [P] Create `PerformanceReviewRepository` with `findByEmployeeIdOrderByPeriodDescCreatedAtDesc`, `findByEmployeeManagerIdOrderByCreatedAtDesc` and `findByIdForUpdate` (`@Lock(PESSIMISTIC_WRITE)`) in `backend/src/main/java/com/iw/rrhh/performance/repository/PerformanceReviewRepository.java`
++- [x] T006 [P] Create DTO records `CreatePerformanceReviewRequest` (`@Min(1) @Max(5) Integer rating`), `AcknowledgePerformanceReviewRequest`, `PerformanceReviewResponse` (with static factory `from(PerformanceReview)`), and `PerformanceReviewEmployeeResponse` in `backend/src/main/java/com/iw/rrhh/performance/dto/`
++- [x] T007 [P] Create `PerformanceReviewAlreadyFinalizedException` (HTTP 409) in `backend/src/main/java/com/iw/rrhh/performance/service/PerformanceReviewAlreadyFinalizedException.java` and register it in `GlobalExceptionHandler`
++- [x] T008 [P] Create TypeScript models `PerformanceReviewStatus`, `PerformanceReview`, `PerformanceReviewEmployee` in `frontend/src/app/features/performance/models/performance-review.models.ts`
++
++---
++
++## Phase 3: User Story 8 — Circuito de Evaluación y Conformidad (Priority: P1) 🎯 MVP
++
++**Goal**: El responsable crea evaluaciones y el empleado da conformidad, formalizando la evaluación de forma inmutable con la fecha del servidor.
++
++**Independent Test**: Ejecutar `PerformanceReviewIntegrationTest` verificando el circuito completo (creación → conformidad → `FINALIZED`) y que un intento de modificar una evaluación `FINALIZED` retorna `409`.
++
++### Backend Implementation
++
++- [x] T009 [US8] Create `PerformanceReviewService` interface and `PerformanceReviewServiceImpl` (`@Service @Transactional`) implementing: `getMyReviews()` (authenticated employee's own reviews), `getTeamReviews()` (manager's current team reviews), `getTeamEmployees()` (active team members sorted by last/first name), `createReview(employeeId, request)` (validates team membership and active status), `acknowledge(reviewId, request)` (pessimistic lock, checks ownership, calls `review.acknowledge(comments, Instant.now(clock))`) in `backend/src/main/java/com/iw/rrhh/performance/service/PerformanceReviewServiceImpl.java`
++- [x] T010 [US8] Create `PerformanceReviewController` with per-method `@PreAuthorize`: `GET /performance-reviews/me` (`EMPLEADO`), `GET /performance-reviews/team` (`RESPONSABLE_EQUIPO`), `GET /performance-reviews/team/employees` (`RESPONSABLE_EQUIPO`), `POST /performance-reviews/team/{employeeId}` (`RESPONSABLE_EQUIPO`), `POST /performance-reviews/{reviewId}/acknowledge` (`EMPLEADO`) in `backend/src/main/java/com/iw/rrhh/performance/controller/PerformanceReviewController.java`
++- [x] T011 [US8] Create `PerformanceReviewIntegrationTest` (Testcontainers + MockMvc, `Clock` fixed) covering: manager creates review → born `PENDING_ACKNOWLEDGMENT`; employee acknowledges → `FINALIZED` with server-side `finalizedAt`; second acknowledge returns `409`; direct DB UPDATE on `FINALIZED` raises PostgreSQL trigger exception; employee cannot see another employee's reviews; manager cannot create review for employee of another team; `rating=0` and `rating=6` return `400`; `RRHH` role returns `403` on creation endpoint in `backend/src/test/java/com/iw/rrhh/performance/PerformanceReviewIntegrationTest.java`
++
++### Frontend Implementation
++
++- [x] T012 [P] [US8] Create `PerformanceReviewService` with `getMyReviews()`, `getTeamReviews()`, `getTeamEmployees()`, `createReview(employeeId, request)`, `acknowledge(reviewId, request)` calling the corresponding API endpoints in `frontend/src/app/features/performance/services/performance-review.service.ts`
++- [x] T013 [US8] Create `PerformanceReviewsComponent` with two views controlled by role: **RESPONSABLE_EQUIPO view** — employee selector from `/team/employees`, form with period, objectives, rating (1–5 slider), manager comments, submit button (creates review); team reviews list with period, employee name, rating stars, status badge; **EMPLEADO view** — own reviews list; detail panel showing all fields, employee comments textarea, "Dar conformidad y formalizar" button (disabled if `FINALIZED`); finalized reviews are read-only with `finalizedAt` date in `frontend/src/app/features/performance/components/performance-reviews/performance-reviews.component.ts`
++- [x] T014 [P] [US8] Register lazy route `/performance` with `authGuard` in `frontend/src/app/app.routes.ts` and add nav link "Evaluaciones" shown for `RESPONSABLE_EQUIPO` and `EMPLEADO` roles in `frontend/src/app/app.html`
++
++---
++
++## Phase 4: Polish & Cross-Cutting Concerns
++
++**Purpose**: Verificaciones finales, accesibilidad y suite completa.
++
++- [x] T015 [P] Add OpenAPI Swagger `@Operation` and `@Tag` annotations to `PerformanceReviewController.java`
++- [x] T016 [P] Verify WCAG 2.1 AA: rating slider with `aria-label`, status badges with text not only color, keyboard navigation for form and conformity button
++- [x] T017 Execute full backend test suite: `cd backend && ./mvnw test`
++- [x] T018 Run frontend tests and build: `cd frontend && npx ng test --watch=false && npx ng build`
++- [x] T019 Validate manual scenarios defined in `specs/spec-008/quickstart.md`
++
++---
++
++## Dependencies & Execution Order
++
++```mermaid
++graph TD
++    T001 --> T002
++    T003 --> T004 --> T005
++    T004 --> T009
++    T005 --> T009
++    T006 --> T009
++    T007 --> T009
++    T009 --> T010 --> T011
++    T002 --> T011
++    T008 --> T012 --> T013 --> T014
++    T010 --> T015
++    T011 --> T017
++    T014 --> T018
++    T017 --> T019
++    T018 --> T019
++```
